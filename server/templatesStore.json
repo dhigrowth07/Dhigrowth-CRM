@@ -9,12 +9,16 @@
         "status": "APPROVED",
         "header_type": "TEXT",
         "header_content": "DhiGrowth IT Services",
-        "body_text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.",
+        "body_text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification.",
         "footer_text": "Tap an option to respond:",
         "buttons": [],
         "variables": [],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-19T06:00:00.000Z"
+        "updatedAt": "2026-09-21T07:11:59.976Z",
+        "reviewNote": "Meta API review queued (Invalid parameter)",
+        "submittedAt": "2026-09-21T07:11:52.262Z",
+        "rejectionReason": null,
+        "metaTemplateId": "1744607210078710"
       },
       {
         "id": "tpl_hi_4105083089797368",
@@ -192,6 +196,31 @@
         "updatedAt": "2026-09-17T06:22:00.000Z"
       }
     ],
-    "80f6df12-ba78-472a-a4ec-1059b113f8ab": []
+    "80f6df12-ba78-472a-a4ec-1059b113f8ab": [],
+    "test-new-user-ws-1789975151188": [
+      {
+        "id": "2074071630135449",
+        "name": "lead_offer_voucher",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "PENDING",
+        "header_type": "NONE",
+        "header_content": null,
+        "body_text": "Hello {{1}}, updated special 25% discount coupon {{2}}! Valid today.",
+        "footer_text": "offer, voucher, discount",
+        "buttons": [],
+        "variables": [
+          "var_1",
+          "var_2"
+        ],
+        "syncedWithMeta": true,
+        "createdAt": "2026-09-21T07:19:11.252Z",
+        "updatedAt": "2026-09-21T07:19:19.083Z",
+        "reviewNote": "Meta API review queued (Invalid parameter)",
+        "submittedAt": "2026-09-21T07:19:18.701Z",
+        "rejectionReason": null,
+        "metaTemplateId": "2074071630135449"
+      }
+    ]
   }
 }

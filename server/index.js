@@ -38,6 +38,9 @@ import {
   getWorkspaceTemplates,
   syncMetaTemplates,
   createMetaTemplate,
+  updateMetaTemplate,
+  submitTemplateForMetaApproval,
+  checkMetaTemplateStatus,
   deleteMetaTemplate,
   STARTER_TEMPLATES,
 } from './templateService.js';
@@ -1726,6 +1729,214 @@ app.post('/api/drips/:id/test', async (req, res) => {
   }
 });
 
+
+// =================================================================
+// Meta Cloud API Message Templates & Approval Endpoints
+// =================================================================
+app.get('/api/meta/templates', async (req, res) => {
+  try {
+    const workspaceId = req.query.workspaceId || req.headers['x-workspace-id'] || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const templates = getWorkspaceTemplates(workspaceId);
+    res.json({ success: true, count: templates.length, templates });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/meta/templates/create', async (req, res) => {
+  try {
+    const {
+      workspaceId = process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001',
+      wabaId,
+      accessToken,
+      name,
+      category = 'UTILITY',
+      language = 'en_US',
+      headerType,
+      headerText,
+      headerImageUrl,
+      bodyText,
+      footerText,
+      buttons,
+    } = req.body;
+
+    const template = await createMetaTemplate({
+      workspaceId,
+      wabaId,
+      accessToken,
+      name,
+      category,
+      language,
+      headerType,
+      headerText,
+      headerImageUrl,
+      bodyText,
+      footerText,
+      buttons,
+    });
+
+    res.json({ success: true, template });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/meta/templates/:id', async (req, res) => {
+  try {
+    const templateId = req.params.id;
+    const workspaceId = req.body.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const updated = await updateMetaTemplate({
+      workspaceId,
+      templateId,
+      name: req.body.name,
+      updates: req.body,
+      wabaId: req.body.wabaId,
+      accessToken: req.body.accessToken,
+    });
+    res.json({ success: true, template: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/meta/templates/:id/submit-approval', async (req, res) => {
+  try {
+    const templateId = req.params.id;
+    const workspaceId = req.body.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const result = await submitTemplateForMetaApproval({
+      workspaceId,
+      templateId,
+      wabaId: req.body.wabaId,
+      accessToken: req.body.accessToken,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/meta/templates/:id/status', async (req, res) => {
+  try {
+    const templateId = req.params.id;
+    const workspaceId = req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const result = await checkMetaTemplateStatus({
+      workspaceId,
+      templateId,
+      wabaId: req.query.wabaId,
+      accessToken: req.query.accessToken,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/meta/templates/:id', async (req, res) => {
+  try {
+    const templateId = req.params.id;
+    const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const name = req.body?.name || req.query.name;
+    const result = await deleteMetaTemplate({
+      workspaceId,
+      templateId,
+      name,
+      wabaId: req.body?.wabaId,
+      accessToken: req.body?.accessToken,
+    });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/meta/templates/sync', async (req, res) => {
+  try {
+    const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const result = await syncMetaTemplates({
+      workspaceId,
+      wabaId: req.body?.wabaId,
+      accessToken: req.body?.accessToken,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =================================================================
+// Workspace Automations & Triggers Endpoints
+// =================================================================
+app.get('/api/automations', async (req, res) => {
+  try {
+    const workspaceId = req.query.workspaceId || req.headers['x-workspace-id'] || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const automations = await getWorkspaceAutomations(workspaceId);
+    res.json({ success: true, automations });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/automations', async (req, res) => {
+  try {
+    const workspaceId = req.body?.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const automation = await createAutomation({
+      workspaceId,
+      name: req.body.name,
+      description: req.body.description,
+      trigger: req.body.trigger,
+      triggerCondition: req.body.triggerCondition,
+      action: req.body.action,
+      actionDetails: req.body.actionDetails,
+    });
+    res.json({ success: true, automation });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/automations/:id', async (req, res) => {
+  try {
+    const automationId = req.params.id;
+    const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const updated = await updateAutomation(workspaceId, automationId, req.body);
+    res.json({ success: true, automation: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/automations/:id', async (req, res) => {
+  try {
+    const automationId = req.params.id;
+    const workspaceId = req.query.workspaceId || req.body?.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const result = await deleteAutomation(workspaceId, automationId);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/automations/:id/toggle', async (req, res) => {
+  try {
+    const automationId = req.params.id;
+    const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const updated = await toggleAutomationStatus(workspaceId, automationId);
+    res.json({ success: true, automation: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/automations/:id/test', async (req, res) => {
+  try {
+    const automationId = req.params.id;
+    const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const result = await testTriggerAutomation(workspaceId, automationId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`\n================================================================`);

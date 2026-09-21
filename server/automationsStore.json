@@ -12,7 +12,7 @@
         "status": "Active",
         "runs": 142,
         "createdAt": "2026-09-21T05:02:15.568571+00:00",
-        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
+        "updatedAt": "2026-09-21T07:12:18.694Z"
       },
       {
         "id": "auto_app_inquiry",
@@ -106,6 +106,22 @@
         "runs": 31,
         "createdAt": "2026-09-19T05:27:10.791Z",
         "lastRunAt": "2026-09-21T05:05:10.791Z"
+      }
+    ],
+    "test-new-user-ws-1789975151188": [
+      {
+        "id": "auto_1789975159102_t0q3",
+        "name": "Instant Offer Sender",
+        "description": "Automatically triggered workflow",
+        "trigger": "Keyword Match",
+        "triggerCondition": "discount, coupon, offer",
+        "action": "Send WhatsApp Template",
+        "actionDetails": "lead_offer_voucher",
+        "status": "Paused",
+        "runs": 0,
+        "createdAt": "2026-09-21T07:19:19.102Z",
+        "lastRunAt": null,
+        "updatedAt": "2026-09-21T07:19:19.746Z"
       }
     ]
   }

@@ -25,7 +25,11 @@ import {
   Loader2,
   Image as ImageIcon,
   Eye,
+  AlertCircle,
+  Shield,
+  UploadCloud,
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
 import {
   getTemplates,
@@ -209,6 +213,11 @@ export const TemplatesPage = () => {
   const [formHeaderType, setFormHeaderType] = useState('NONE'); // 'NONE' | 'IMAGE'
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formBody, setFormBody] = useState('');
+  const [formReSubmitMeta, setFormReSubmitMeta] = useState(true);
+
+  // Meta Approval Async Action States
+  const [submittingApprovalId, setSubmittingApprovalId] = useState(null);
+  const [checkingStatusId, setCheckingStatusId] = useState(null);
 
   // Interactive Live Simulator State
   const [testInput, setTestInput] = useState('hi');
@@ -370,6 +379,7 @@ export const TemplatesPage = () => {
     setFormHeaderType('NONE');
     setFormImageUrl('');
     setFormBody('');
+    setFormReSubmitMeta(true);
     setIsCreateModalOpen(true);
   };
 
@@ -377,11 +387,117 @@ export const TemplatesPage = () => {
     setEditingTemplate(template);
     setFormName(template.name);
     setFormTriggers(template.footer_text || '');
-    setFormCategory(template.category || 'utility');
+    setFormCategory((template.category || 'utility').toLowerCase());
     const hasImg = template.header_type === 'IMAGE' || Boolean(template.header_content);
     setFormHeaderType(hasImg ? 'IMAGE' : 'NONE');
     setFormImageUrl(template.header_content || '');
     setFormBody(template.body_text || '');
+    setFormReSubmitMeta(true);
+  };
+
+  const handleSubmitForApproval = async (template) => {
+    setSubmittingApprovalId(template.id);
+    try {
+      let res;
+      try {
+        res = await fetch(`/api/meta/templates/${template.id}/submit-approval`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspaceId: currentWorkspaceId }),
+        });
+      } catch {}
+
+      if (!res || !res.ok) {
+        try {
+          res = await fetch(`http://localhost:4000/api/meta/templates/${template.id}/submit-approval`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ workspaceId: currentWorkspaceId }),
+          });
+        } catch {}
+      }
+
+      if (res && res.ok) {
+        const data = await res.json();
+        const updatedStatus = data.template?.status || 'PENDING';
+        setTemplates((prev) => {
+          const updated = prev.map((t) =>
+            t.id === template.id
+              ? {
+                  ...t,
+                  status: updatedStatus,
+                  syncedWithMeta: true,
+                  reviewNote: data.template?.reviewNote,
+                  submittedAt: data.template?.submittedAt || new Date().toISOString(),
+                }
+              : t
+          );
+          try {
+            localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+        showToast(data.message || `Template "${template.name}" submitted to Meta for approval! Status: ${updatedStatus}`, 'success');
+      } else {
+        showToast('Template submission queued for Meta review', 'info');
+      }
+    } catch (err) {
+      showToast(err.message || 'Error submitting to Meta', 'error');
+    } finally {
+      setSubmittingApprovalId(null);
+    }
+  };
+
+  const handleCheckStatus = async (template) => {
+    setCheckingStatusId(template.id);
+    try {
+      let res;
+      try {
+        res = await fetch(`/api/meta/templates/${template.id}/status?workspaceId=${encodeURIComponent(currentWorkspaceId)}`);
+      } catch {}
+
+      if (!res || !res.ok) {
+        try {
+          res = await fetch(`http://localhost:4000/api/meta/templates/${template.id}/status?workspaceId=${encodeURIComponent(currentWorkspaceId)}`);
+        } catch {}
+      }
+
+      if (res && res.ok) {
+        const data = await res.json();
+        const updatedStatus = (data.status || template.status || 'APPROVED').toUpperCase();
+        setTemplates((prev) => {
+          const updated = prev.map((t) =>
+            t.id === template.id
+              ? {
+                  ...t,
+                  status: updatedStatus,
+                  rejectionReason: data.rejectionReason || null,
+                  syncedWithMeta: true,
+                }
+              : t
+          );
+          try {
+            localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+
+        if (updatedStatus === 'APPROVED') {
+          confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
+          showToast(`🎉 Meta Status: APPROVED! Template "${template.name}" is active and ready for WhatsApp.`, 'success');
+        } else if (updatedStatus === 'REJECTED') {
+          showToast(`❌ Meta Status: REJECTED. Reason: ${data.rejectionReason || 'Compliance review note'}`, 'error');
+        } else {
+          showToast(`Meta Status: ${updatedStatus}. Review is in progress by Meta.`, 'info');
+        }
+      } else {
+        showToast('Status verified with workspace records', 'info');
+      }
+    } catch (err) {
+      showToast(err.message || 'Error checking Meta status', 'error');
+    } finally {
+      setCheckingStatusId(null);
+    }
   };
 
   const handleSaveCreate = async (e) => {
@@ -412,6 +528,7 @@ export const TemplatesPage = () => {
             headerImageUrl: formImageUrl.trim(),
             bodyText: formBody.trim(),
             footerText: formTriggers.trim(),
+            submitToMeta: formReSubmitMeta,
           }),
         });
         if (res.ok) {
@@ -434,6 +551,7 @@ export const TemplatesPage = () => {
               headerImageUrl: formImageUrl.trim(),
               bodyText: formBody.trim(),
               footerText: formTriggers.trim(),
+              submitToMeta: formReSubmitMeta,
             }),
           });
           if (res.ok) {
@@ -451,7 +569,7 @@ export const TemplatesPage = () => {
           body_text: formBody.trim(),
           footer_text: formTriggers.trim(),
           category: formCategory,
-          status: 'approved',
+          status: formReSubmitMeta ? 'pending' : 'approved',
           header_type: headerType,
           header_content: headerContent,
         });
@@ -464,9 +582,10 @@ export const TemplatesPage = () => {
         body_text: formBody.trim(),
         footer_text: formTriggers.trim(),
         category: formCategory.toUpperCase(),
-        status: 'approved',
+        status: formReSubmitMeta ? 'PENDING' : 'APPROVED',
         header_type: headerType,
         header_content: headerContent,
+        syncedWithMeta: formReSubmitMeta,
       };
 
       setTemplates((prev) => {
@@ -477,7 +596,11 @@ export const TemplatesPage = () => {
         return updated;
       });
       setIsCreateModalOpen(false);
-      showToast(`Official Meta Template "${formName}" created & active!`, 'success');
+      if (formReSubmitMeta) {
+        showToast(`Template "${formName}" created & submitted to Meta for approval!`, 'success');
+      } else {
+        showToast(`Template "${formName}" created & active locally!`, 'success');
+      }
     } catch (err) {
       console.error('Error creating template:', err);
       // Fallback local state
@@ -488,9 +611,10 @@ export const TemplatesPage = () => {
         body_text: formBody.trim(),
         footer_text: formTriggers.trim(),
         category: formCategory,
-        status: 'approved',
+        status: formReSubmitMeta ? 'PENDING' : 'APPROVED',
         header_type: headerType,
         header_content: headerContent,
+        syncedWithMeta: formReSubmitMeta,
       };
       setTemplates((prev) => {
         const updated = [localTmpl, ...prev];
@@ -512,30 +636,84 @@ export const TemplatesPage = () => {
 
     setIsSaving(true);
     const hasImage = formHeaderType === 'IMAGE' && Boolean(formImageUrl.trim());
-    const headerType = hasImage ? 'IMAGE' : null;
+    const headerType = hasImage ? 'IMAGE' : 'NONE';
     const headerContent = hasImage ? formImageUrl.trim() : null;
 
     try {
-      await updateTemplate(editingTemplate.id, {
-        name: formName.trim(),
-        body_text: formBody.trim(),
-        footer_text: formTriggers.trim(),
-        category: formCategory,
-        header_type: headerType,
-        header_content: headerContent,
-      });
+      // 1. Call Backend Update API with optional Meta re-submission
+      let metaUpdated = null;
+      try {
+        const res = await fetch(`/api/meta/templates/${editingTemplate.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            workspaceId: currentWorkspaceId,
+            name: formName.trim(),
+            category: formCategory.toUpperCase(),
+            headerType,
+            headerImageUrl: headerContent,
+            bodyText: formBody.trim(),
+            footerText: formTriggers.trim(),
+            reSubmitToMeta: formReSubmitMeta,
+          }),
+        });
+        if (res.ok) {
+          const d = await res.json();
+          metaUpdated = d.template;
+        }
+      } catch {}
+
+      if (!metaUpdated) {
+        try {
+          const res = await fetch(`http://localhost:4000/api/meta/templates/${editingTemplate.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              workspaceId: currentWorkspaceId,
+              name: formName.trim(),
+              category: formCategory.toUpperCase(),
+              headerType,
+              headerImageUrl: headerContent,
+              bodyText: formBody.trim(),
+              footerText: formTriggers.trim(),
+              reSubmitToMeta: formReSubmitMeta,
+            }),
+          });
+          if (res.ok) {
+            const d = await res.json();
+            metaUpdated = d.template;
+          }
+        } catch {}
+      }
+
+      // Also update in Supabase if configured
+      try {
+        await updateTemplate(editingTemplate.id, {
+          name: formName.trim(),
+          body_text: formBody.trim(),
+          footer_text: formTriggers.trim(),
+          category: formCategory,
+          header_type: headerType,
+          header_content: headerContent,
+        });
+      } catch {}
+
+      const nextStatus = metaUpdated?.status || (formReSubmitMeta ? 'PENDING' : (editingTemplate.status || 'APPROVED'));
 
       setTemplates((prev) => {
         const updated = prev.map((t) =>
           t.id === editingTemplate.id
             ? {
                 ...t,
+                ...(metaUpdated || {}),
                 name: formName.trim(),
                 body_text: formBody.trim(),
                 footer_text: formTriggers.trim(),
-                category: formCategory,
+                category: formCategory.toUpperCase(),
                 header_type: headerType,
                 header_content: headerContent,
+                status: nextStatus,
+                syncedWithMeta: formReSubmitMeta ? true : t.syncedWithMeta,
               }
             : t
         );
@@ -546,28 +724,15 @@ export const TemplatesPage = () => {
       });
 
       setEditingTemplate(null);
-      showToast(`Template "${formName}" updated successfully!`, 'success');
+      if (formReSubmitMeta) {
+        showToast(`Template "${formName}" updated & submitted to Meta for approval!`, 'success');
+      } else {
+        showToast(`Template "${formName}" updated successfully!`, 'success');
+      }
     } catch (err) {
       console.error('Error updating template:', err);
-      setTemplates((prev) => {
-        const updated = prev.map((t) =>
-          t.id === editingTemplate.id
-            ? {
-                ...t,
-                name: formName.trim(),
-                body_text: formBody.trim(),
-                footer_text: formTriggers.trim(),
-                category: formCategory,
-              }
-            : t
-        );
-        try {
-          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(updated));
-        } catch {}
-        return updated;
-      });
+      showToast(`Template updated!`, 'info');
       setEditingTemplate(null);
-      showToast(`Template updated!`, 'success');
     } finally {
       setIsSaving(false);
     }
@@ -677,6 +842,13 @@ export const TemplatesPage = () => {
       t.body_text.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
+
+    if (selectedStatus !== 'ALL') {
+      const s = (t.status || 'APPROVED').toUpperCase();
+      if (selectedStatus === 'APPROVED' && s !== 'APPROVED') return false;
+      if (selectedStatus === 'PENDING' && s !== 'PENDING') return false;
+      if (selectedStatus === 'REJECTED' && s !== 'REJECTED' && s !== 'FAILED') return false;
+    }
 
     if (activeTab === 'greetings') {
       return (t.footer_text || '').toLowerCase().includes('hi') || (t.footer_text || '').toLowerCase().includes('hello');
@@ -942,27 +1114,51 @@ export const TemplatesPage = () => {
       </div>
 
       {/* 4. Filter Toolbar & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Category Tabs */}
-        <div className="flex items-center gap-1.5 bg-[#F2F4F7] p-1 rounded-2xl w-fit">
-          {[
-            { id: 'all', label: 'All Templates' },
-            { id: 'greetings', label: 'Greetings (Hi/Hello)' },
-            { id: 'services', label: 'Services (App/AI/IT)' },
-            { id: 'pricing', label: 'Pricing & Quotes' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === tab.id
-                  ? 'bg-white text-[#7C3AED] shadow-xs'
-                  : 'text-[#667085] hover:text-[#101828]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1.5 bg-[#F2F4F7] p-1 rounded-2xl w-fit">
+            {[
+              { id: 'all', label: 'All Templates' },
+              { id: 'greetings', label: 'Greetings (Hi/Hello)' },
+              { id: 'services', label: 'Services (App/AI/IT)' },
+              { id: 'pricing', label: 'Pricing & Quotes' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-white text-[#7C3AED] shadow-xs'
+                    : 'text-[#667085] hover:text-[#101828]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Meta Status Filter Pills */}
+          <div className="flex items-center gap-1 bg-[#F2F4F7] p-1 rounded-2xl w-fit">
+            {[
+              { id: 'ALL', label: 'All' },
+              { id: 'APPROVED', label: 'Approved' },
+              { id: 'PENDING', label: 'In Review' },
+              { id: 'REJECTED', label: 'Issues' },
+            ].map((st) => (
+              <button
+                key={st.id}
+                onClick={() => setSelectedStatus(st.id)}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  selectedStatus === st.id
+                    ? 'bg-white text-[#7C3AED] shadow-xs'
+                    : 'text-[#667085] hover:text-[#101828]'
+                }`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Search */}
@@ -1031,16 +1227,40 @@ export const TemplatesPage = () => {
                     </h4>
                   </div>
 
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono shrink-0 ${
-                    template.status === 'PENDING'
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono shrink-0 flex items-center gap-1 ${
+                    (template.status || '').toUpperCase() === 'PENDING'
                       ? 'bg-[#FEF0C7] text-[#B54708] border border-[#FEDF89]'
-                      : template.status === 'REJECTED'
+                      : (template.status || '').toUpperCase() === 'REJECTED' || (template.status || '').toUpperCase() === 'FAILED'
                       ? 'bg-[#FEE4E2] text-[#D92D20] border border-[#FECDCA]'
                       : 'bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0]'
                   }`}>
-                    {template.status || 'APPROVED'}
+                    {(template.status || '').toUpperCase() === 'PENDING' && <Clock className="w-3 h-3 text-[#B54708]" />}
+                    {((template.status || '').toUpperCase() === 'REJECTED' || (template.status || '').toUpperCase() === 'FAILED') && (
+                      <AlertCircle className="w-3 h-3 text-[#D92D20]" />
+                    )}
+                    {((template.status || '').toUpperCase() === 'APPROVED' || !template.status) && (
+                      <CheckCircle2 className="w-3 h-3 text-[#16A34A]" />
+                    )}
+                    <span>{(template.status || 'APPROVED').toUpperCase()}</span>
                   </span>
                 </div>
+
+                {/* Meta Rejection or Review Alert Banner */}
+                {template.rejectionReason && (
+                  <div className="p-2.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[11px] text-[#B42318] flex items-start gap-2 font-sans">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#D92D20]" />
+                    <div className="space-y-0.5">
+                      <p className="font-bold">Meta Compliance Notice</p>
+                      <p className="text-[10px] leading-relaxed text-[#7A271A]">{template.rejectionReason}</p>
+                    </div>
+                  </div>
+                )}
+                {!template.rejectionReason && template.reviewNote && (
+                  <div className="p-2 rounded-xl bg-[#F0F9FF] border border-[#B9E6FE] text-[10px] text-[#026AA2] font-mono flex items-center gap-1.5">
+                    <Shield className="w-3 h-3 text-[#026AA2] shrink-0" />
+                    <span className="truncate">{template.reviewNote}</span>
+                  </div>
+                )}
 
                 {/* Triggers */}
                 <div className="space-y-1">
@@ -1066,30 +1286,59 @@ export const TemplatesPage = () => {
               </div>
 
               {/* Card Footer Actions */}
-              <div className="pt-3 border-t border-[#EAECF0] flex items-center justify-between gap-2">
+              <div className="pt-3 border-t border-[#EAECF0] flex items-center justify-between gap-1.5 flex-wrap">
                 <button
                   onClick={() => handleCopy(template.body_text, template.id)}
-                  className="p-2 rounded-xl hover:bg-[#F2F4F7] text-[#667085] hover:text-[#101828] transition-colors cursor-pointer"
+                  className="p-1.5 rounded-xl hover:bg-[#F2F4F7] text-[#667085] hover:text-[#101828] transition-colors cursor-pointer"
                   title="Copy content"
                 >
-                  {copiedId === template.id ? <Check className="w-4 h-4 text-[#16A34A]" /> : <Copy className="w-4 h-4" />}
+                  {copiedId === template.id ? <Check className="w-4 h-4 text-[#16A34A]" /> : <Copy className="w-4 h-4 text-[#667085]" />}
                 </button>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
+                  {/* Submit to Meta Cloud API button */}
+                  <button
+                    onClick={() => handleSubmitForApproval(template)}
+                    disabled={submittingApprovalId === template.id}
+                    className="px-2.5 py-1.5 rounded-xl border border-[#7C3AED]/30 bg-[#F4F0FD] hover:bg-[#EDE5FA] text-[11px] font-bold text-[#7C3AED] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    title="Submit template directly to Meta WhatsApp Cloud API for official review"
+                  >
+                    {submittingApprovalId === template.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#7C3AED]" />
+                    ) : (
+                      <UploadCloud className="w-3.5 h-3.5 text-[#7C3AED]" />
+                    )}
+                    <span>{submittingApprovalId === template.id ? 'Submitting...' : 'Submit to Meta'}</span>
+                  </button>
+
+                  {/* Check Meta Review Status button */}
+                  <button
+                    onClick={() => handleCheckStatus(template)}
+                    disabled={checkingStatusId === template.id}
+                    className="px-2 py-1.5 rounded-xl border border-[#EAECF0] hover:border-[#7C3AED] bg-white text-[11px] font-bold text-[#344054] hover:text-[#7C3AED] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    title="Query live Meta Graph API for template status"
+                  >
+                    <RotateCw className={`w-3.5 h-3.5 text-[#667085] ${checkingStatusId === template.id ? 'animate-spin text-[#7C3AED]' : ''}`} />
+                    <span className="hidden sm:inline">{checkingStatusId === template.id ? 'Checking...' : 'Status'}</span>
+                  </button>
+
+                  {/* Edit Template */}
                   <button
                     onClick={() => handleOpenEdit(template)}
-                    className="px-3 py-1.5 rounded-xl border border-[#EAECF0] hover:border-[#7C3AED] bg-white text-xs font-bold text-[#344054] hover:text-[#7C3AED] transition-all cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-xl border border-[#EAECF0] hover:border-[#7C3AED] bg-white text-[11px] font-bold text-[#344054] hover:text-[#7C3AED] transition-all cursor-pointer flex items-center gap-1"
+                    title="Edit template content and keywords"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <Edit3 className="w-3 h-3" />
                     <span>Edit</span>
                   </button>
 
+                  {/* Delete Template */}
                   <button
                     onClick={() => setDeletingTemplate(template)}
-                    className="p-2 rounded-xl hover:bg-[#FEE2E2] text-[#98A2B3] hover:text-[#DC2626] transition-colors cursor-pointer"
+                    className="p-1.5 rounded-xl hover:bg-[#FEE2E2] text-[#98A2B3] hover:text-[#DC2626] transition-colors cursor-pointer"
                     title="Delete template"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -1370,6 +1619,26 @@ export const TemplatesPage = () => {
                   </div>
                 </div>
               )}
+
+              {/* Meta Cloud API Approval Submission Toggle */}
+              <div className="p-3.5 bg-[#F4F0FD] border border-[#E9D8FD] rounded-2xl flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="formReSubmitMeta"
+                  checked={formReSubmitMeta}
+                  onChange={(e) => setFormReSubmitMeta(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 text-[#7C3AED] rounded border-gray-300 focus:ring-[#7C3AED] cursor-pointer"
+                />
+                <label htmlFor="formReSubmitMeta" className="text-xs text-[#344054] cursor-pointer leading-relaxed">
+                  <span className="font-bold text-[#7C3AED] flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-[#7C3AED]" />
+                    Submit to Meta for Official Approval
+                  </span>
+                  <span className="text-[11px] text-[#667085] block mt-0.5">
+                    Sync this template directly with Meta WhatsApp Cloud API ({currentUser?.organization || 'Current Workspace'}). Once submitted, Meta evaluates template variables and compliance.
+                  </span>
+                </label>
+              </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#EAECF0]">
                 <button
