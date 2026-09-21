@@ -1,11 +1,21 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const AUTOMATIONS_FILE = path.resolve(__dirname, 'automationsStore.json');
+
+// Supabase Cloud Client
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+
+let isCloudAutomationsTableAvailable = false;
 
 const DEFAULT_STARTER_AUTOMATIONS = [
   {
@@ -66,20 +76,36 @@ let store = {
   workspaces: {},
 };
 
-export function initAutomationsStore() {
+export async function initAutomationsStore() {
+  // 1. Initialize from local disk
   try {
     if (fs.existsSync(AUTOMATIONS_FILE)) {
       const data = JSON.parse(fs.readFileSync(AUTOMATIONS_FILE, 'utf-8'));
       store = { workspaces: data.workspaces || {} };
-      console.log(`⚡ [AutomationsService] Loaded automations for ${Object.keys(store.workspaces).length} workspaces`);
+      console.log(`⚡ [AutomationsService] Loaded automations from disk for ${Object.keys(store.workspaces).length} workspaces`);
     } else {
       store.workspaces['b0000000-0000-0000-0000-000000000001'] = [...DEFAULT_STARTER_AUTOMATIONS];
       saveAutomationsToDisk();
-      console.log('⚡ [AutomationsService] Seeded starter automations store');
+      console.log('⚡ [AutomationsService] Seeded starter automations store to disk');
     }
   } catch (err) {
-    console.warn('[AutomationsService] Init error:', err.message);
+    console.warn('[AutomationsService] Disk Init error:', err.message);
     store.workspaces['b0000000-0000-0000-0000-000000000001'] = [...DEFAULT_STARTER_AUTOMATIONS];
+  }
+
+  // 2. Check Supabase Cloud table availability
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('automations').select('id').limit(1);
+      if (!error) {
+        isCloudAutomationsTableAvailable = true;
+        console.log('☁️ [AutomationsService] Connected to Supabase Cloud automations table');
+      } else {
+        console.log('ℹ️ [AutomationsService] Supabase automations table not yet created. Using local JSON store. (Run database/migrations/01_automations_and_drips.sql to activate in cloud)');
+      }
+    } catch (err) {
+      console.log('ℹ️ [AutomationsService] Supabase check notice:', err.message);
+    }
   }
 }
 
@@ -91,7 +117,46 @@ function saveAutomationsToDisk() {
   }
 }
 
-export function getWorkspaceAutomations(workspaceId = 'b0000000-0000-0000-0000-000000000001') {
+function normalizeAutomationRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    trigger: row.trigger,
+    triggerCondition: row.trigger_condition || row.triggerCondition,
+    action: row.action,
+    actionDetails: row.action_details || row.actionDetails,
+    status: row.status,
+    runs: row.runs || 0,
+    createdAt: row.created_at || row.createdAt,
+    lastRunAt: row.last_run_at || row.lastRunAt,
+    updatedAt: row.updated_at || row.updatedAt,
+  };
+}
+
+export async function getWorkspaceAutomations(workspaceId = 'b0000000-0000-0000-0000-000000000001') {
+  // If Supabase cloud table is online, read from cloud
+  if (isCloudAutomationsTableAvailable && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('automations')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const normalized = data.map(normalizeAutomationRow);
+        // Sync local cache
+        store.workspaces[workspaceId] = normalized;
+        saveAutomationsToDisk();
+        return normalized;
+      }
+    } catch (err) {
+      console.warn('Could not read automations from cloud Supabase, falling back to disk:', err.message);
+    }
+  }
+
+  // Fallback to local memory & disk
   if (!store.workspaces[workspaceId] || store.workspaces[workspaceId].length === 0) {
     store.workspaces[workspaceId] = JSON.parse(JSON.stringify(DEFAULT_STARTER_AUTOMATIONS));
     saveAutomationsToDisk();
@@ -99,7 +164,7 @@ export function getWorkspaceAutomations(workspaceId = 'b0000000-0000-0000-0000-0
   return store.workspaces[workspaceId];
 }
 
-export function createAutomation({
+export async function createAutomation({
   workspaceId = 'b0000000-0000-0000-0000-000000000001',
   name,
   description,
@@ -108,7 +173,6 @@ export function createAutomation({
   action = 'Send WhatsApp Catalog',
   actionDetails = '',
 }) {
-  const list = getWorkspaceAutomations(workspaceId);
   const newAuto = {
     id: `auto_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     name: name?.trim() || 'New Automation Rule',
@@ -123,13 +187,71 @@ export function createAutomation({
     lastRunAt: null,
   };
 
-  list.unshift(newAuto);
+  // 1. Try writing to Supabase Cloud
+  if (isCloudAutomationsTableAvailable && supabase) {
+    try {
+      const { error } = await supabase.from('automations').insert([
+        {
+          id: newAuto.id,
+          workspace_id: workspaceId,
+          name: newAuto.name,
+          description: newAuto.description,
+          trigger: newAuto.trigger,
+          trigger_condition: newAuto.triggerCondition,
+          action: newAuto.action,
+          action_details: newAuto.actionDetails,
+          status: newAuto.status,
+          runs: newAuto.runs,
+          created_at: newAuto.createdAt,
+        },
+      ]);
+      if (!error) {
+        console.log(`☁️ [AutomationsService] Saved automation "${newAuto.name}" to Supabase Cloud`);
+      }
+    } catch (err) {
+      console.warn('Supabase cloud write note:', err.message);
+    }
+  }
+
+  // 2. Write to local store
+  if (!store.workspaces[workspaceId]) {
+    store.workspaces[workspaceId] = [];
+  }
+  store.workspaces[workspaceId].unshift(newAuto);
   saveAutomationsToDisk();
+
   return newAuto;
 }
 
-export function updateAutomation(workspaceId, automationId, updates = {}) {
-  const list = getWorkspaceAutomations(workspaceId);
+export async function updateAutomation(workspaceId, automationId, updates = {}) {
+  // 1. Update in Supabase Cloud
+  if (isCloudAutomationsTableAvailable && supabase) {
+    try {
+      const dbUpdates = {
+        updated_at: new Date().toISOString(),
+      };
+      if (updates.name) dbUpdates.name = updates.name;
+      if (updates.description) dbUpdates.description = updates.description;
+      if (updates.trigger) dbUpdates.trigger = updates.trigger;
+      if (updates.triggerCondition) dbUpdates.trigger_condition = updates.triggerCondition;
+      if (updates.action) dbUpdates.action = updates.action;
+      if (updates.actionDetails) dbUpdates.action_details = updates.actionDetails;
+      if (updates.status) dbUpdates.status = updates.status;
+      if (updates.runs !== undefined) dbUpdates.runs = updates.runs;
+      if (updates.lastRunAt) dbUpdates.last_run_at = updates.lastRunAt;
+
+      await supabase
+        .from('automations')
+        .update(dbUpdates)
+        .eq('id', automationId)
+        .eq('workspace_id', workspaceId);
+    } catch (err) {
+      console.warn('Supabase update automation note:', err.message);
+    }
+  }
+
+  // 2. Update local store
+  const list = store.workspaces[workspaceId] || [];
   const idx = list.findIndex((a) => a.id === automationId);
   if (idx === -1) {
     throw new Error(`Automation ${automationId} not found`);
@@ -148,8 +270,22 @@ export function updateAutomation(workspaceId, automationId, updates = {}) {
   return updated;
 }
 
-export function deleteAutomation(workspaceId, automationId) {
-  const list = getWorkspaceAutomations(workspaceId);
+export async function deleteAutomation(workspaceId, automationId) {
+  // 1. Delete in Supabase Cloud
+  if (isCloudAutomationsTableAvailable && supabase) {
+    try {
+      await supabase
+        .from('automations')
+        .delete()
+        .eq('id', automationId)
+        .eq('workspace_id', workspaceId);
+    } catch (err) {
+      console.warn('Supabase delete automation note:', err.message);
+    }
+  }
+
+  // 2. Delete in local store
+  const list = store.workspaces[workspaceId] || [];
   const beforeLen = list.length;
   store.workspaces[workspaceId] = list.filter((a) => a.id !== automationId);
 
@@ -161,33 +297,35 @@ export function deleteAutomation(workspaceId, automationId) {
   return { success: true, deletedId: automationId };
 }
 
-export function toggleAutomationStatus(workspaceId, automationId) {
-  const list = getWorkspaceAutomations(workspaceId);
+export async function toggleAutomationStatus(workspaceId, automationId) {
+  const list = store.workspaces[workspaceId] || [];
   const auto = list.find((a) => a.id === automationId);
   if (!auto) {
     throw new Error(`Automation ${automationId} not found`);
   }
 
-  auto.status = auto.status === 'Active' ? 'Paused' : 'Active';
-  auto.updatedAt = new Date().toISOString();
-  saveAutomationsToDisk();
-  return auto;
+  const nextStatus = auto.status === 'Active' ? 'Paused' : 'Active';
+  return updateAutomation(workspaceId, automationId, { status: nextStatus });
 }
 
-export function testTriggerAutomation(workspaceId, automationId) {
-  const list = getWorkspaceAutomations(workspaceId);
+export async function testTriggerAutomation(workspaceId, automationId) {
+  const list = store.workspaces[workspaceId] || [];
   const auto = list.find((a) => a.id === automationId);
   if (!auto) {
     throw new Error(`Automation ${automationId} not found`);
   }
 
-  auto.runs = (auto.runs || 0) + 1;
-  auto.lastRunAt = new Date().toISOString();
-  saveAutomationsToDisk();
+  const newRuns = (auto.runs || 0) + 1;
+  const now = new Date().toISOString();
+
+  const updated = await updateAutomation(workspaceId, automationId, {
+    runs: newRuns,
+    lastRunAt: now,
+  });
 
   return {
     success: true,
-    automation: auto,
-    message: `Trigger executed: "${auto.name}" ran successfully!`,
+    automation: updated,
+    message: `Trigger executed: "${updated.name}" ran successfully!`,
   };
 }

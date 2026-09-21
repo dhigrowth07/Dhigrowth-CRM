@@ -5,13 +5,21 @@ import { sendWhatsAppMessage, sendWhatsAppInteractiveButtons } from './metaServi
 import { getWorkspaceTemplates, STARTER_TEMPLATES } from './templateService.js';
 import { getWorkspaceSubscription } from './billingService.js';
 import { getTenantMetaConfig } from './tenantMetaManager.js';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const CAMPAIGNS_FILE = path.resolve(__dirname, 'campaignsStore.json');
 const META_GRAPH_VERSION = 'v20.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${META_GRAPH_VERSION}`;
+
+// Supabase Cloud Client
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 let campaignStore = {
   workspaces: {},
@@ -216,7 +224,7 @@ export async function createBroadcastCampaign({
   }
 
   const newCampaign = {
-    id: `camp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    id: crypto.randomUUID(),
     name: name.trim(),
     channel,
     templateName: templateName || 'welcome_greeting_v2',
@@ -235,6 +243,33 @@ export async function createBroadcastCampaign({
     completedAt: null,
     logs: [],
   };
+
+  // Sync to Supabase Cloud campaigns table
+  if (supabase) {
+    try {
+      await supabase.from('campaigns').insert([
+        {
+          id: newCampaign.id,
+          workspace_id: workspaceId,
+          name: newCampaign.name,
+          channel_type: (newCampaign.channel || 'whatsapp').toLowerCase(),
+          status: isInstant ? 'processing' : 'scheduled',
+          scheduled_at: isInstant ? null : scheduledAt,
+          started_at: isInstant ? new Date().toISOString() : null,
+          total_recipients: newCampaign.targetCount || 0,
+          sent_count: 0,
+          delivered_count: 0,
+          read_count: 0,
+          replied_count: 0,
+          failed_count: 0,
+          created_at: newCampaign.createdAt,
+        },
+      ]);
+      console.log(`☁️ [BroadcastService] Synced campaign "${newCampaign.name}" to Supabase Cloud`);
+    } catch (err) {
+      console.warn('Supabase campaign insert notice:', err.message);
+    }
+  }
 
   if (!campaignStore.workspaces[workspaceId]) {
     campaignStore.workspaces[workspaceId] = [...STARTER_CAMPAIGNS];
@@ -427,8 +462,31 @@ export async function executeBroadcast(workspaceId, campaignId) {
   campaign.deliveredCount = Math.round(sent * 0.98);
   campaign.readCount = Math.round(sent * 0.85);
   campaign.repliedCount = Math.round(sent * 0.28);
-  campaign.failedCount = failed;
   campaign.completedAt = new Date().toISOString();
+
+  // Sync metrics to Supabase Cloud
+  if (supabase) {
+    try {
+      await supabase
+        .from('campaigns')
+        .update({
+          status: 'completed',
+          total_recipients: campaign.targetCount,
+          sent_count: campaign.sentCount,
+          delivered_count: campaign.deliveredCount,
+          read_count: campaign.readCount,
+          replied_count: campaign.repliedCount,
+          failed_count: campaign.failedCount,
+          completed_at: campaign.completedAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', campaign.id)
+        .eq('workspace_id', workspaceId);
+      console.log(`☁️ [BroadcastService] Synced campaign completion to Supabase Cloud`);
+    } catch (err) {
+      console.warn('Supabase campaign update notice:', err.message);
+    }
+  }
 
   saveCampaignsToDisk();
   console.log(`✅ [BroadcastService] Finished broadcast "${campaign.name}": Sent: ${sent}, Failed: ${failed}`);

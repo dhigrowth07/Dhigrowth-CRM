@@ -586,3 +586,62 @@ export const deleteTemplate = async (templateId, workspaceId = null) => {
   return true;
 };
 
+// 9. Broadcast Campaigns (Cloud Persistence)
+export const getCampaigns = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase getCampaigns note:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    return [];
+  }
+};
+
+// 10. Drip Campaigns (Cloud Persistence)
+export const getDripCampaigns = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('drip_campaigns')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return null;
+    }
+    return data || [];
+  } catch (err) {
+    return null;
+  }
+};
+
+// 11. Automations (Cloud Persistence)
+export const getAutomations = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('automations')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return null;
+    }
+    return data || [];
+  } catch (err) {
+    return null;
+  }
+};
+
+

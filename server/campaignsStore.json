@@ -2,6 +2,26 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
+        "id": "dd31da29-6e3a-4877-a84f-0c96c4c7ea94",
+        "name": "AI Automation Launch 2026",
+        "channel": "WhatsApp",
+        "templateName": "hi",
+        "status": "scheduled",
+        "audienceType": "All Contacts",
+        "targetCount": 150,
+        "sentCount": 0,
+        "deliveredCount": 0,
+        "readCount": 0,
+        "repliedCount": 0,
+        "failedCount": 0,
+        "recipients": [],
+        "variableMapping": [],
+        "scheduledAt": null,
+        "createdAt": "2026-09-21T04:51:43.650Z",
+        "completedAt": null,
+        "logs": []
+      },
+      {
         "id": "camp_1789800884516_trt7",
         "name": "test",
         "channel": "WhatsApp",
