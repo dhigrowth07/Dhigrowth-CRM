@@ -157,11 +157,11 @@ export const LoginPage = () => {
 
           <div className="p-4 rounded-2xl bg-[#7C3AED]/15 border border-[#7C3AED]/30 backdrop-blur-md space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-white">
-              <Gift className="w-4 h-4 text-[#C084FC]" />
-              <span>14-Day Full Commercial Free Trial</span>
+              <ShieldCheck className="w-4 h-4 text-[#C084FC]" />
+              <span>Enterprise WhatsApp Cloud API Suite</span>
             </div>
             <p className="text-[11px] text-purple-200/80 leading-relaxed">
-              Sign up today and get <strong>$5.00 free AI credits</strong>, unlimited contacts, automated drip campaigns, and team member seats included. No credit card required.
+              AI-powered multi-tenant WhatsApp CRM with automated drip campaigns, live team inbox, and official Meta Cloud API integration.
             </p>
           </div>
         </div>
@@ -188,48 +188,13 @@ export const LoginPage = () => {
             />
           </div>
 
-          {/* Tab Switcher: Sign In vs 14-Day Free Trial */}
-          <div className="p-1 bg-[#F2F4F7] rounded-2xl flex items-center shadow-inner">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('signin');
-                setError('');
-              }}
-              className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                authMode === 'signin'
-                  ? 'bg-white text-[#101828] shadow-xs'
-                  : 'text-[#667085] hover:text-[#101828]'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('signup');
-                setError('');
-              }}
-              className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                authMode === 'signup'
-                  ? 'bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white shadow-xs'
-                  : 'text-[#667085] hover:text-[#7C3AED]'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>14-Day Free Trial</span>
-            </button>
-          </div>
-
           {/* Form Header */}
           <div className="space-y-1.5 text-center lg:text-left">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#101828]">
-              {authMode === 'signin' ? 'Sign in to WAPPPILOT' : 'Start your 14-Day Free Trial'}
+              Sign in to WAPPPILOT
             </h2>
             <p className="text-xs sm:text-sm text-[#667085]">
-              {authMode === 'signin'
-                ? 'Enter your credentials to access your WAPPPILOT workspace'
-                : 'No credit card required. Free $5 AI credits & instant Meta WhatsApp setup.'}
+              Enter your credentials to access your WAPPPILOT workspace
             </p>
           </div>
 
@@ -486,37 +451,9 @@ export const LoginPage = () => {
             </form>
           )}
 
-          {/* Switch tab helper text */}
+          {/* Footer Helper Note */}
           <div className="text-center text-xs text-[#667085]">
-            {authMode === 'signin' ? (
-              <span>
-                Don't have a workspace yet?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('signup');
-                    setError('');
-                  }}
-                  className="font-bold text-[#7C3AED] hover:underline cursor-pointer"
-                >
-                  Start 14-Day Free Trial
-                </button>
-              </span>
-            ) : (
-              <span>
-                Already have a workspace?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('signin');
-                    setError('');
-                  }}
-                  className="font-bold text-[#7C3AED] hover:underline cursor-pointer"
-                >
-                  Sign In
-                </button>
-              </span>
-            )}
+            <span>Need an account or new workspace? Contact your platform administrator</span>
           </div>
 
           {/* Footer Note */}
