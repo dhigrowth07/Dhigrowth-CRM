@@ -153,7 +153,7 @@ export const Sidebar = () => {
         { id: 'apps', label: 'Apps', icon: Grid, hasArrow: false, hasDot: false },
       ],
     },
-    ...(currentUser?.isAdmin
+    ...((currentUser?.isSuperAdmin || currentUser?.username?.toLowerCase() === 'admin')
       ? [
           {
             title: 'SUPER ADMIN',
@@ -251,7 +251,11 @@ export const Sidebar = () => {
                     <span className="text-xs font-bold text-[#101828] truncate">
                       {currentUser?.name || currentUser?.username || 'Dhigrowth'}
                     </span>
-                    {currentUser?.isAdmin && <span className="text-xs">👑</span>}
+                    {(currentUser?.isSuperAdmin || currentUser?.username?.toLowerCase() === 'admin') ? (
+                      <span className="text-xs" title="Super Administrator">👑</span>
+                    ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-bold font-mono">ADMIN</span>
+                    ) : null}
                   </div>
                   <div className="text-[10px] font-medium text-[#98A2B3] uppercase tracking-wider font-mono truncate max-w-[120px]">
                     {currentUser?.organization || (currentUser?.name ? `${currentUser.name} Workspace` : 'WORKSPACE')}

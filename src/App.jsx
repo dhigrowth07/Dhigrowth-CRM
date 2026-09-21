@@ -70,16 +70,21 @@ const AppContent = () => {
     );
   }
 
-  const isAdmin = currentUser?.isAdmin || currentUser?.username?.toLowerCase() === 'admin';
+  const isSuperAdmin = Boolean(
+    currentUser?.isSuperAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'Super Administrator' ||
+    currentUser?.username?.toLowerCase() === 'admin'
+  );
   const isDirectKiki = currentUser?.isExternalClient || currentUser?.username?.toLowerCase() === 'kiki';
 
   // If user explicitly selected the isolated BYOK Client Portal view:
-  const shouldShowClientPortal = (isDirectKiki || (isAdmin && adminViewProfile === 'kiki')) && clientViewMode === 'portal';
+  const shouldShowClientPortal = (isDirectKiki || (isSuperAdmin && adminViewProfile === 'kiki')) && clientViewMode === 'portal';
 
   if (shouldShowClientPortal) {
     return (
       <div className="flex flex-col min-h-screen">
-        {isAdmin && (
+        {isSuperAdmin && (
           <AdminTopBar
             activeProfile={adminViewProfile}
             onSwitchProfile={switchAdminProfile}
@@ -318,7 +323,25 @@ const AppContent = () => {
       case 'super-admin':
       case 'tenants':
       case 'tenant-management':
-        return <SuperAdminTenantsPage />;
+        return isSuperAdmin ? (
+          <SuperAdminTenantsPage />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center text-2xl font-bold mb-3 shadow-xs">
+              🛡️
+            </div>
+            <h2 className="text-xl font-bold text-[#101828]">Super Administrator Access Required</h2>
+            <p className="text-sm text-[#667085] max-w-md mt-1 mb-4">
+              The Tenant Organizations & Users Directory is reserved for WAPPPILOT Super Administrators. Please sign in with <strong>admin</strong> credentials to manage platform tenants.
+            </p>
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        );
       case 'team':
       case 'team-members':
       case 'members':
@@ -330,7 +353,7 @@ const AppContent = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#F8F9FC] text-[#101828] font-sans antialiased">
-      {isAdmin && (
+      {isSuperAdmin && (
         <AdminTopBar
           activeProfile={adminViewProfile}
           onSwitchProfile={switchAdminProfile}

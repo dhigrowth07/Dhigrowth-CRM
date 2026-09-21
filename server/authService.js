@@ -184,22 +184,56 @@ export async function registerTenant({
 export async function loginTenant({ email, password, username }) {
   const cleanIdentifier = (email || username || '').trim().toLowerCase();
 
-  // 1. Seed accounts fallback (e.g. sri, kiki)
-  if (cleanIdentifier === 'sri' || cleanIdentifier === 'srivaladeno@gmail.com') {
+  const cleanPass = (password || '').trim();
+
+  // 1. Super Admin Account: admin / wappilot@
+  if (cleanIdentifier === 'admin' || cleanIdentifier === 'admin@wapppilot.com' || cleanIdentifier === 'admin@dhigrowth.com') {
+    if (cleanPass !== 'wappilot@' && cleanPass !== 'DhiGrowth@admin') {
+      throw new Error('Invalid email or password.');
+    }
+    return {
+      success: true,
+      user: {
+        id: 'a0000000-0000-0000-0000-000000000001',
+        name: 'Super Administrator',
+        username: 'admin',
+        email: 'admin@wapppilot.com',
+        role: 'super_admin',
+        isSuperAdmin: true,
+        isAdmin: true,
+        organization: 'WAPPPILOT Platform Operations',
+      },
+      workspace: {
+        id: 'a0000000-0000-0000-0000-000000000001',
+        name: 'Super Admin Workspace',
+        slug: 'admin',
+        plan: 'enterprise',
+      },
+      isFirstTimeOnboarding: false,
+    };
+  }
+
+  // 2. DhiGrowth Admin Account: sri (DhiGrowth Admin only, not Super Admin)
+  if (cleanIdentifier === 'sri' || cleanIdentifier === 'sri@dhigrowth.com' || cleanIdentifier === 'srivaladeno@gmail.com') {
+    if (cleanPass && cleanPass !== 'dhigrowth2026' && cleanPass !== 'Dhigrowth2026' && cleanPass !== 'sri123') {
+      throw new Error('Invalid email or password.');
+    }
     return {
       success: true,
       user: {
         id: 'c0000000-0000-0000-0000-000000000001',
         name: 'Sri',
         username: 'sri',
-        email: 'srivaladeno@gmail.com',
-        role: 'super_admin',
-        organization: 'Dhigrowth AI Services',
+        email: 'sri@dhigrowth.com',
+        role: 'admin', // DhiGrowth admin only, NOT super_admin
+        isSuperAdmin: false,
+        isAdmin: false,
+        organization: 'Dhigrowth CRM',
       },
       workspace: {
         id: 'b0000000-0000-0000-0000-000000000001',
-        name: "Sri's Workspace",
-        slug: 'sri-workspace',
+        name: "Dhigrowth CRM",
+        slug: 'sri',
         plan: 'business',
       },
       isFirstTimeOnboarding: false,
@@ -214,7 +248,9 @@ export async function loginTenant({ email, password, username }) {
         name: 'Kiki Client Portal',
         username: 'kiki',
         email: 'kiki@dhigrowth.com',
-        role: 'admin',
+        role: 'client',
+        isSuperAdmin: false,
+        isAdmin: false,
         organization: 'Kiki Fashion Retail',
       },
       workspace: {

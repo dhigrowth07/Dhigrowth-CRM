@@ -48,7 +48,12 @@ export const MobileDrawer = () => {
 
   if (!isMobileMenuOpen) return null;
 
-  const isAdmin = currentUser?.isAdmin || currentUser?.username?.toLowerCase() === 'admin' || currentUser?.username?.toLowerCase() === 'sri';
+  const isSuperAdmin = Boolean(
+    currentUser?.isSuperAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'Super Administrator' ||
+    currentUser?.username?.toLowerCase() === 'admin'
+  );
 
   const menuSections = [
     {
@@ -95,7 +100,7 @@ export const MobileDrawer = () => {
         { id: 'api', label: 'Developer API & Webhooks', icon: Code },
       ],
     },
-    ...(isAdmin
+    ...(isSuperAdmin
       ? [
           {
             title: 'SUPER ADMIN',
@@ -162,8 +167,8 @@ export const MobileDrawer = () => {
           </button>
         </div>
 
-        {/* Profile Switcher on Mobile (For Admin) */}
-        {isAdmin && (
+        {/* Profile Switcher on Mobile (For Super Admin) */}
+        {isSuperAdmin && (
           <div className="px-5 py-2.5 bg-[#FAF8FF] border-b border-[#E9D8FD] flex items-center justify-between">
             <span className="text-[11px] font-bold text-[#6941C6] uppercase font-mono">
               Switch Profile:

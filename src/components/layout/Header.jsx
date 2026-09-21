@@ -75,7 +75,13 @@ export const Header = () => {
   };
 
   const isKiki = currentUser?.username?.toLowerCase() === 'kiki';
-  const isAdmin = currentUser?.isAdmin || currentUser?.username?.toLowerCase() === 'admin';
+  const isSuperAdmin = Boolean(
+    currentUser?.isSuperAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'Super Administrator' ||
+    currentUser?.username?.toLowerCase() === 'admin'
+  );
+  const isAdmin = isSuperAdmin;
 
   return (
     <header className="h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans">
@@ -148,7 +154,11 @@ export const Header = () => {
             <span className="text-xs font-semibold text-[#344054]">
               {currentUser?.name || currentUser?.username || 'Sri'}
             </span>
-            {currentUser?.isAdmin && <span className="text-xs">👑</span>}
+            {isSuperAdmin ? (
+              <span className="text-xs" title="Super Administrator">👑</span>
+            ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-bold font-mono">ADMIN</span>
+            ) : null}
             <ChevronDown className="w-3.5 h-3.5 text-[#98A2B3]" />
           </button>
 
@@ -166,42 +176,44 @@ export const Header = () => {
                 </div>
               </div>
 
-              {/* Quick Profile / User Switcher */}
-              <div className="p-2 bg-[#FAF8FF] border border-[#E9D8FD] rounded-xl my-1">
-                <div className="text-[10px] font-bold text-[#6941C6] uppercase font-mono mb-1 px-1">
-                  Switch Workspace User:
+              {/* Quick Profile / User Switcher (Super Admin Only) */}
+              {isSuperAdmin && (
+                <div className="p-2 bg-[#FAF8FF] border border-[#E9D8FD] rounded-xl my-1">
+                  <div className="text-[10px] font-bold text-[#6941C6] uppercase font-mono mb-1 px-1">
+                    Switch Workspace User:
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchAdminProfile('sri');
+                        setIsWorkspaceDropdownOpen(false);
+                      }}
+                      className={`py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        adminViewProfile === 'sri'
+                          ? 'bg-[#7C3AED] text-white shadow-xs'
+                          : 'bg-white text-[#475467] border border-[#EAECF0] hover:bg-[#F2F4F7]'
+                      }`}
+                    >
+                      Sri (CRM)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchAdminProfile('kiki');
+                        setIsWorkspaceDropdownOpen(false);
+                      }}
+                      className={`py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        adminViewProfile === 'kiki'
+                          ? 'bg-[#7C3AED] text-white shadow-xs'
+                          : 'bg-white text-[#475467] border border-[#EAECF0] hover:bg-[#F2F4F7]'
+                      }`}
+                    >
+                      Kiki (Client)
+                    </button>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchAdminProfile('sri');
-                      setIsWorkspaceDropdownOpen(false);
-                    }}
-                    className={`py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                      adminViewProfile === 'sri'
-                        ? 'bg-[#7C3AED] text-white shadow-xs'
-                        : 'bg-white text-[#475467] border border-[#EAECF0] hover:bg-[#F2F4F7]'
-                    }`}
-                  >
-                    Sri (CRM)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchAdminProfile('kiki');
-                      setIsWorkspaceDropdownOpen(false);
-                    }}
-                    className={`py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                      adminViewProfile === 'kiki'
-                        ? 'bg-[#7C3AED] text-white shadow-xs'
-                        : 'bg-white text-[#475467] border border-[#EAECF0] hover:bg-[#F2F4F7]'
-                    }`}
-                  >
-                    Kiki (Client)
-                  </button>
-                </div>
-              </div>
+              )}
 
               <button
                 onClick={() => {

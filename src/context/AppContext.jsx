@@ -29,6 +29,32 @@ import {
 
 export const SEED_TENANTS = [
   {
+    id: 'a0000000-0000-0000-0000-000000000001',
+    workspaceId: 'a0000000-0000-0000-0000-000000000001',
+    name: 'Super Administrator',
+    username: 'admin',
+    email: 'admin@wapppilot.com',
+    companyName: 'WAPPPILOT Platform',
+    slug: 'admin',
+    role: 'Super Administrator',
+    plan: 'Enterprise',
+    isSuperAdmin: true,
+    isAdmin: true,
+    isExternalClient: false,
+    password: 'wappilot@',
+    passwordHash: '$2b$10$6M.SDAOCSZAI9MIIdkfA.u8oGEL7mTMWvhCds9LOp/UUayeCIY39i',
+    permissions: {
+      sendDueToAll: true,
+      teamInbox: true,
+      metaKeys: true,
+      aiStudio: true,
+      fileManager: true,
+      invoicing: true,
+    },
+    status: 'active',
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
     id: 'b0000000-0000-0000-0000-000000000001',
     workspaceId: 'b0000000-0000-0000-0000-000000000001',
     name: 'Sri',
@@ -36,9 +62,10 @@ export const SEED_TENANTS = [
     email: 'sri@dhigrowth.com',
     companyName: 'Dhigrowth CRM',
     slug: 'sri',
-    role: 'Dhigrowth CRM User',
+    role: 'DhiGrowth Admin',
     plan: 'Business',
-    isAdmin: false,
+    isSuperAdmin: false,
+    isAdmin: false, // DhiGrowth admin only, NOT super admin
     isExternalClient: false,
     password: 'dhigrowth2026',
     passwordHash: '$2a$10$954hF52aM/UfxY8c3Y7fse9fL4k9nU2r8/xRSm2sT.k2k9e9nL8zK', // sri123
@@ -109,7 +136,18 @@ export const AppProvider = ({ children }) => {
       const urlTenant = urlParams?.get('tenant') || urlParams?.get('t');
       const storageKey = urlTenant ? `dhigrowth_auth_session_${urlTenant}` : 'dhigrowth_auth_session';
       const saved = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey) || (!urlTenant ? localStorage.getItem('dhigrowth_auth_session') : null);
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (parsed?.username?.toLowerCase() === 'sri') {
+        parsed.role = 'DhiGrowth Admin';
+        parsed.isSuperAdmin = false;
+        parsed.isAdmin = false;
+      } else if (parsed?.username?.toLowerCase() === 'admin') {
+        parsed.role = 'Super Administrator';
+        parsed.isSuperAdmin = true;
+        parsed.isAdmin = true;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -691,7 +729,7 @@ export const AppProvider = ({ children }) => {
 
   // Bcrypt hashed passwords for secure authentication (Cost Factor: 10)
   const USER_PASSWORD_HASHES = {
-    admin: '$2b$10$pXOt6.GRAajCsYXj1nAI4umTXtdKYfVzxr5f8sZeedXag/b5vZ.zO', // DhiGrowth@admin
+    admin: '$2b$10$6M.SDAOCSZAI9MIIdkfA.u8oGEL7mTMWvhCds9LOp/UUayeCIY39i', // wappilot@
     sri: '$2b$10$5ZDjuHTdcawqR3JfLwxc6uckYA9dVEQDZ0J9Lhv4W28Se8hmoyiXy', // dhigrowth2026
     kiki: [
       '$2b$10$9GRXc/Yq5N.PUsjUOQitGuxAHOQttXJBV/x6WUBLPA./rhRs8.QBG', // kiki123
@@ -727,14 +765,18 @@ export const AppProvider = ({ children }) => {
       if (cloudRes && cloudRes.ok) {
         const cloudData = await cloudRes.json();
         if (cloudData?.success && cloudData?.user) {
+          const isSuperAdminUser = cloudData.user.role === 'super_admin' || cloudData.user.username === 'admin';
+          const isSriAdmin = cleanUser === 'sri' || cloudData.user.username === 'sri';
           const session = {
             username: cloudData.user.username || cloudData.user.email?.split('@')[0] || cleanUser,
             name: cloudData.user.name || cleanUser,
             email: cloudData.user.email || `${cleanUser}@dhigrowth.com`,
             phone: cloudData.user.phone || '',
-            role: cloudData.user.role || 'super_admin',
+            role: isSuperAdminUser ? 'Super Administrator' : (isSriAdmin ? 'DhiGrowth Admin' : (cloudData.user.role || 'CRM User')),
             isExternalClient: cloudData.user.isExternalClient || false,
-            isAdmin: cloudData.user.role === 'super_admin' || cloudData.user.role === 'admin',
+            isSuperAdmin: isSuperAdminUser,
+            isAdmin: isSuperAdminUser, // Only Super Admin has platform-level master privileges
+            isDhigrowthAdmin: isSriAdmin,
             organization: cloudData.workspace?.name || `${cloudData.user.name}'s Workspace`,
             workspaceId: cloudData.workspace?.id || DEFAULT_WORKSPACE_ID,
             slug: cloudData.workspace?.slug || cleanUser,
@@ -802,16 +844,15 @@ export const AppProvider = ({ children }) => {
         })()
       );
 
-    const isAdmin = cleanUser === 'admin' || cleanUser === 'admin@dhigrowth.com';
+    const isAdmin = cleanUser === 'admin' || cleanUser === 'admin@wapppilot.com' || cleanUser === 'admin@dhigrowth.com';
     const isValidAdmin =
       isAdmin &&
       Boolean(cleanPass) &&
       (
+        cleanPass === 'wappilot@' ||
+        cleanPass === 'Wappilot@' ||
         cleanPass === 'DhiGrowth@admin' ||
-        cleanPass === 'Dhigrowth@admin' ||
         cleanPass === 'dhigrowth@admin' ||
-        cleanPass === 'dhigrowth2026' ||
-        cleanPass === 'admin123' ||
         (() => {
           try {
             return bcrypt.compareSync(cleanPass, USER_PASSWORD_HASHES.admin);
@@ -853,6 +894,7 @@ export const AppProvider = ({ children }) => {
         role: matchedTenant.role || 'CRM User',
         isExternalClient: matchedTenant.isExternalClient || false,
         isAdmin: matchedTenant.isAdmin || false,
+        isSuperAdmin: Boolean(matchedTenant.isSuperAdmin),
         organization: matchedTenant.companyName || `${matchedTenant.name}'s Workspace`,
         workspaceId: matchedTenant.workspaceId,
         slug: matchedTenant.slug || matchedTenant.username,
@@ -867,6 +909,7 @@ export const AppProvider = ({ children }) => {
         role: savedCreds.role || 'CRM User',
         isExternalClient: false,
         isAdmin: false,
+        isSuperAdmin: false,
         organization: savedCreds.organization || 'WAPPPILOT',
         workspaceId: savedCreds.workspaceId || DEFAULT_WORKSPACE_ID,
         slug: savedCreds.slug || cleanUser,
@@ -881,6 +924,7 @@ export const AppProvider = ({ children }) => {
         role: 'External Client (BYOK)',
         isExternalClient: true,
         isAdmin: false,
+        isSuperAdmin: false,
         organization: "Kiki's Client Workspace",
         workspaceId: 'b0000000-0000-0000-0000-000000000002',
         slug: 'kiki',
@@ -892,10 +936,12 @@ export const AppProvider = ({ children }) => {
         username: 'sri',
         name: 'Sri',
         email: 'sri@dhigrowth.com',
-        role: 'WAPPPILOT CRM User',
+        role: 'DhiGrowth Admin',
         isExternalClient: false,
-        isAdmin: false,
-        organization: 'WAPPPILOT',
+        isSuperAdmin: false,
+        isAdmin: false, // DhiGrowth admin only, NOT super admin
+        isDhigrowthAdmin: true,
+        organization: 'Dhigrowth CRM',
         workspaceId: DEFAULT_WORKSPACE_ID,
         slug: 'sri',
         token: `dhi_sri_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
@@ -904,15 +950,16 @@ export const AppProvider = ({ children }) => {
     } else {
       session = {
         username: 'admin',
-        name: 'Administrator',
-        email: 'admin@dhigrowth.com',
+        name: 'Super Administrator',
+        email: 'admin@wapppilot.com',
         role: 'Super Administrator',
         isExternalClient: false,
+        isSuperAdmin: true,
         isAdmin: true,
-        organization: 'WAPPPILOT & Master Operations',
+        organization: 'WAPPPILOT Platform Operations',
         workspaceId: DEFAULT_WORKSPACE_ID,
         slug: 'admin',
-        token: `dhi_admin_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        token: `wappilot_admin_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
         loginAt: new Date().toISOString(),
       };
     }

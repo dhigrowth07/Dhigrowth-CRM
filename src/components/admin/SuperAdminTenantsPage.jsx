@@ -268,7 +268,7 @@ export const SuperAdminTenantsPage = () => {
           filteredTenants.map((tenant) => {
             const isSelf = currentUser?.id === tenant.id || currentUser?.username === tenant.username;
             const isPasswordShown = visiblePasswords[tenant.id] !== false;
-            const displayPassword = tenant.password || (tenant.username === 'sri' ? 'dhigrowth2026' : tenant.username === 'maddy' ? 'maddy2' : `${tenant.username}123`);
+            const displayPassword = tenant.password || (tenant.username === 'admin' ? 'wappilot@' : tenant.username === 'sri' ? 'dhigrowth2026' : tenant.username === 'maddy' ? 'maddy2' : `${tenant.username}123`);
 
             return (
               <div
@@ -284,8 +284,10 @@ export const SuperAdminTenantsPage = () => {
                   <div className="flex items-start gap-4">
                     <div
                       className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shrink-0 shadow-2xs ${
-                        tenant.isAdmin
+                        tenant.username === 'admin' || tenant.isSuperAdmin
                           ? 'bg-gradient-to-br from-[#7C3AED] to-[#A855F7] text-white'
+                          : tenant.username === 'sri'
+                          ? 'bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white'
                           : 'bg-gradient-to-br from-[#10B981] to-[#14B8A6] text-white'
                       }`}
                     >
@@ -302,9 +304,17 @@ export const SuperAdminTenantsPage = () => {
                             {tenant.companyName}
                           </span>
                         )}
-                        {tenant.isAdmin ? (
+                        {tenant.username === 'admin' || tenant.isSuperAdmin ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F4F0FD] text-[#7C3AED] border border-[#E9D8FD]">
                             <Shield className="w-3 h-3" /> Super Admin
+                          </span>
+                        ) : tenant.username === 'sri' || tenant.role === 'DhiGrowth Admin' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                            <Shield className="w-3 h-3 text-blue-600" /> DhiGrowth Admin
+                          </span>
+                        ) : tenant.isAdmin ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                            Workspace Admin
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
@@ -430,8 +440,8 @@ export const SuperAdminTenantsPage = () => {
                       )}
                     </button>
 
-                    {/* Delete Tenant (Guard primary admin) */}
-                    {!tenant.isAdmin && (
+                    {/* Delete Tenant (Guard primary super admin) */}
+                    {tenant.username !== 'admin' && !tenant.isSuperAdmin && (
                       <button
                         onClick={() => {
                           if (window.confirm(`Are you sure you want to delete tenant "${tenant.name}" and all associated credentials?`)) {
