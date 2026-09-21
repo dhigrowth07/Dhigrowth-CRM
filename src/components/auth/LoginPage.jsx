@@ -24,11 +24,25 @@ export const LoginPage = () => {
 
   const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
 
-  // Sign In state
-  const [username, setUsername] = useState('');
+  // Sign In state with persistent browser memory
+  const [rememberMe, setRememberMe] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wapppilot_remember_me');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [username, setUsername] = useState(() => {
+    try {
+      return localStorage.getItem('wapppilot_remembered_username') || '';
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
 
   // Sign Up (Commercial SaaS Self-Serve Tenant Provisioning) state
   const [regFullName, setRegFullName] = useState('');
@@ -58,6 +72,17 @@ export const LoginPage = () => {
         password,
         remember: rememberMe,
       });
+
+      // Persist remembered username on successful sign in
+      try {
+        if (rememberMe) {
+          localStorage.setItem('wapppilot_remembered_username', username.trim());
+          localStorage.setItem('wapppilot_remember_me', 'true');
+        } else {
+          localStorage.removeItem('wapppilot_remembered_username');
+          localStorage.setItem('wapppilot_remember_me', 'false');
+        }
+      } catch {}
     } catch (err) {
       setError(err.message || 'Invalid username or password.');
     } finally {
@@ -212,7 +237,7 @@ export const LoginPage = () => {
               {/* Username Field */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#344054]">
-                  Username or Email
+                  Email or Username
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#98A2B3]">
@@ -221,7 +246,7 @@ export const LoginPage = () => {
                   <input
                     type="text"
                     required
-                    placeholder="admin or your-email@company.com"
+                    placeholder="email@company.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#D0D5DD] rounded-xl text-xs sm:text-sm text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/15 transition-all shadow-2xs"
@@ -272,7 +297,14 @@ export const LoginPage = () => {
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setRememberMe(checked);
+                      try {
+                        localStorage.setItem('wapppilot_remember_me', String(checked));
+                        if (!checked) localStorage.removeItem('wapppilot_remembered_username');
+                      } catch {}
+                    }}
                     className="w-4 h-4 rounded border-[#D0D5DD] text-[#7C3AED] focus:ring-[#7C3AED] cursor-pointer accent-[#7C3AED]"
                   />
                   <span className="text-xs text-[#475467] font-medium">Remember me on this browser</span>
