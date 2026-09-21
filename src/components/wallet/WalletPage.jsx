@@ -60,14 +60,11 @@ export const WalletPage = () => {
 
   // Friendly display name for active user profile
   const profileDisplayName = useMemo(() => {
-    if (activeProfileKey === 'kiki' || currentUser?.username === 'kiki') {
-      return 'Kiki (External Client)';
-    }
     if (currentUser?.name) {
       return currentUser.name;
     }
     return 'Sri (CRM User)';
-  }, [activeProfileKey, currentUser]);
+  }, [currentUser]);
 
   // Per-user profile wallet transaction logs
   const [walletLogs, setWalletLogs] = useState(() => {
@@ -90,7 +87,7 @@ export const WalletPage = () => {
     ];
   });
 
-  // Switch and fetch logs when active profile switches (Sri vs Kiki)
+  // Switch and fetch logs when active profile switches
   useEffect(() => {
     try {
       const key = (activeProfileKey || 'sri').toLowerCase();

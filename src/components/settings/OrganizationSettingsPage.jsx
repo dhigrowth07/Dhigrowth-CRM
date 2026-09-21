@@ -276,7 +276,7 @@ export const OrganizationSettingsPage = () => {
           )}
 
           {/* =========================================================
-              VIEW: META WHATSAPP CLOUD API (For Kiki & Admin)
+              VIEW: META WHATSAPP CLOUD API
           ========================================================= */}
           {activeTabNav === 'meta_api' && (
             <div>

@@ -67,7 +67,7 @@ export const ClientPortal = () => {
     chats,
   } = useApp();
 
-  const canSendDue = hasPermission('sendDueToAll', 'kiki');
+  const canSendDue = hasPermission('sendDueToAll', currentUser?.username || 'client');
 
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'meta-keys' | 'messenger' | 'auto-reply' | 'logs'
 
@@ -105,10 +105,10 @@ export const ClientPortal = () => {
   const [newTrigger, setNewTrigger] = useState('');
   const [newReply, setNewReply] = useState('');
 
-  // Dedicated Isolated WhatsApp Inbox State for Kiki
+  // Dedicated Isolated WhatsApp Inbox State
   const [conversations, setConversations] = useState([
     {
-      id: 'kiki-conv-1',
+      id: 'client-conv-1',
       customerName: 'Alex Morgan',
       phone: '+91 97914 71277',
       unreadCount: 1,
@@ -127,7 +127,7 @@ export const ClientPortal = () => {
         },
         {
           id: 'm2',
-          sender: 'Kiki Bot',
+          sender: 'Support Bot',
           isOutbound: true,
           text: 'Hello! Thanks for reaching out. How can our team assist you today?',
           timestamp: '10:40 AM',
@@ -145,7 +145,7 @@ export const ClientPortal = () => {
       ],
     },
     {
-      id: 'kiki-conv-2',
+      id: 'client-conv-2',
       customerName: 'Elena Rostova',
       phone: '+1 (555) 382-9912',
       unreadCount: 0,
@@ -158,13 +158,13 @@ export const ClientPortal = () => {
           id: 'm4',
           sender: 'Elena Rostova',
           isOutbound: false,
-          text: 'Is this the WhatsApp support for Kiki Suite?',
+          text: 'Is this the WhatsApp support channel?',
           timestamp: 'Yesterday 3:15 PM',
           status: 'received',
         },
         {
           id: 'm5',
-          sender: 'Kiki',
+          sender: currentUser?.name || 'Agent',
           isOutbound: true,
           text: 'Welcome to our service! We are ready to assist you on WhatsApp.',
           timestamp: 'Yesterday 3:16 PM',
@@ -173,7 +173,7 @@ export const ClientPortal = () => {
       ],
     },
     {
-      id: 'kiki-conv-3',
+      id: 'client-conv-3',
       customerName: 'David Chen',
       phone: '+44 7700 900451',
       unreadCount: 0,
@@ -192,7 +192,7 @@ export const ClientPortal = () => {
         },
         {
           id: 'm7',
-          sender: 'Kiki',
+          sender: currentUser?.name || 'Agent',
           isOutbound: true,
           text: 'Sure David, our team will connect at 2 PM GMT.',
           timestamp: 'Sep 09 11:05 AM',
@@ -210,7 +210,7 @@ export const ClientPortal = () => {
     },
   ]);
 
-  const [selectedConversationId, setSelectedConversationId] = useState('kiki-conv-1');
+  const [selectedConversationId, setSelectedConversationId] = useState('client-conv-1');
   const [inboxSearch, setInboxSearch] = useState('');
   const [inboxFilter, setInboxFilter] = useState('all'); // 'all' | 'unread'
   const [inboxReplyText, setInboxReplyText] = useState('');
@@ -265,7 +265,7 @@ export const ClientPortal = () => {
 
       const newMsg = {
         id: `msg-${Date.now()}`,
-        sender: 'Kiki',
+        sender: currentUser?.name || 'Agent',
         isOutbound: true,
         text: textToSend,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -329,7 +329,7 @@ export const ClientPortal = () => {
         ? [
             {
               id: `m-${Date.now()}`,
-              sender: 'Kiki',
+              sender: currentUser?.name || 'Agent',
               isOutbound: true,
               text: newChatInitialMessage.trim(),
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -501,7 +501,7 @@ export const ClientPortal = () => {
       'Can we schedule a call for tomorrow?': '¿Podemos programar una llamada para mañana?',
       'Welcome to our service! We are ready to assist you on WhatsApp.': '¡Bienvenido a nuestro servicio! Estamos listos para atenderle por WhatsApp.',
       'Here are our package pricing details.': 'Aquí están los detalles de precios de nuestros paquetes.',
-      'Thanks for contacting Kiki Support!': '¡Gracias por contactar al soporte de Kiki!',
+      'Thanks for contacting Support!': '¡Gracias por contactar al soporte!',
       'Can we schedule a quick call?': '¿Podemos programar una llamada rápida?',
     },
     hi: {
@@ -515,7 +515,7 @@ export const ClientPortal = () => {
       'Our team will connect shortly.': 'हमारी टीम शीघ्र ही संपर्क करेगी।',
       'Welcome to our service! We are ready to assist you on WhatsApp.': 'हमारी सेवा में आपका स्वागत है! हम व्हाट्सएप पर आपकी सहायता के लिए तैयार हैं।',
       'Here are our package pricing details.': 'यहाँ हमारे पैकेज मूल्य निर्धारण का विवरण है।',
-      'Thanks for contacting Kiki Support!': 'किकी सपोर्ट से संपर्क करने के लिए धन्यवाद!',
+      'Thanks for contacting Support!': 'सपोर्ट से संपर्क करने के लिए धन्यवाद!',
       'Can we schedule a quick call?': 'क्या हम एक त्वरित कॉल निर्धारित कर सकते हैं?',
     },
     fr: {
@@ -524,11 +524,11 @@ export const ClientPortal = () => {
       'Thank you': 'Merci beaucoup',
       'Thanks': 'Merci',
       'How can our team assist you today?': 'Comment notre équipe peut-elle vous aider aujourd\'hui?',
-      'How can I assist you today?': 'Comment puis-je vous aider aujourd\'hui?',
+      'How can I assist you today?': 'Comment puis-je vous aider aujourd\'aujourd\'hui?',
       'Our service plans start at affordable monthly rates.': 'Nos forfaits commencent à des tarifs mensuels abordables.',
       'Welcome to our service! We are ready to assist you on WhatsApp.': 'Bienvenue dans notre service! Nous sommes prêts à vous aider sur WhatsApp.',
       'Here are our package pricing details.': 'Voici les détails des tarifs de nos forfaits.',
-      'Thanks for contacting Kiki Support!': 'Merci d\'avoir contacté le support Kiki!',
+      'Thanks for contacting Support!': 'Merci d\'avoir contacté le support!',
       'Can we schedule a quick call?': 'Pouvons-nous planifier un appel rapide?',
     },
     de: {
@@ -540,7 +540,7 @@ export const ClientPortal = () => {
       'How can I assist you today?': 'Wie kann ich Ihnen heute helfen?',
       'Welcome to our service! We are ready to assist you on WhatsApp.': 'Willkommen bei unserem Service! Wir freuen uns, Ihnen auf WhatsApp zu helfen.',
       'Here are our package pricing details.': 'Hier sind die Preisdetails unserer Pakete.',
-      'Thanks for contacting Kiki Support!': 'Vielen Dank für Ihre Kontaktaufnahme mit dem Kiki-Support!',
+      'Thanks for contacting Support!': 'Vielen Dank für Ihre Kontaktaufnahme mit dem Support!',
     },
     ar: {
       'Hello': 'مرحباً',
@@ -551,7 +551,7 @@ export const ClientPortal = () => {
       'How can I assist you today?': 'كيف يمكنني مساعدتك اليوم؟',
       'Welcome to our service! We are ready to assist you on WhatsApp.': 'مرحباً بكم في خدمتنا! نحن جاهزون لمساعدتكم عبر واتساب.',
       'Here are our package pricing details.': 'إليكم تفاصيل أسعار الباقات لدينا.',
-      'Thanks for contacting Kiki Support!': 'شكراً لتواصلك مع دعم كيكي!',
+      'Thanks for contacting Support!': 'شكراً لتواصلك مع الدعم!',
     },
     ta: {
       'Hello': 'வணக்கம்',
@@ -562,7 +562,7 @@ export const ClientPortal = () => {
       'How can I assist you today?': 'இன்று நான் உங்களுக்கு எப்படி உதவ முடியும்?',
       'Welcome to our service! We are ready to assist you on WhatsApp.': 'எங்கள் சேவைக்கு வரவேற்கிறோம்! வாட்ஸ்அப்பில் உங்களுக்கு உதவ நாங்கள் தயாராக உள்ளோம்.',
       'Here are our package pricing details.': 'எங்கள் தொகுப்பு விலை விவரங்கள் இங்கே உள்ளன.',
-      'Thanks for contacting Kiki Support!': 'கிகி ஆதரவைத் தொடர்பு கொண்டதற்கு நன்றி!',
+      'Thanks for contacting Support!': 'ஆதரவைத் தொடர்பு கொண்டதற்கு நன்றி!',
     },
   };
 
@@ -755,12 +755,12 @@ export const ClientPortal = () => {
       <header className="h-16 bg-white border-b border-[#EAECF0] px-6 lg:px-10 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white flex items-center justify-center font-extrabold text-base shadow-sm">
-            K
+            {currentUser?.organization?.[0]?.toUpperCase() || currentUser?.name?.[0]?.toUpperCase() || 'W'}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="text-base font-extrabold text-[#101828] tracking-tight">
-                Kiki WhatsApp Suite
+                {currentUser?.organization || currentUser?.name || 'Client'} WhatsApp Suite
               </span>
               <span className="text-[10px] font-mono font-bold bg-[#DCFCE7] text-[#15803D] px-2 py-0.5 rounded-full border border-[#BBF7D0]">
                 BYOK CLIENT PORTAL
@@ -807,11 +807,11 @@ export const ClientPortal = () => {
 
           <div className="hidden sm:flex items-center gap-2 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-1.5 rounded-xl">
             <div className="w-6 h-6 rounded-full bg-[#7C3AED] text-white flex items-center justify-center text-xs font-bold">
-              K
+              {currentUser?.name?.[0]?.toUpperCase() || 'C'}
             </div>
             <div className="text-left">
-              <div className="text-xs font-bold text-[#101828]">{currentUser?.name || 'Kiki'}</div>
-              <div className="text-[10px] text-[#667085] font-mono">{currentUser?.email || 'kiki@client.com'}</div>
+              <div className="text-xs font-bold text-[#101828]">{currentUser?.name || 'Client'}</div>
+              <div className="text-[10px] text-[#667085] font-mono">{currentUser?.email || 'client@wapppilot.com'}</div>
             </div>
           </div>
 
@@ -938,7 +938,7 @@ export const ClientPortal = () => {
                     <span>Independent Client Workspace</span>
                   </div>
                   <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">
-                    Welcome to your WhatsApp Suite, Kiki
+                    Welcome to your WhatsApp Suite{currentUser?.name ? `, ${currentUser.name}` : ''}
                   </h1>
                   <p className="text-white/80 text-xs lg:text-sm mt-1 max-w-xl">
                     Operate and broadcast WhatsApp communications through your personal Meta Cloud API configuration with automated bots and real-time delivery telemetry.
@@ -1815,7 +1815,7 @@ export const ClientPortal = () => {
 
       {/* 4. Client Portal Footer */}
       <footer className="bg-white border-t border-[#EAECF0] py-4 px-6 lg:px-10 text-center text-xs text-[#98A2B3]">
-        Kiki Client Portal · Powered by Multi-Tenant Meta WhatsApp Cloud API Gateway · Zero access to internal CRM data
+        Client Portal · Powered by Multi-Tenant Meta WhatsApp Cloud API Gateway · Zero access to internal CRM data
       </footer>
     </div>
   );

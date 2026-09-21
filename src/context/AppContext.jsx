@@ -118,7 +118,7 @@ export const AppProvider = ({ children }) => {
     return SEED_TENANTS;
   });
 
-  // URL Tenant Resolver (e.g. ?tenant=kiki or ?t=kiki or ?workspace=xyz)
+  // URL Tenant Resolver (e.g. ?tenant=client or ?t=client or ?workspace=xyz)
   const [urlTenantSlug] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
@@ -155,24 +155,20 @@ export const AppProvider = ({ children }) => {
 
   const isAuthenticated = Boolean(currentUser);
 
-  // Admin Profile Switching State: Admin can switch between 'sri' (CRM User) and 'kiki' (Separate Client)
-  const [adminViewProfile, setAdminViewProfile] = useState('sri'); // 'sri' | 'kiki'
-
-  // Active individual profile key (e.g. 'sri', 'kiki', or currentUser slug/username)
+  // Active individual profile key (e.g. currentUser slug/username or 'sri')
+  const [adminViewProfile, setAdminViewProfile] = useState('sri');
   const activeProfileKey = useMemo(() => {
     const rawKey = currentUser?.username || currentUser?.slug || adminViewProfile || 'sri';
     return String(rawKey).toLowerCase().trim();
   }, [currentUser?.username, currentUser?.slug, adminViewProfile]);
 
   // Current active workspace ID (Strict Partitioning)
-  const currentWorkspaceId = currentUser?.workspaceId || (
-    adminViewProfile === 'kiki' ? 'b0000000-0000-0000-0000-000000000002' : DEFAULT_WORKSPACE_ID
-  );
+  const currentWorkspaceId = currentUser?.workspaceId || DEFAULT_WORKSPACE_ID;
 
   // User & Wallet State (Individually partitioned per user profile)
   const [credits, setCreditsState] = useState(() => {
     try {
-      const initKey = (currentUser?.username || currentUser?.slug || adminViewProfile || 'sri').toLowerCase().trim();
+      const initKey = (currentUser?.username || currentUser?.slug || 'sri').toLowerCase().trim();
       const userSaved = localStorage.getItem(`dhigrowth_wallet_credits_${initKey}`);
       if (userSaved !== null) {
         const num = parseFloat(userSaved);
@@ -187,7 +183,7 @@ export const AppProvider = ({ children }) => {
     return 5.00; // Seed with promotional $5 launch credits
   });
 
-  // Switch credits when user switches profile (Sri vs Kiki vs other users)
+  // Switch credits when active profile changes
   useEffect(() => {
     try {
       const userSaved = localStorage.getItem(`dhigrowth_wallet_credits_${activeProfileKey}`);
@@ -731,10 +727,6 @@ export const AppProvider = ({ children }) => {
   const USER_PASSWORD_HASHES = {
     admin: '$2b$10$6M.SDAOCSZAI9MIIdkfA.u8oGEL7mTMWvhCds9LOp/UUayeCIY39i', // wappilot@
     sri: '$2b$10$5ZDjuHTdcawqR3JfLwxc6uckYA9dVEQDZ0J9Lhv4W28Se8hmoyiXy', // dhigrowth2026
-    kiki: [
-      '$2b$10$9GRXc/Yq5N.PUsjUOQitGuxAHOQttXJBV/x6WUBLPA./rhRs8.QBG', // kiki123
-      '$2b$10$sUBNkFJ1ooejU8FVDVAhje5qd4dg1kWf2XKaQyu4bNyvT1GK7fWza', // kiki2026
-    ],
   };
 
   const login = async ({ username, password, remember = true }) => {
@@ -812,22 +804,6 @@ export const AppProvider = ({ children }) => {
       cleanPass === savedCreds.password
     );
 
-    const isKiki = cleanUser === 'kiki' || cleanUser === 'kiki@dhigrowth.com';
-    const isValidKiki =
-      isKiki &&
-      Boolean(cleanPass) &&
-      (
-        cleanPass === 'kiki123' ||
-        cleanPass === 'kiki2026' ||
-        USER_PASSWORD_HASHES.kiki.some((hash) => {
-          try {
-            return bcrypt.compareSync(cleanPass, hash);
-          } catch {
-            return false;
-          }
-        })
-      );
-
     const isSri = cleanUser === 'sri' || cleanUser === 'sri@dhigrowth.com';
     const isValidSri =
       isSri &&
@@ -881,7 +857,7 @@ export const AppProvider = ({ children }) => {
       }
     }
 
-    if (!isValidAdmin && !isValidSri && !isValidCustom && !isValidKiki && !isValidTenant) {
+    if (!isValidAdmin && !isValidSri && !isValidCustom && !isValidTenant) {
       throw new Error('Invalid username or password. Please try again.');
     }
 
@@ -914,21 +890,6 @@ export const AppProvider = ({ children }) => {
         workspaceId: savedCreds.workspaceId || DEFAULT_WORKSPACE_ID,
         slug: savedCreds.slug || cleanUser,
         token: `custom_${cleanUser}_${Date.now()}`,
-        loginAt: new Date().toISOString(),
-      };
-    } else if (isValidKiki) {
-      session = {
-        username: 'kiki',
-        name: 'Kiki',
-        email: 'kiki@client-org.com',
-        role: 'External Client (BYOK)',
-        isExternalClient: true,
-        isAdmin: false,
-        isSuperAdmin: false,
-        organization: "Kiki's Client Workspace",
-        workspaceId: 'b0000000-0000-0000-0000-000000000002',
-        slug: 'kiki',
-        token: `client_kiki_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
         loginAt: new Date().toISOString(),
       };
     } else if (isSri || cleanUser === 'sri') {
@@ -1081,12 +1042,8 @@ export const AppProvider = ({ children }) => {
   };
 
   const switchAdminProfile = (profileName) => {
-    if (profileName !== 'sri' && profileName !== 'kiki') return;
+    if (!profileName) return;
     setAdminViewProfile(profileName);
-    showToast(
-      `Viewing ${profileName === 'sri' ? 'Sri (Dhigrowth CRM User)' : 'Kiki (Separate Client)'}`,
-      'info'
-    );
   };
 
   const logout = () => {
@@ -1334,14 +1291,6 @@ export const AppProvider = ({ children }) => {
 
   // Multi-Tenant User Permissions State (Admin can manage permissions for other users)
   const DEFAULT_USER_PERMISSIONS = {
-    kiki: {
-      sendDueToAll: true, // Enabled for Kiki
-      teamInbox: true,    // Enabled Team Inbox for Kiki
-      metaKeys: true,
-      isolatedInbox: true,
-      autoReply: true,
-      messenger: true,
-    },
     sri: {
       sendDueToAll: true,
       teamInbox: true,
@@ -1359,7 +1308,6 @@ export const AppProvider = ({ children }) => {
         return {
           ...DEFAULT_USER_PERMISSIONS,
           ...parsed,
-          kiki: { ...DEFAULT_USER_PERMISSIONS.kiki, ...(parsed.kiki || {}) },
           sri: { ...DEFAULT_USER_PERMISSIONS.sri, ...(parsed.sri || {}) },
         };
       }

@@ -143,8 +143,6 @@ export const MetaApiSettings = () => {
     }
   };
 
-  const isKiki = currentUser?.username?.toLowerCase() === 'kiki';
-
   return (
     <div className="p-6 lg:p-10 space-y-6 max-w-[1300px] mx-auto font-sans">
       {/* 1. Top Header Banner */}
@@ -154,11 +152,6 @@ export const MetaApiSettings = () => {
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#7C3AED] bg-[#F4F0FD] px-2.5 py-0.5 rounded-full border border-[#E9D8FD]">
               Meta Cloud API Configuration
             </span>
-            {isKiki && (
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#16A34A] bg-[#DCFCE7] px-2.5 py-0.5 rounded-full border border-[#BBF7D0]">
-                Channel Admin: Kiki
-              </span>
-            )}
           </div>
           <h1 className="text-2xl font-bold text-[#101828]">
             Meta WhatsApp Cloud API Credentials
@@ -506,7 +499,7 @@ export const MetaApiSettings = () => {
             </span>
           </div>
 
-          {/* Quick Guide for Kiki */}
+          {/* Quick Guide for Credentials */}
           <div className="sendiee-card p-6 space-y-4">
             <div className="text-xs font-bold uppercase text-[#667085] flex items-center gap-2 font-mono">
               <HelpCircle className="w-4 h-4 text-[#7C3AED]" />

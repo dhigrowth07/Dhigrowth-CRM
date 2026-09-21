@@ -240,28 +240,7 @@ export async function loginTenant({ email, password, username }) {
     };
   }
 
-  if (cleanIdentifier === 'kiki' || cleanIdentifier === 'kiki@dhigrowth.com') {
-    return {
-      success: true,
-      user: {
-        id: 'c0000000-0000-0000-0000-000000000002',
-        name: 'Kiki Client Portal',
-        username: 'kiki',
-        email: 'kiki@dhigrowth.com',
-        role: 'client',
-        isSuperAdmin: false,
-        isAdmin: false,
-        organization: 'Kiki Fashion Retail',
-      },
-      workspace: {
-        id: 'b0000000-0000-0000-0000-000000000002',
-        name: "Kiki's Boutique Workspace",
-        slug: 'kiki-boutique',
-        plan: 'growth',
-      },
-      isFirstTimeOnboarding: false,
-    };
-  }
+
 
   if (!supabase) {
     throw new Error('Database is currently offline. Please use administrator credentials.');

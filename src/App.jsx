@@ -53,8 +53,6 @@ const AppContent = () => {
     activeTab,
     isAuthenticated,
     currentUser,
-    adminViewProfile,
-    switchAdminProfile,
     clientViewMode,
     subscription,
     isOnboardingWizardOpen,
@@ -76,20 +74,14 @@ const AppContent = () => {
     currentUser?.role === 'Super Administrator' ||
     currentUser?.username?.toLowerCase() === 'admin'
   );
-  const isDirectKiki = currentUser?.isExternalClient || currentUser?.username?.toLowerCase() === 'kiki';
 
   // If user explicitly selected the isolated BYOK Client Portal view:
-  const shouldShowClientPortal = (isDirectKiki || (isSuperAdmin && adminViewProfile === 'kiki')) && clientViewMode === 'portal';
+  const shouldShowClientPortal = currentUser?.isExternalClient && clientViewMode === 'portal';
 
   if (shouldShowClientPortal) {
     return (
       <div className="flex flex-col min-h-screen">
-        {isSuperAdmin && (
-          <AdminTopBar
-            activeProfile={adminViewProfile}
-            onSwitchProfile={switchAdminProfile}
-          />
-        )}
+        {isSuperAdmin && <AdminTopBar />}
         <ClientPortal />
         <Toast />
         <BroadcastDueModal />
@@ -353,12 +345,7 @@ const AppContent = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#F8F9FC] text-[#101828] font-sans antialiased">
-      {isSuperAdmin && (
-        <AdminTopBar
-          activeProfile={adminViewProfile}
-          onSwitchProfile={switchAdminProfile}
-        />
-      )}
+      {isSuperAdmin && <AdminTopBar />}
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Sidebar navigation */}

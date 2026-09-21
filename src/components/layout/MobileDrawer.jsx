@@ -37,8 +37,6 @@ export const MobileDrawer = () => {
     isMobileMenuOpen,
     setIsMobileMenuOpen,
     currentUser,
-    adminViewProfile,
-    switchAdminProfile,
     credits,
     logout,
     subscription,
@@ -167,44 +165,7 @@ export const MobileDrawer = () => {
           </button>
         </div>
 
-        {/* Profile Switcher on Mobile (For Super Admin) */}
-        {isSuperAdmin && (
-          <div className="px-5 py-2.5 bg-[#FAF8FF] border-b border-[#E9D8FD] flex items-center justify-between">
-            <span className="text-[11px] font-bold text-[#6941C6] uppercase font-mono">
-              Switch Profile:
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  switchAdminProfile('sri');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                  adminViewProfile === 'sri'
-                    ? 'bg-[#7C3AED] text-white shadow-xs'
-                    : 'bg-white text-[#475467] border border-[#EAECF0]'
-                }`}
-              >
-                Sri (CRM)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  switchAdminProfile('kiki');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                  adminViewProfile === 'kiki'
-                    ? 'bg-[#7C3AED] text-white shadow-xs'
-                    : 'bg-white text-[#475467] border border-[#EAECF0]'
-                }`}
-              >
-                Kiki (Client)
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* Scrollable Navigation List */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5">

@@ -15,10 +15,6 @@ export const Header = () => {
     showToast,
     currentUser,
     logout,
-    adminViewProfile,
-    switchAdminProfile,
-    clientViewMode,
-    toggleClientViewMode,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
   } = useApp();
@@ -74,14 +70,12 @@ export const Header = () => {
     }
   };
 
-  const isKiki = currentUser?.username?.toLowerCase() === 'kiki';
   const isSuperAdmin = Boolean(
     currentUser?.isSuperAdmin ||
     currentUser?.role === 'super_admin' ||
     currentUser?.role === 'Super Administrator' ||
     currentUser?.username?.toLowerCase() === 'admin'
   );
-  const isAdmin = isSuperAdmin;
 
   return (
     <header className="h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans">
@@ -103,18 +97,6 @@ export const Header = () => {
 
       {/* Right Controls */}
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        {/* BYOK Client Suite Switcher Pill (For Kiki or Admin viewing Kiki) */}
-        {(isKiki || (isAdmin && adminViewProfile === 'kiki')) && (
-          <button
-            type="button"
-            onClick={() => toggleClientViewMode('portal')}
-            className="hidden sm:flex px-2.5 py-1 rounded-xl bg-[#F4F0FD] hover:bg-[#EDE5FA] border border-[#E9D8FD] text-[#7C3AED] text-xs font-bold items-center gap-1.5 transition-colors cursor-pointer"
-            title="Switch to BYOK Client Suite (Own Meta API Keys & Rules)"
-          >
-            <span>⚡ BYOK Suite</span>
-          </button>
-        )}
-
         {/* Search Bar with Ctrl+K trigger */}
         <button
           onClick={() => setIsSearchOpen(true)}
@@ -176,45 +158,6 @@ export const Header = () => {
                 </div>
               </div>
 
-              {/* Quick Profile / User Switcher (Super Admin Only) */}
-              {isSuperAdmin && (
-                <div className="p-2 bg-[#FAF8FF] border border-[#E9D8FD] rounded-xl my-1">
-                  <div className="text-[10px] font-bold text-[#6941C6] uppercase font-mono mb-1 px-1">
-                    Switch Workspace User:
-                  </div>
-                  <div className="grid grid-cols-2 gap-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchAdminProfile('sri');
-                        setIsWorkspaceDropdownOpen(false);
-                      }}
-                      className={`py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        adminViewProfile === 'sri'
-                          ? 'bg-[#7C3AED] text-white shadow-xs'
-                          : 'bg-white text-[#475467] border border-[#EAECF0] hover:bg-[#F2F4F7]'
-                      }`}
-                    >
-                      Sri (CRM)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchAdminProfile('kiki');
-                        setIsWorkspaceDropdownOpen(false);
-                      }}
-                      className={`py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        adminViewProfile === 'kiki'
-                          ? 'bg-[#7C3AED] text-white shadow-xs'
-                          : 'bg-white text-[#475467] border border-[#EAECF0] hover:bg-[#F2F4F7]'
-                      }`}
-                    >
-                      Kiki (Client)
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <button
                 onClick={() => {
                   setActiveTab('meta-api');
@@ -226,29 +169,25 @@ export const Header = () => {
                 <span className="text-[9px] bg-[#F4F0FD] text-[#7C3AED] px-1.5 py-0.5 rounded font-mono font-bold border border-[#E9D8FD]">API</span>
               </button>
 
-              {!isKiki && (
-                <>
-                  <button
-                    onClick={() => {
-                      setActiveTab('usage');
-                      setIsWorkspaceDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F4F0FD] hover:text-[#7C3AED] rounded-xl font-medium cursor-pointer transition-colors"
-                  >
-                    Usage & Limits
-                  </button>
+              <button
+                onClick={() => {
+                  setActiveTab('usage');
+                  setIsWorkspaceDropdownOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F4F0FD] hover:text-[#7C3AED] rounded-xl font-medium cursor-pointer transition-colors"
+              >
+                Usage & Limits
+              </button>
 
-                  <button
-                    onClick={() => {
-                      setIsUpgradeModalOpen(true);
-                      setIsWorkspaceDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F4F0FD] hover:text-[#7C3AED] rounded-xl font-medium cursor-pointer transition-colors"
-                  >
-                    Subscription & Plans
-                  </button>
-                </>
-              )}
+              <button
+                onClick={() => {
+                  setIsUpgradeModalOpen(true);
+                  setIsWorkspaceDropdownOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F4F0FD] hover:text-[#7C3AED] rounded-xl font-medium cursor-pointer transition-colors"
+              >
+                Subscription & Plans
+              </button>
 
               <div className="pt-1 border-t border-[#F2F4F7]">
                 <button

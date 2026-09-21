@@ -11,7 +11,7 @@ let walletStore = {
   profiles: {},
 };
 
-const DEFAULT_USERS = ['sri', 'kiki', 'admin', 'default'];
+const DEFAULT_USERS = ['sri', 'admin', 'default'];
 
 export function initWalletStore() {
   try {
@@ -27,7 +27,7 @@ export function initWalletStore() {
       if (!walletStore.profiles[usr]) {
         walletStore.profiles[usr] = {
           userId: usr,
-          workspaceId: usr === 'kiki' ? 'b0000000-0000-0000-0000-000000000002' : 'b0000000-0000-0000-0000-000000000001',
+          workspaceId: 'b0000000-0000-0000-0000-000000000001',
           balanceUsd: 5.0,
           transactions: [
             {
@@ -68,7 +68,7 @@ export function getUserWallet(userKey = 'sri') {
   if (!walletStore.profiles[cleanKey]) {
     walletStore.profiles[cleanKey] = {
       userId: cleanKey,
-      workspaceId: cleanKey === 'kiki' ? 'b0000000-0000-0000-0000-000000000002' : 'b0000000-0000-0000-0000-000000000001',
+      workspaceId: 'b0000000-0000-0000-0000-000000000001',
       balanceUsd: 5.0,
       transactions: [
         {

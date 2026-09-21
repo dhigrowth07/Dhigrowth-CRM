@@ -30,23 +30,6 @@
       ],
       "updatedAt": "2026-09-18T07:09:58.524Z"
     },
-    "kiki": {
-      "userId": "kiki",
-      "workspaceId": "b0000000-0000-0000-0000-000000000002",
-      "balanceUsd": 5,
-      "transactions": [
-        {
-          "id": "tx_init_kiki",
-          "type": "LAUNCH_CREDIT",
-          "amountUsd": 5,
-          "balanceAfterUsd": 5,
-          "description": "Promotional $5.00 launch credit applied to profile",
-          "referenceId": "promo_launch_2026",
-          "provider": "system",
-          "createdAt": "2026-09-03T00:00:00.000Z"
-        }
-      ]
-    },
     "admin": {
       "userId": "admin",
       "workspaceId": "b0000000-0000-0000-0000-000000000001",
