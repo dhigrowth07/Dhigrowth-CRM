@@ -316,19 +316,46 @@ export const TeamInbox = () => {
     }
     setIsSendingInvoice(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/invoices/create-and-send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName: invoiceName,
-          phone: invoicePhone,
-          email: invoiceEmail,
-          city: invoiceCity,
-          description: invoiceDesc,
-          amount: invoiceAmount,
-          conversationId: activeChat.conversationId || activeChat.id,
-        }),
-      });
+      const payload = {
+        customerName: invoiceName,
+        phone: invoicePhone,
+        email: invoiceEmail,
+        city: invoiceCity,
+        description: invoiceDesc,
+        amount: invoiceAmount,
+        conversationId: activeChat?.conversationId || activeChat?.id,
+        workspaceId: currentWorkspaceId,
+        userId: currentUser?.username || currentUser?.id || 'sri',
+        username: currentUser?.username || 'sri',
+      };
+
+      let res;
+      try {
+        res = await fetch(`${BACKEND_URL}/api/invoices/create-and-send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (err) {
+        console.warn('Remote invoice send failed, trying local fallback:', err.message);
+      }
+
+      if (!res || !res.ok) {
+        try {
+          res = await fetch('http://localhost:4000/api/invoices/create-and-send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } catch (err) {
+          console.warn('Local fallback also failed:', err.message);
+        }
+      }
+
+      if (!res) {
+        throw new Error('Unable to reach invoice server. Please check backend connection.');
+      }
+
       const data = await res.json();
       if (data.success) {
         const inv = data.invoice;
@@ -356,9 +383,12 @@ export const TeamInbox = () => {
         phone: activeChat?.phone || '919791471277',
         email: activeChat?.email || '',
         city: activeChat?.city || 'India',
-        description: activeChat?.interestedIn ? `DhiGrowth Service - ${activeChat.interestedIn}` : 'DhiGrowth WhatsApp CRM & AI Business Concierge',
+        description: activeChat?.interestedIn ? `WAPPPILOT Service - ${activeChat.interestedIn}` : 'WAPPPILOT WhatsApp CRM & AI Business Concierge',
         amount: activeChat?.dealValue ? Number(activeChat.dealValue.replace(/[^0-9]/g, '')) || 2499 : 2499,
         conversationId: activeChat?.conversationId || activeChat?.id,
+        workspaceId: currentWorkspaceId,
+        userId: currentUser?.username || currentUser?.id || 'sri',
+        username: currentUser?.username || 'sri',
       };
 
       let res;

@@ -688,6 +688,11 @@ app.post('/api/invoices/create-and-send', async (req, res) => {
       description,
       amount,
       conversationId,
+      messageTemplate,
+      workspaceId = req.headers['x-workspace-id'] || 'b0000000-0000-0000-0000-000000000001',
+      userId,
+      username,
+      slug,
     } = req.body;
 
     if (!phone) {
@@ -703,7 +708,12 @@ app.post('/api/invoices/create-and-send', async (req, res) => {
       description,
       amount,
       conversationId,
+      messageTemplate,
       baseUrl,
+      workspaceId,
+      userId,
+      username,
+      slug,
     });
 
     res.json({
@@ -720,10 +730,19 @@ app.post('/api/invoices/create-and-send', async (req, res) => {
 // 7.1.1 Broadcast Payment Due Invoice PDFs to All Contacts
 app.post('/api/invoices/broadcast-due-to-all', async (req, res) => {
   try {
-    const { contacts, description, amount, messageTemplate } = req.body || {};
+    const {
+      contacts,
+      description,
+      amount,
+      messageTemplate,
+      workspaceId = req.headers['x-workspace-id'] || 'b0000000-0000-0000-0000-000000000001',
+      userId,
+      username,
+      slug,
+    } = req.body || {};
     const baseUrl = (process.env.RENDER_EXTERNAL_URL || process.env.VITE_BACKEND_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
 
-    console.log(`📡 [Broadcast API Request] Base URL: ${baseUrl} | Amount: ${amount || 2499} | HasCustomTemplate: ${Boolean(messageTemplate)}`);
+    console.log(`📡 [Broadcast API Request] Base URL: ${baseUrl} | Workspace: ${workspaceId} | Amount: ${amount || 2499} | HasCustomTemplate: ${Boolean(messageTemplate)}`);
 
     const summary = await broadcastDueInvoicesToAll({
       contacts,
@@ -731,6 +750,10 @@ app.post('/api/invoices/broadcast-due-to-all', async (req, res) => {
       amount,
       messageTemplate,
       baseUrl,
+      workspaceId,
+      userId,
+      username,
+      slug,
     });
 
     res.json({
@@ -841,7 +864,14 @@ app.get('/invoices/:id/pay', (req, res) => {
 app.post('/api/invoices/:id/pay', async (req, res) => {
   try {
     const invoiceId = req.params.id;
-    const { paymentMethod = 'UPI / Online Checkout', transactionId } = req.body;
+    const {
+      paymentMethod = 'UPI / Online Checkout',
+      transactionId,
+      workspaceId = req.headers['x-workspace-id'] || 'b0000000-0000-0000-0000-000000000001',
+      userId,
+      username,
+      slug,
+    } = req.body || {};
 
     // Ensure invoice exists
     if (!invoices.has(invoiceId)) {
@@ -851,16 +881,21 @@ app.post('/api/invoices/:id/pay', async (req, res) => {
         phone: '919791471277',
         email: 'client@example.com',
         city: 'India',
-        description: 'DhiGrowth IT Services',
+        description: 'WAPPPILOT Business Solutions',
         amount: 2499,
         status: 'due',
         paymentLink: `${req.protocol}://${req.get('host')}/invoices/${invoiceId}/pay`,
+        workspaceId,
       });
     }
 
     const result = await markInvoicePaid(invoiceId, {
       paymentMethod,
       transactionId,
+      workspaceId,
+      userId,
+      username,
+      slug,
     });
 
     res.json({
@@ -888,6 +923,10 @@ app.post('/api/invoices/:id/mark-paid', async (req, res) => {
       description,
       amount,
       conversationId,
+      workspaceId = req.headers['x-workspace-id'] || 'b0000000-0000-0000-0000-000000000001',
+      userId,
+      username,
+      slug,
     } = req.body || {};
 
     const baseUrl = (process.env.RENDER_EXTERNAL_URL || process.env.VITE_BACKEND_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
@@ -903,6 +942,10 @@ app.post('/api/invoices/:id/mark-paid', async (req, res) => {
       amount,
       conversationId,
       baseUrl,
+      workspaceId,
+      userId,
+      username,
+      slug,
     });
 
     res.json({

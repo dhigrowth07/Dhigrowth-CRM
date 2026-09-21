@@ -1,4 +1,5 @@
 import { generateInvoicePdf } from './invoicePdfGenerator.js';
+import { getTenantMetaConfig } from './tenantMetaManager.js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -142,14 +143,34 @@ async function logSupabaseMessage({ conversationId, phone, text, type = 'documen
 
 
 /**
+ * Resolve active Meta WhatsApp credentials for tenant or workspace
+ */
+export function resolveMetaCredentials({ workspaceId, userId, username, slug } = {}) {
+  let config = getTenantMetaConfig({
+    workspaceId: workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001',
+    userId,
+    username: username || 'sri',
+    slug,
+  });
+
+  if (!config?.accessToken || !config?.phoneNumberId) {
+    config = getTenantMetaConfig({ workspaceId: 'b0000000-0000-0000-0000-000000000001', username: 'sri' });
+  }
+
+  const phoneId = config?.phoneNumberId || process.env.META_WHATSAPP_PHONE_NUMBER_ID || '1272943605907701';
+  const token = config?.accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
+
+  return { phoneId, token };
+}
+
+/**
  * Upload PDF buffer to Meta WhatsApp Cloud API /media
  */
-export async function uploadPdfToMeta(pdfBuffer, filename = 'invoice.pdf') {
-  const phoneId = process.env.META_WHATSAPP_PHONE_NUMBER_ID || '1349867994870208';
-  const token = process.env.META_WHATSAPP_ACCESS_TOKEN;
+export async function uploadPdfToMeta(pdfBuffer, filename = 'invoice.pdf', metaContext = {}) {
+  const { phoneId, token } = resolveMetaCredentials(metaContext);
 
-  if (!token) {
-    console.warn('[Meta Media] Missing META_WHATSAPP_ACCESS_TOKEN');
+  if (!token || !phoneId) {
+    console.warn('[Meta Media] Missing active Meta WhatsApp access token or phone ID');
     return null;
   }
 
@@ -179,14 +200,23 @@ export async function uploadPdfToMeta(pdfBuffer, filename = 'invoice.pdf') {
 /**
  * Send WhatsApp Document Message via Meta Cloud API
  */
-export async function sendWhatsAppDocument({ toPhone, mediaId, filename, caption }) {
-  const phoneId = process.env.META_WHATSAPP_PHONE_NUMBER_ID || '1349867994870208';
-  const token = process.env.META_WHATSAPP_ACCESS_TOKEN;
+export async function sendWhatsAppDocument({ toPhone, mediaId, filename, caption, pdfUrl, metaContext = {} }) {
+  const { phoneId, token } = resolveMetaCredentials(metaContext);
   const cleanPhone = toPhone.replace(/[^0-9]/g, '');
 
-  if (!token) {
-    console.warn('[Meta Document] Missing META_WHATSAPP_ACCESS_TOKEN');
-    return null;
+  if (!token || !phoneId) {
+    console.warn('[Meta Document] Missing active Meta WhatsApp access token or phone ID');
+    return { success: false, error: 'Missing active Meta credentials' };
+  }
+
+  const documentPayload = {
+    filename: filename,
+    caption: caption,
+  };
+  if (mediaId) {
+    documentPayload.id = mediaId;
+  } else if (pdfUrl) {
+    documentPayload.link = pdfUrl;
   }
 
   const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
@@ -200,11 +230,7 @@ export async function sendWhatsAppDocument({ toPhone, mediaId, filename, caption
       recipient_type: 'individual',
       to: cleanPhone,
       type: 'document',
-      document: {
-        id: mediaId,
-        filename: filename,
-        caption: caption,
-      },
+      document: documentPayload,
     }),
   });
 
@@ -226,11 +252,15 @@ export async function createAndSendInvoice({
   phone = '919791471277',
   email = '',
   city = 'Mumbai, IN',
-  description = 'DhiGrowth WhatsApp CRM & AI Concierge',
+  description = 'WAPPPILOT WhatsApp CRM & AI Concierge',
   amount = 2499,
   conversationId = 'c1000000-0000-0000-0000-000000000001',
   messageTemplate = '',
   baseUrl = 'http://localhost:4000',
+  workspaceId = 'b0000000-0000-0000-0000-000000000001',
+  userId = null,
+  username = 'sri',
+  slug = null,
 }) {
   const invoiceNum = 'INV-' + Math.floor(100000 + Math.random() * 900000);
   const paymentLink = `${baseUrl}/invoices/${invoiceNum}/pay`;
@@ -246,6 +276,7 @@ export async function createAndSendInvoice({
     status: 'due',
     paymentLink,
     conversationId,
+    workspaceId: workspaceId || 'b0000000-0000-0000-0000-000000000001',
     createdAt: new Date().toISOString(),
     transactionId: null,
     paymentMethod: null,
@@ -275,17 +306,20 @@ export async function createAndSendInvoice({
       .replace(/\{\{\s*description\s*\}\}/gi, invoice.description)
       .replace(/\{\{\s*paymentLink\s*\}\}/gi, paymentLink);
   } else {
-    caption = `🧾 *INVOICE DUE: ${invoice.id}*\n\nDear ${invoice.customerName},\nYour invoice for *${invoice.description}* has been issued.\n\n💳 *Amount Due:* ${formattedAmount}\n🔗 *Secure Payment Link:* ${paymentLink}\n\nClick the link above to pay via UPI, Cards, or NetBanking. Once completed, your official Paid Receipt PDF will be automatically sent here.\n\n_DhiGrowth IT Services_`;
+    caption = `🧾 *INVOICE DUE: ${invoice.id}*\n\nDear ${invoice.customerName},\nYour invoice for *${invoice.description}* has been issued.\n\n💳 *Amount Due:* ${formattedAmount}\n🔗 *Secure Payment Link:* ${paymentLink}\n\nClick the link above to pay via UPI, Cards, or NetBanking. Once completed, your official Paid Receipt PDF will be automatically sent here.\n\n_WAPPPILOT Business Solutions_`;
   }
 
+  const metaContext = { workspaceId, userId, username, slug };
+
   try {
-    const mediaId = await uploadPdfToMeta(pdfBuffer, filename);
+    const mediaId = await uploadPdfToMeta(pdfBuffer, filename, metaContext);
     if (mediaId) {
       metaResult = await sendWhatsAppDocument({
         toPhone: invoice.phone,
         mediaId,
         filename,
         caption,
+        metaContext,
       });
     }
   } catch (err) {
@@ -322,6 +356,10 @@ export async function markInvoicePaid(invoiceId, {
   amount = 2499,
   conversationId = null,
   baseUrl = '',
+  workspaceId = null,
+  userId = null,
+  username = 'sri',
+  slug = null,
 } = {}) {
   let invoice = invoices.get(invoiceId);
   if (!invoice) {
@@ -339,11 +377,12 @@ export async function markInvoicePaid(invoiceId, {
       phone: phone || '919791471277',
       email: email || '',
       city: city || 'India',
-      description: description || 'DhiGrowth WhatsApp CRM & AI Business Concierge',
+      description: description || 'WAPPPILOT WhatsApp CRM & AI Business Concierge',
       amount: Number(amount) || 2499,
       status: 'due',
       paymentLink: `${resolvedBaseUrl}/invoices/${invoiceId}/pay`,
       conversationId: conversationId || null,
+      workspaceId: workspaceId || 'b0000000-0000-0000-0000-000000000001',
       createdAt: new Date().toISOString(),
       transactionId: null,
       paymentMethod: null,
@@ -375,16 +414,20 @@ export async function markInvoicePaid(invoiceId, {
   let metaResult = null;
   const filename = `Receipt_${invoice.id}.pdf`;
   const formattedAmount = `INR ${invoice.amount.toLocaleString('en-IN')}`;
-  const caption = `✅ *PAYMENT CONFIRMED / RECEIPT: ${invoice.id}*\n\nDear ${invoice.customerName},\nThank you! We have received your payment of *${formattedAmount}* for *${invoice.description}*.\n\n🛡️ *Transaction ID:* ${invoice.transactionId}\n💳 *Payment Mode:* ${invoice.paymentMethod}\n📅 *Paid On:* ${invoice.paymentDate}\n\nAttached is your official Tax Payment Receipt PDF.\n\n_Thank you for choosing DhiGrowth IT Services! 🚀_`;
+  const caption = `✅ *PAYMENT CONFIRMED / RECEIPT: ${invoice.id}*\n\nDear ${invoice.customerName},\nThank you! We have received your payment of *${formattedAmount}* for *${invoice.description}*.\n\n🛡️ *Transaction ID:* ${invoice.transactionId}\n💳 *Payment Mode:* ${invoice.paymentMethod}\n📅 *Paid On:* ${invoice.paymentDate}\n\nAttached is your official Tax Payment Receipt PDF.\n\n_Thank you for choosing WAPPPILOT Business Solutions! 🚀_`;
+
+  const effectiveWorkspaceId = workspaceId || invoice.workspaceId || 'b0000000-0000-0000-0000-000000000001';
+  const metaContext = { workspaceId: effectiveWorkspaceId, userId, username, slug };
 
   try {
-    const mediaId = await uploadPdfToMeta(paidPdfBuffer, filename);
+    const mediaId = await uploadPdfToMeta(paidPdfBuffer, filename, metaContext);
     if (mediaId) {
       metaResult = await sendWhatsAppDocument({
         toPhone: invoice.phone,
         mediaId,
         filename,
         caption,
+        metaContext,
       });
     }
   } catch (err) {
@@ -420,7 +463,7 @@ export function renderCheckoutHtml(invoice) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${isPaid ? 'Payment Receipt' : 'Pay Invoice'} - ${invoice.id} | DhiGrowth IT Services</title>
+  <title>${isPaid ? 'Payment Receipt' : 'Pay Invoice'} - ${invoice.id} | WAPPPILOT Business Solutions</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -749,10 +792,14 @@ export function renderCheckoutHtml(invoice) {
  */
 export async function broadcastDueInvoicesToAll({
   contacts = [],
-  description = 'DhiGrowth WhatsApp CRM & AI Business Concierge',
+  description = 'WAPPPILOT WhatsApp CRM & AI Business Concierge',
   amount = 2499,
   messageTemplate = '',
   baseUrl = 'https://dhigrowth-backend-8tlq.onrender.com',
+  workspaceId = 'b0000000-0000-0000-0000-000000000001',
+  userId = null,
+  username = 'sri',
+  slug = null,
 } = {}) {
   let targetContacts = [...(contacts || [])];
 
@@ -809,6 +856,10 @@ export async function broadcastDueInvoicesToAll({
         conversationId: contact.conversationId || null,
         messageTemplate,
         baseUrl,
+        workspaceId,
+        userId,
+        username,
+        slug,
       });
 
       results.push({

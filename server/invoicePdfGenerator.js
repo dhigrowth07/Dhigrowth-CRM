@@ -50,9 +50,9 @@ export const generateInvoicePdf = ({
       doc.rect(0, 0, 595.28, 8).fill(isPaid ? '#16A34A' : '#7C3AED');
 
       // 2. Company Brand Header
-      doc.fillColor('#101828').fontSize(22).font('Helvetica-Bold').text('DhiGrowth IT Services', 40, 35);
-      doc.fillColor('#64748B').fontSize(9).font('Helvetica').text('AI Business Solutions, WhatsApp CRM & App Development', 40, 62);
-      doc.text('support@dhigrowth.com  |  +91 97914 71277  |  Bangalore & Mumbai, India', 40, 75);
+      doc.fillColor('#101828').fontSize(22).font('Helvetica-Bold').text('WAPPPILOT Business Solutions', 40, 35);
+      doc.fillColor('#64748B').fontSize(9).font('Helvetica').text('AI WhatsApp CRM, Marketing Automation & Commerce', 40, 62);
+      doc.text('support@wapppilot.com  |  +91 97914 71277  |  Official Meta Business Partner', 40, 75);
 
       // 3. Status Badge (Top Right)
       if (isPaid) {
@@ -102,7 +102,7 @@ export const generateInvoicePdf = ({
       // Table Row
       const rowY = tableTop + 34;
       doc.fillColor('#0F172A').fontSize(9.5).font('Helvetica-Bold').text(description, 50, rowY);
-      doc.fillColor('#64748B').fontSize(8).font('Helvetica').text('Official DhiGrowth IT enterprise service delivery & SLA', 50, rowY + 14);
+      doc.fillColor('#64748B').fontSize(8).font('Helvetica').text('Official WAPPPILOT enterprise service delivery & SLA', 50, rowY + 14);
 
       doc.fillColor('#0F172A').fontSize(9).font('Helvetica').text('1', 360, rowY + 4, { width: 40, align: 'center' });
       doc.text(formattedAmount, 410, rowY + 4, { width: 60, align: 'right' });

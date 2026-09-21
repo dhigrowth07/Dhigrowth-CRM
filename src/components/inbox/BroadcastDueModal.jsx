@@ -81,12 +81,13 @@ export const BroadcastDueModal = ({ onClose }) => {
   const {
     chats = [],
     currentUser,
+    currentWorkspaceId,
     isBroadcastDueModalOpen,
     setIsBroadcastDueModalOpen,
     showToast,
   } = useApp();
 
-  const [broadcastDesc, setBroadcastDesc] = useState('DhiGrowth WhatsApp CRM & AI Business Concierge');
+  const [broadcastDesc, setBroadcastDesc] = useState('WAPPPILOT WhatsApp CRM & AI Business Concierge');
   const [broadcastAmount, setBroadcastAmount] = useState(2499);
   const [selectedPreset, setSelectedPreset] = useState('formal');
   const [customTemplate, setCustomTemplate] = useState(TEMPLATE_PRESETS[0].text);
@@ -157,6 +158,9 @@ export const BroadcastDueModal = ({ onClose }) => {
         amount: broadcastAmount,
         messageTemplate: customTemplate,
         senderName: currentUser?.name || 'CRM Administrator',
+        workspaceId: currentWorkspaceId,
+        userId: currentUser?.username || currentUser?.id || 'sri',
+        username: currentUser?.username || 'sri',
       };
 
       let res;
