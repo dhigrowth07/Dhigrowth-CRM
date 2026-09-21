@@ -1464,63 +1464,63 @@ app.get('/api/meta-insights', async (req, res) => {
 });
 
 // 16. Automations Engine API
-app.get('/api/automations', (req, res) => {
+app.get('/api/automations', async (req, res) => {
   try {
     const workspaceId = req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const automations = getWorkspaceAutomations(workspaceId);
+    const automations = await getWorkspaceAutomations(workspaceId);
     res.json({ success: true, automations });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.post('/api/automations', (req, res) => {
+app.post('/api/automations', async (req, res) => {
   try {
-    const auto = createAutomation(req.body || {});
+    const auto = await createAutomation(req.body || {});
     res.json({ success: true, automation: auto });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.put('/api/automations/:id', (req, res) => {
+app.put('/api/automations/:id', async (req, res) => {
   try {
     const autoId = req.params.id;
     const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const updated = updateAutomation(workspaceId, autoId, req.body || {});
+    const updated = await updateAutomation(workspaceId, autoId, req.body || {});
     res.json({ success: true, automation: updated });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.delete('/api/automations/:id', (req, res) => {
+app.delete('/api/automations/:id', async (req, res) => {
   try {
     const autoId = req.params.id;
     const workspaceId = req.query.workspaceId || req.body?.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const result = deleteAutomation(workspaceId, autoId);
+    const result = await deleteAutomation(workspaceId, autoId);
     res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.post('/api/automations/:id/toggle', (req, res) => {
+app.post('/api/automations/:id/toggle', async (req, res) => {
   try {
     const autoId = req.params.id;
     const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const auto = toggleAutomationStatus(workspaceId, autoId);
+    const auto = await toggleAutomationStatus(workspaceId, autoId);
     res.json({ success: true, automation: auto });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.post('/api/automations/:id/test', (req, res) => {
+app.post('/api/automations/:id/test', async (req, res) => {
   try {
     const autoId = req.params.id;
     const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const result = testTriggerAutomation(workspaceId, autoId);
+    const result = await testTriggerAutomation(workspaceId, autoId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1528,65 +1528,65 @@ app.post('/api/automations/:id/test', (req, res) => {
 });
 
 // Drip Campaigns API
-app.get('/api/drips', (req, res) => {
+app.get('/api/drips', async (req, res) => {
   try {
     const workspaceId = req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const drips = getWorkspaceDrips(workspaceId);
+    const drips = await getWorkspaceDrips(workspaceId);
     res.json({ success: true, drips });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.post('/api/drips', (req, res) => {
+app.post('/api/drips', async (req, res) => {
   try {
     const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
     const { name, category, trigger, delay, steps } = req.body;
-    const drip = createDripCampaign({ workspaceId, name, category, trigger, delay, steps });
+    const drip = await createDripCampaign({ workspaceId, name, category, trigger, delay, steps });
     res.json({ success: true, drip });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.put('/api/drips/:id', (req, res) => {
+app.put('/api/drips/:id', async (req, res) => {
   try {
     const dripId = req.params.id;
     const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const updated = updateDripCampaign(workspaceId, dripId, req.body);
+    const updated = await updateDripCampaign(workspaceId, dripId, req.body);
     res.json({ success: true, drip: updated });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.delete('/api/drips/:id', (req, res) => {
+app.delete('/api/drips/:id', async (req, res) => {
   try {
     const dripId = req.params.id;
     const workspaceId = req.query.workspaceId || req.body?.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const result = deleteDripCampaign(workspaceId, dripId);
+    const result = await deleteDripCampaign(workspaceId, dripId);
     res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.post('/api/drips/:id/toggle', (req, res) => {
+app.post('/api/drips/:id/toggle', async (req, res) => {
   try {
     const dripId = req.params.id;
     const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const drip = toggleDripStatus(workspaceId, dripId);
+    const drip = await toggleDripStatus(workspaceId, dripId);
     res.json({ success: true, drip });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.post('/api/drips/:id/test', (req, res) => {
+app.post('/api/drips/:id/test', async (req, res) => {
   try {
     const dripId = req.params.id;
     const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const result = testTriggerDrip(workspaceId, dripId);
+    const result = await testTriggerDrip(workspaceId, dripId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
