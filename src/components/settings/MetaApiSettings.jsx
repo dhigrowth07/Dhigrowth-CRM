@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { BACKEND_URL } from '../../services/apiConfig';
+import { MetaEmbeddedSignupModal } from './MetaEmbeddedSignupModal';
 
 export const MetaApiSettings = () => {
   const {
@@ -31,6 +32,7 @@ export const MetaApiSettings = () => {
     isMetaLoading,
     showToast,
     currentUser,
+    currentWorkspaceId,
     setIsUpgradeModalOpen
   } = useApp();
 
@@ -41,11 +43,34 @@ export const MetaApiSettings = () => {
   const [verifyToken, setVerifyToken] = useState(metaConfig?.verifyToken || 'dhigrowth_webhook_secret_2026');
 
   // UI state
+  const [isEmbeddedModalOpen, setIsEmbeddedModalOpen] = useState(false);
+  const [isChannelConnected, setIsChannelConnected] = useState(Boolean(metaConfig?.phoneNumberId && metaConfig?.accessToken));
   const [showToken, setShowToken] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [hasSaved, setHasSaved] = useState(false);
+
+  const handleDisconnectChannel = async () => {
+    if (!window.confirm('Are you sure you want to disconnect this WhatsApp Business account from this workspace?')) return;
+    try {
+      await fetch(`${BACKEND_URL}/api/meta/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId: currentWorkspaceId,
+          username: currentUser?.username || 'sri'
+        })
+      });
+      setPhoneNumberId('');
+      setAccessToken('');
+      setWabaId('');
+      setIsChannelConnected(false);
+      showToast('WhatsApp Business account unlinked successfully', 'info');
+    } catch (err) {
+      showToast('Error disconnecting: ' + err.message, 'error');
+    }
+  };
 
   // Sync with context if metaConfig updates for this specific user
   useEffect(() => {
@@ -181,6 +206,55 @@ export const MetaApiSettings = () => {
               These WhatsApp Cloud API credentials belong strictly to <strong className="text-[#101828]">{currentUser?.organization || `${currentUser?.name || 'Your'}'s Workspace`}</strong>. Each user configures their own independent Phone Number ID and Meta Access Token.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* 1-Click Meta Embedded Signup Hero Card */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-[#1877F2]/10 via-[#25D366]/10 to-[#7C3AED]/10 border border-[#1877F2]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-xs">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#1877F2] text-white flex items-center justify-center font-bold shadow-md shrink-0">
+            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+          </div>
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-bold text-[#101828]">Meta Embedded Signup (1-Click)</h3>
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#1877F2] text-white">
+                RECOMMENDED
+              </span>
+              {isChannelConnected ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">
+                  ● Live Connected
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300">
+                  ○ Needs Connection
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[#475467] max-w-xl">
+              Connect your WhatsApp Business Account (WABA) in 1 click. Automatically links Phone ID, Cloud API tokens, and webhook listeners without manual copying.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+          {isChannelConnected ? (
+            <button
+              onClick={handleDisconnectChannel}
+              className="px-4 py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
+            >
+              Disconnect
+            </button>
+          ) : null}
+          <button
+            onClick={() => setIsEmbeddedModalOpen(true)}
+            className="w-full sm:w-auto px-5 py-2.5 bg-[#1877F2] hover:bg-[#166FE5] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <Zap className="w-4 h-4" />
+            <span>{isChannelConnected ? 'Reconnect / Change Number' : 'Connect WhatsApp (1-Click)'}</span>
+          </button>
         </div>
       </div>
 
@@ -498,6 +572,18 @@ export const MetaApiSettings = () => {
           </div>
         </div>
       </div>
+
+      {/* Meta Embedded Signup 1-Click Modal */}
+      <MetaEmbeddedSignupModal
+        isOpen={isEmbeddedModalOpen}
+        onClose={() => setIsEmbeddedModalOpen(false)}
+        onConnected={(channel) => {
+          setIsChannelConnected(true);
+          if (channel.phoneNumberId) setPhoneNumberId(channel.phoneNumberId);
+          if (channel.wabaId) setWabaId(channel.wabaId);
+          if (channel.accessToken) setAccessToken(channel.accessToken);
+        }}
+      />
     </div>
   );
 };

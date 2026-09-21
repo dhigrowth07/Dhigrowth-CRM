@@ -10,10 +10,9 @@
         "action": "Dispatch Interactive Greeting",
         "actionDetails": "Send button card with App Dev, CRM, and AI Solutions",
         "status": "Active",
-        "runs": 143,
-        "createdAt": "2026-09-12T07:22:51.549Z",
-        "lastRunAt": "2026-09-19T07:23:28.336Z",
-        "updatedAt": "2026-09-19T07:23:28.358Z"
+        "runs": 142,
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       },
       {
         "id": "auto_app_inquiry",
@@ -25,8 +24,8 @@
         "actionDetails": "Send Flutter & React Native portfolio with consultation link",
         "status": "Active",
         "runs": 89,
-        "createdAt": "2026-09-14T07:22:51.549Z",
-        "lastRunAt": "2026-09-19T05:22:51.549Z"
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       },
       {
         "id": "auto_crm_funnel",
@@ -38,8 +37,8 @@
         "actionDetails": "Send Cloud API features, lead funnels, and pricing plans",
         "status": "Active",
         "runs": 64,
-        "createdAt": "2026-09-16T07:22:51.549Z",
-        "lastRunAt": "2026-09-19T02:22:51.549Z"
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       },
       {
         "id": "auto_agent_handoff",
@@ -51,8 +50,8 @@
         "actionDetails": "Move to Manual Agent mode and notify team inbox",
         "status": "Active",
         "runs": 31,
-        "createdAt": "2026-09-17T07:22:51.549Z",
-        "lastRunAt": "2026-09-19T07:00:51.549Z"
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       }
     ]
   }

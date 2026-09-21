@@ -250,5 +250,18 @@ export function getTenantByPhoneNumberId(phoneNumberId) {
   return null;
 }
 
+/**
+ * Remove tenant credentials
+ */
+export function removeTenantMeta(identifier) {
+  if (!identifier) return;
+  const key = String(identifier).toLowerCase();
+  delete tenantConfigs.tenants[key];
+  delete tenantConfigs.tenants[identifier];
+  saveToDisk();
+}
+
+export const registerTenantMeta = saveTenantMetaConfig;
+
 // Self initialize on load
 initTenantMetaStore();

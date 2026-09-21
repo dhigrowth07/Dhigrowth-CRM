@@ -8,8 +8,8 @@
         "trigger": "Hot",
         "delay": "1 day(s)",
         "status": "Active",
-        "enrolled": 125,
-        "delivered": 121,
+        "enrolled": 124,
+        "delivered": 120,
         "steps": [
           {
             "step": 1,
@@ -22,9 +22,8 @@
             "action": "Offer 1-on-1 Consultation Call Link"
           }
         ],
-        "createdAt": "2026-09-09T07:31:23.698Z",
-        "lastTriggerAt": "2026-09-19T07:32:58.825Z",
-        "updatedAt": "2026-09-19T07:32:46.185Z"
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       },
       {
         "id": "drip_cart_recovery",
@@ -47,8 +46,8 @@
             "action": "Send Direct WhatsApp Checkout Link"
           }
         ],
-        "createdAt": "2026-09-12T07:31:23.698Z",
-        "lastTriggerAt": "2026-09-19T05:31:23.698Z"
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       },
       {
         "id": "drip_post_purchase",
@@ -73,11 +72,11 @@
           {
             "step": 3,
             "delay": "Day 14",
-            "action": "₹500 Referral Bonus Invitation"
+            "action": "â‚¹500 Referral Bonus Invitation"
           }
         ],
-        "createdAt": "2026-09-05T07:31:23.698Z",
-        "lastTriggerAt": "2026-09-19T04:31:23.698Z"
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       },
       {
         "id": "drip_cold_reactivation",
@@ -100,8 +99,8 @@
             "action": "Exclusive Reactivation 20% Voucher"
           }
         ],
-        "createdAt": "2026-08-30T07:31:23.698Z",
-        "lastTriggerAt": "2026-09-19T02:31:23.698Z"
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
       }
     ]
   }

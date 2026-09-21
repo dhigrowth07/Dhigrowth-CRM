@@ -78,6 +78,11 @@ import {
 } from './dripService.js';
 import { setManualMode, isManualMode } from './manualAgentStore.js';
 import { getMetaWhatsAppInsights } from './metaInsightsService.js';
+import {
+  getMetaOAuthConfig,
+  handleEmbeddedSignupCallback,
+  disconnectMetaChannel,
+} from './metaOAuthService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1459,6 +1464,34 @@ app.get('/api/meta-insights', async (req, res) => {
     res.json(insights);
   } catch (err) {
     console.error('[MetaInsights] Route error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 15b. Meta Embedded Signup (OAuth 1-Click WhatsApp Onboarding)
+app.get('/api/meta/oauth/config', (req, res) => {
+  try {
+    const config = getMetaOAuthConfig();
+    res.json({ success: true, config });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/meta/embedded-signup/callback', async (req, res) => {
+  try {
+    const result = await handleEmbeddedSignupCallback(req.body || {});
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/meta/disconnect', async (req, res) => {
+  try {
+    const result = await disconnectMetaChannel(req.body || {});
+    res.json(result);
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
