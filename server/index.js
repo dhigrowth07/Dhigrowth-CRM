@@ -83,6 +83,13 @@ import {
   handleEmbeddedSignupCallback,
   disconnectMetaChannel,
 } from './metaOAuthService.js';
+import {
+  registerTenant,
+  loginTenant,
+  getWorkspaceMembers,
+  inviteWorkspaceMember,
+  removeWorkspaceMember,
+} from './authService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1490,6 +1497,56 @@ app.post('/api/meta/embedded-signup/callback', async (req, res) => {
 app.post('/api/meta/disconnect', async (req, res) => {
   try {
     const result = await disconnectMetaChannel(req.body || {});
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 15c. Commercial SaaS Authentication & Tenant Registration API
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const result = await registerTenant(req.body || {});
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const result = await loginTenant(req.body || {});
+    res.json(result);
+  } catch (err) {
+    res.status(401).json({ success: false, error: err.message });
+  }
+});
+
+// 15d. Multi-Tenant Workspace Team Members API
+app.get('/api/workspace/members', async (req, res) => {
+  try {
+    const workspaceId = req.query.workspaceId || req.headers['x-workspace-id'] || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const members = await getWorkspaceMembers(workspaceId);
+    res.json({ success: true, members });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/workspace/members/invite', async (req, res) => {
+  try {
+    const member = await inviteWorkspaceMember(req.body || {});
+    res.json({ success: true, member });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/workspace/members/:id', async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    const workspaceId = req.query.workspaceId || req.body?.workspaceId || null;
+    const result = await removeWorkspaceMember(memberId, workspaceId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

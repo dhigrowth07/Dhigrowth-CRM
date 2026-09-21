@@ -45,6 +45,8 @@ import { BroadcastDueModal } from './components/inbox/BroadcastDueModal';
 import { BroadcastTemplateModal } from './components/inbox/BroadcastTemplateModal';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { MobileDrawer } from './components/layout/MobileDrawer';
+import { OnboardingWizardModal } from './components/onboarding/OnboardingWizardModal';
+import { TeamMembersPage } from './components/settings/TeamMembersPage';
 
 const AppContent = () => {
   const {
@@ -55,6 +57,8 @@ const AppContent = () => {
     switchAdminProfile,
     clientViewMode,
     subscription,
+    isOnboardingWizardOpen,
+    setIsOnboardingWizardOpen,
   } = useApp();
 
   if (!isAuthenticated) {
@@ -315,6 +319,10 @@ const AppContent = () => {
       case 'tenants':
       case 'tenant-management':
         return <SuperAdminTenantsPage />;
+      case 'team':
+      case 'team-members':
+      case 'members':
+        return <TeamMembersPage />;
       default:
         return <DashboardOverview />;
     }
@@ -348,6 +356,10 @@ const AppContent = () => {
       <MobileDrawer />
 
       {/* Interactive Global Modals */}
+      <OnboardingWizardModal
+        isOpen={isOnboardingWizardOpen}
+        onClose={() => setIsOnboardingWizardOpen(false)}
+      />
       <CheckoutModal />
       <UpgradeModal />
       <UsageModal />

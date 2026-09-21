@@ -106,8 +106,9 @@ export const MobileDrawer = () => {
         ]
       : []),
     {
-      title: 'BILLING & WALLET',
+      title: 'TEAM & SETTINGS',
       items: [
+        { id: 'team', label: 'Team Members & Roles', icon: Users },
         { id: 'wallet', label: 'Credits & Wallet Balance', icon: Wallet },
         { id: 'plans', label: 'Subscription Plans', icon: Crown },
         { id: 'manage', label: 'Workspace Settings', icon: Settings },

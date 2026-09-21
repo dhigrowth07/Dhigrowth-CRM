@@ -166,6 +166,7 @@ export const Sidebar = () => {
     {
       title: 'ACCOUNT',
       items: [
+        { id: 'team', label: 'Team Members', icon: Users, hasArrow: false, hasDot: false },
         { id: 'manage', label: 'Manage', icon: Settings, hasArrow: false, hasDot: false },
         { id: 'wallet', label: 'Wallet', icon: Wallet, hasArrow: false, hasDot: false },
         { id: 'plans', label: 'Plans', icon: Crown, hasArrow: false, hasDot: false, isUpgrade: true },

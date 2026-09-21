@@ -261,6 +261,57 @@ export const AppProvider = ({ children }) => {
   const [checkoutData, setCheckoutData] = useState({ planId: 'Growth', billingCycle: 'monthly', provider: 'razorpay' });
   const [subscription, setSubscription] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
+
+  const registerNewTenant = async ({ fullName, companyName, email, phone, password }) => {
+    const payload = { fullName, companyName, email, phone, password };
+    let res;
+    try {
+      res = await fetch(`${BACKEND_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch {}
+
+    if (!res || !res.ok) {
+      try {
+        res = await fetch('http://localhost:4000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch {}
+    }
+
+    if (!res) throw new Error('Cannot connect to backend server. Please verify backend is running on port 4000.');
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create account.');
+
+    const session = {
+      username: data.user?.email?.split('@')[0] || 'admin',
+      name: data.user?.name || fullName,
+      email: data.user?.email || email,
+      phone: data.user?.phone || phone,
+      role: data.user?.role || 'super_admin',
+      isExternalClient: false,
+      isAdmin: true,
+      organization: data.organization?.name || data.workspace?.name || companyName,
+      workspaceId: data.workspace?.id,
+      slug: data.workspace?.slug || (companyName.toLowerCase().replace(/[^a-z0-9]/g, '-')),
+      token: `tenant_${data.user?.id || Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      loginAt: new Date().toISOString(),
+      isFirstTimeOnboarding: true,
+    };
+
+    setCurrentUser(session);
+    localStorage.setItem('dhigrowth_auth_session', JSON.stringify(session));
+    localStorage.setItem(`dhigrowth_auth_session_${session.slug}`, JSON.stringify(session));
+    setIsOnboardingWizardOpen(true);
+    showToast(`🎉 Welcome to Dhigrowth CRM, ${session.name}! Your 14-day free trial has started.`, 'success');
+    return session;
+  };
 
   const openCheckout = (planId = 'Growth', billingCycle = 'monthly', provider = 'razorpay') => {
     setCheckoutData({ planId, billingCycle, provider });
@@ -651,6 +702,61 @@ export const AppProvider = ({ children }) => {
   const login = async ({ username, password, remember = true }) => {
     const cleanUser = username?.trim().toLowerCase();
     const cleanPass = password?.trim();
+
+    // 1. First attempt Cloud Authentication with Supabase backend
+    try {
+      let cloudRes;
+      try {
+        cloudRes = await fetch(`${BACKEND_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanUser, username: cleanUser, password: cleanPass }),
+        });
+      } catch {}
+
+      if (!cloudRes || !cloudRes.ok) {
+        try {
+          cloudRes = await fetch('http://localhost:4000/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: cleanUser, username: cleanUser, password: cleanPass }),
+          });
+        } catch {}
+      }
+
+      if (cloudRes && cloudRes.ok) {
+        const cloudData = await cloudRes.json();
+        if (cloudData?.success && cloudData?.user) {
+          const session = {
+            username: cloudData.user.username || cloudData.user.email?.split('@')[0] || cleanUser,
+            name: cloudData.user.name || cleanUser,
+            email: cloudData.user.email || `${cleanUser}@dhigrowth.com`,
+            phone: cloudData.user.phone || '',
+            role: cloudData.user.role || 'super_admin',
+            isExternalClient: cloudData.user.isExternalClient || false,
+            isAdmin: cloudData.user.role === 'super_admin' || cloudData.user.role === 'admin',
+            organization: cloudData.workspace?.name || `${cloudData.user.name}'s Workspace`,
+            workspaceId: cloudData.workspace?.id || DEFAULT_WORKSPACE_ID,
+            slug: cloudData.workspace?.slug || cleanUser,
+            token: `tenant_${cloudData.user.id || cleanUser}_${Date.now()}`,
+            loginAt: new Date().toISOString(),
+          };
+          setCurrentUser(session);
+          const storageKey = session.slug ? `dhigrowth_auth_session_${session.slug}` : 'dhigrowth_auth_session';
+          if (remember) {
+            localStorage.setItem(storageKey, JSON.stringify(session));
+            localStorage.setItem('dhigrowth_auth_session', JSON.stringify(session));
+          } else {
+            sessionStorage.setItem(storageKey, JSON.stringify(session));
+            sessionStorage.setItem('dhigrowth_auth_session', JSON.stringify(session));
+          }
+          showToast(`Welcome back, ${session.name}! 👋`, 'success');
+          return session;
+        }
+      }
+    } catch (cloudAuthErr) {
+      console.warn('[CloudAuth] Backend login check skipped, falling back to local credentials:', cloudAuthErr.message);
+    }
 
     let savedCreds = null;
     try {
@@ -2360,6 +2466,10 @@ export const AppProvider = ({ children }) => {
         subscription,
         refreshSubscription,
         setSubscriptionStatus,
+        // Commercial SaaS Onboarding & Multi-Tenancy
+        isOnboardingWizardOpen,
+        setIsOnboardingWizardOpen,
+        registerNewTenant,
       }}
     >
       {children}
