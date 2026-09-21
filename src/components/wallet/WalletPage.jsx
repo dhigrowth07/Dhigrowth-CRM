@@ -246,7 +246,7 @@ export const WalletPage = () => {
           key: keyId,
           amount: (orderData?.amountPaise || (amountInr * 100)),
           currency: 'INR',
-          name: 'Dhigrowth CRM',
+          name: 'WAPPPILOT',
           description: `AI Credits Recharge (${profileDisplayName})`,
           order_id: orderData?.orderId && !orderData.isTest ? orderData.orderId : undefined,
           prefill: {
@@ -464,7 +464,7 @@ export const WalletPage = () => {
               <span>Transparent Billing Model: How Your Charges Work</span>
             </h3>
             <p className="text-xs text-[#667085]">
-              You only pay Dhigrowth CRM a flat monthly platform subscription. Infrastructure costs (Meta WhatsApp fees &amp; AI tokens) are billed directly to providers with zero markup.
+              You only pay WAPPPILOT a flat monthly platform subscription. Infrastructure costs (Meta WhatsApp fees &amp; AI tokens) are billed directly to providers with zero markup.
             </p>
           </div>
           <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-[#F4F0FD] text-[#7C3AED] rounded-full self-start sm:self-auto border border-[#E9D8FD]">
@@ -485,7 +485,7 @@ export const WalletPage = () => {
               Monthly Platform Fee
             </div>
             <p className="text-[11px] text-[#475467] leading-relaxed">
-              Paid monthly to Dhigrowth CRM. Unlocks our multi-agent Team Inbox, mass broadcast campaign scheduler, flow automations, analytics, CRM contacts, and team seats.
+              Paid monthly to WAPPPILOT. Unlocks our multi-agent Team Inbox, mass broadcast campaign scheduler, flow automations, analytics, CRM contacts, and team seats.
             </p>
           </div>
 

@@ -407,7 +407,7 @@ export const AiStudio = () => {
             <div className="p-3.5 rounded-2xl bg-[#FFFDF5] border border-[#FEF0C7] flex items-start gap-2.5 text-xs text-[#92400E]">
               <ShieldCheck className="w-4 h-4 text-[#D97706] shrink-0 mt-0.5" />
               <div className="text-[11px] leading-relaxed">
-                <strong className="text-[#B45309]">Zero-Markup AI Token Policy (BYOK):</strong> Connect your own API key below. You only pay your AI provider directly at wholesale developer rates. Dhigrowth CRM charges <strong>$0 markup</strong> on AI tokens; you only pay Dhigrowth CRM a monthly platform subscription.
+                <strong className="text-[#B45309]">Zero-Markup AI Token Policy (BYOK):</strong> Connect your own API key below. You only pay your AI provider directly at wholesale developer rates. WAPPPILOT charges <strong>$0 markup</strong> on AI tokens; you only pay WAPPPILOT a monthly platform subscription.
               </div>
             </div>
 

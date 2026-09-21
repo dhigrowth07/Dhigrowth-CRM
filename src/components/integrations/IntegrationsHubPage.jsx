@@ -37,7 +37,7 @@ export const IntegrationsHubPage = () => {
       name: 'Shopify',
       badge: 'S',
       badgeBg: 'bg-[#95BF47] text-white',
-      desc: 'Integrate with Shopify to enhance your e-commerce experience with Dhigrowth CRM.',
+      desc: 'Integrate with Shopify to enhance your e-commerce experience with WAPPPILOT.',
       actionText: 'Shopify Settings',
       onClick: () => setActiveTab('shopify'),
     },

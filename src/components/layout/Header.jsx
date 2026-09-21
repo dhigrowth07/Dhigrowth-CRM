@@ -67,8 +67,9 @@ export const Header = () => {
         return 'Organization Settings';
       case 'plans': return 'Subscription Plans';
       case 'usage':
-      case 'limits':
-        return 'Usage & Limits';
+      case 'team':
+      case 'team-members':
+        return 'Team Members & Roles';
       default: return 'Dashboard';
     }
   };

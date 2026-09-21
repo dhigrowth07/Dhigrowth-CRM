@@ -47,7 +47,7 @@ export const ShopifyIntegrationPage = () => {
           Shopify integration
         </h1>
         <p className="text-xs lg:text-sm text-[#475467] mt-0.5">
-          Sync products, orders, customers and abandoned carts between your Shopify store and Dhigrowth CRM — automatically.
+          Sync products, orders, customers and abandoned carts between your Shopify store and WAPPPILOT — automatically.
         </p>
       </div>
 
@@ -137,7 +137,7 @@ export const ShopifyIntegrationPage = () => {
           <div>
             <h2 className="text-base font-bold text-[#101828]">Connect your Shopify store</h2>
             <p className="text-xs text-[#667085]">
-              Authorise Dhigrowth CRM to read orders, customers, inventory, and write draft orders so we can power WhatsApp commerce.
+              Authorise WAPPPILOT to read orders, customers, inventory, and write draft orders so we can power WhatsApp commerce.
             </p>
           </div>
         </div>

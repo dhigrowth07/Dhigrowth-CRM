@@ -309,7 +309,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('dhigrowth_auth_session', JSON.stringify(session));
     localStorage.setItem(`dhigrowth_auth_session_${session.slug}`, JSON.stringify(session));
     setIsOnboardingWizardOpen(true);
-    showToast(`🎉 Welcome to Dhigrowth CRM, ${session.name}! Your 14-day free trial has started.`, 'success');
+    showToast(`🎉 Welcome to WAPPPILOT, ${session.name}! Your 14-day free trial has started.`, 'success');
     return session;
   };
 
@@ -867,7 +867,7 @@ export const AppProvider = ({ children }) => {
         role: savedCreds.role || 'CRM User',
         isExternalClient: false,
         isAdmin: false,
-        organization: savedCreds.organization || 'Dhigrowth CRM',
+        organization: savedCreds.organization || 'WAPPPILOT',
         workspaceId: savedCreds.workspaceId || DEFAULT_WORKSPACE_ID,
         slug: savedCreds.slug || cleanUser,
         token: `custom_${cleanUser}_${Date.now()}`,
@@ -892,10 +892,10 @@ export const AppProvider = ({ children }) => {
         username: 'sri',
         name: 'Sri',
         email: 'sri@dhigrowth.com',
-        role: 'Dhigrowth CRM User',
+        role: 'WAPPPILOT CRM User',
         isExternalClient: false,
         isAdmin: false,
-        organization: 'Dhigrowth CRM',
+        organization: 'WAPPPILOT',
         workspaceId: DEFAULT_WORKSPACE_ID,
         slug: 'sri',
         token: `dhi_sri_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
@@ -909,7 +909,7 @@ export const AppProvider = ({ children }) => {
         role: 'Super Administrator',
         isExternalClient: false,
         isAdmin: true,
-        organization: 'Dhigrowth CRM & Master Operations',
+        organization: 'WAPPPILOT & Master Operations',
         workspaceId: DEFAULT_WORKSPACE_ID,
         slug: 'admin',
         token: `dhi_admin_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,

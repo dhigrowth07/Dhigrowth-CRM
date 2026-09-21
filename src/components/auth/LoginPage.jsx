@@ -105,17 +105,19 @@ export const LoginPage = () => {
 
         {/* Top Header */}
         <div className="relative z-10 flex items-center gap-3">
-          <img
-            src="/logo.webp"
-            alt="DhiGrowth CRM Logo"
-            className="w-10 h-10 object-contain rounded-full shadow-lg border border-white/20 bg-white/10 backdrop-blur-md p-0.5"
-          />
+          <div className="bg-white rounded-xl px-2.5 py-1.5 shadow-lg border border-white/20">
+            <img
+              src="/wapppilot-logo.png"
+              alt="WAPPPILOT"
+              className="h-7 object-contain"
+            />
+          </div>
           <div>
             <span className="text-lg font-extrabold tracking-tight text-white">
-              Dhigrowth CRM
+              WAPPPILOT
             </span>
-            <div className="text-[10px] text-purple-300 font-mono tracking-wide uppercase">
-              Commercial SaaS & WhatsApp Automation
+            <div className="text-[10px] text-blue-200 font-mono tracking-wide uppercase">
+              AI WhatsApp Marketing & Commercial Automation
             </div>
           </div>
         </div>
@@ -178,20 +180,12 @@ export const LoginPage = () => {
       <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16">
         <div className="w-full max-w-md space-y-6">
           {/* Mobile Brand Logo */}
-          <div className="flex lg:hidden items-center gap-3 justify-center mb-2">
+          <div className="flex lg:hidden items-center justify-center mb-2">
             <img
-              src="/logo.webp"
-              alt="DhiGrowth CRM Logo"
-              className="w-10 h-10 object-contain rounded-full shadow-md"
+              src="/wapppilot-logo.png"
+              alt="WAPPPILOT"
+              className="h-10 object-contain"
             />
-            <div className="text-left">
-              <span className="text-lg font-extrabold tracking-tight text-[#101828]">
-                Dhigrowth CRM
-              </span>
-              <div className="text-[10px] text-[#667085] font-mono">
-                Commercial WhatsApp SaaS
-              </div>
-            </div>
           </div>
 
           {/* Tab Switcher: Sign In vs 14-Day Free Trial */}
@@ -230,11 +224,11 @@ export const LoginPage = () => {
           {/* Form Header */}
           <div className="space-y-1.5 text-center lg:text-left">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#101828]">
-              {authMode === 'signin' ? 'Sign in to your account' : 'Start your 14-Day Free Trial'}
+              {authMode === 'signin' ? 'Sign in to WAPPPILOT' : 'Start your 14-Day Free Trial'}
             </h2>
             <p className="text-xs sm:text-sm text-[#667085]">
               {authMode === 'signin'
-                ? 'Enter your credentials to access your DhiGrowth workspace'
+                ? 'Enter your credentials to access your WAPPPILOT workspace'
                 : 'No credit card required. Free $5 AI credits & instant Meta WhatsApp setup.'}
             </p>
           </div>
@@ -527,7 +521,7 @@ export const LoginPage = () => {
 
           {/* Footer Note */}
           <div className="text-center text-[11px] text-[#98A2B3] pt-1">
-            Protected by DhiGrowth Enterprise Cloud · Isolated Supabase Tenant Database
+            Protected by WAPPPILOT Enterprise Cloud · Isolated Supabase Tenant Database
           </div>
         </div>
       </div>

@@ -204,7 +204,7 @@ const AppContent = () => {
         ) : (
           <FeaturePaywall
             featureTitle="App Integrations Hub"
-            featureDescription="Connect 100+ native apps, CRMs, payment gateways, and tools to your Dhigrowth workspace."
+            featureDescription="Connect 100+ native apps, CRMs, payment gateways, and tools to your WAPPPILOT workspace."
             requiredPlan="Growth"
           />
         );

@@ -186,24 +186,26 @@ export const Sidebar = () => {
           {!isSidebarCollapsed ? (
             <div
               onClick={() => setActiveTab('dashboard')}
-              className="flex items-center gap-2.5 min-w-0 cursor-pointer"
+              className="flex items-center gap-2 min-w-0 cursor-pointer"
             >
               <img
-                src="/logo.webp"
-                alt="Dhigrowth CRM Logo"
-                className="w-7 h-7 object-contain rounded-full shrink-0"
+                src="/wapppilot-logo.png"
+                alt="WAPPPILOT"
+                className="h-8 max-w-[155px] object-contain shrink-0"
               />
-              <span className="font-extrabold text-sm tracking-tight text-[#101828]">
-                Dhigrowth CRM
-              </span>
             </div>
           ) : (
-            <img
-              src="/logo.webp"
-              alt="Logo"
+            <div
               onClick={() => setActiveTab('dashboard')}
-              className="w-6 h-6 object-contain rounded-full shrink-0 cursor-pointer"
-            />
+              className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-start shrink-0 cursor-pointer bg-blue-50/50 p-0.5"
+              title="WAPPPILOT Dashboard"
+            >
+              <img
+                src="/wapppilot-logo.png"
+                alt="WAPPPILOT"
+                className="h-7 max-w-none object-left"
+              />
+            </div>
           )}
 
           {/* Sidebar Collapse/Expand Toggle Button */}

@@ -328,7 +328,7 @@ export const WhatsAppBusinessPage = () => {
                 Connect WhatsApp Business App
               </h3>
               <p className="text-xs text-[#667085] mt-0.5">
-                Link the number already running on your WhatsApp Business app to the API. You keep chatting from the app while Dhigrowth CRM adds automation, broadcasts and AI on the same number.
+                Link the number already running on your WhatsApp Business app to the API. You keep chatting from the app while WAPPPILOT adds automation, broadcasts and AI on the same number.
               </p>
             </div>
 
@@ -398,7 +398,7 @@ export const WhatsAppBusinessPage = () => {
                     Continue as {currentUser?.name || 'User'}?
                   </h3>
                   <p className="text-xs text-[#475467] mt-1 leading-relaxed">
-                    Dhigrowth CRM will receive your name, business portfolio details, and manage WhatsApp Cloud API messaging webhooks on your behalf.
+                    WAPPPILOT will receive your name, business portfolio details, and manage WhatsApp Cloud API messaging webhooks on your behalf.
                   </p>
                 </div>
 
@@ -501,7 +501,7 @@ export const WhatsAppBusinessPage = () => {
                     <span>Live Coexistence Mode Active</span>
                   </div>
                   <p className="text-[11px] leading-relaxed text-[#15803D]">
-                    You can continue chatting directly on the WhatsApp Business mobile app on your phone while Dhigrowth CRM automatically handles AI replies, webhooks, broadcasts, and team routing.
+                    You can continue chatting directly on the WhatsApp Business mobile app on your phone while WAPPPILOT automatically handles AI replies, webhooks, broadcasts, and team routing.
                   </p>
                 </div>
 
