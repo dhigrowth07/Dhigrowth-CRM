@@ -11,4 +11,4 @@ const isLocalhost =
 
 export const BACKEND_URL = isLocalhost
   ? 'http://localhost:4000'
-  : (import.meta.env.VITE_BACKEND_URL || 'https://dhigrowth-backend-8tlq.onrender.com').replace(/\/+$/, '');
+  : (import.meta.env.VITE_BACKEND_URL || 'https://api-wappilot.dhigrowth.com' || 'https://dhigrowth-crm.onrender.com').replace(/\/+$/, '');

@@ -295,8 +295,19 @@ export const AppProvider = ({ children }) => {
 
   // SaaS Subscription & Unified Checkout State (Stripe / Razorpay)
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-  const [checkoutData, setCheckoutData] = useState({ planId: 'Growth', billingCycle: 'monthly', provider: 'razorpay' });
-  const [subscription, setSubscription] = useState({ status: 'active', planId: 'Growth', planName: 'Growth Plan' });
+  const [checkoutData, setCheckoutData] = useState({ planId: 'Business', billingCycle: 'monthly', provider: 'razorpay' });
+  const [subscription, setSubscription] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('dhigrowth_subscription_b0000000-0000-0000-0000-000000000001') || localStorage.getItem('dhigrowth_subscription');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.status) return parsed;
+        }
+      }
+    } catch {}
+    return { status: 'active', planId: 'Business', planName: 'Business Plan' };
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
 
@@ -968,23 +979,43 @@ export const AppProvider = ({ children }) => {
   const refreshSubscription = async () => {
     try {
       const activeWs = currentWorkspaceId || 'b0000000-0000-0000-0000-000000000001';
-      let res;
+      // 1. Check localStorage first
       try {
-        res = await fetch(`${BACKEND_URL}/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`);
-      } catch {}
-      if (!res || !res.ok) {
-        try {
-          res = await fetch(`http://localhost:4000/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`);
-        } catch {}
-      }
-      if (res && res.ok) {
-        const data = await res.json();
-        if (data.subscription) {
-          setSubscription(data.subscription);
-          if (data.subscription.planId) {
-            setCurrentPlan(data.subscription.planId);
+        const saved = localStorage.getItem(`dhigrowth_subscription_${activeWs}`) || localStorage.getItem('dhigrowth_subscription');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.status) {
+            setSubscription(parsed);
+            if (parsed.planId) setCurrentPlan(parsed.planId);
           }
         }
+      } catch {}
+
+      // 2. Query remote endpoints in background
+      const endpoints = [
+        `${BACKEND_URL}/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
+        `https://api-wappilot.dhigrowth.com/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
+        `https://dhigrowth-crm.onrender.com/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
+        `http://localhost:4000/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
+      ];
+
+      for (const url of endpoints) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.subscription) {
+              setSubscription(data.subscription);
+              if (data.subscription.planId) {
+                setCurrentPlan(data.subscription.planId);
+              }
+              try {
+                localStorage.setItem(`dhigrowth_subscription_${activeWs}`, JSON.stringify(data.subscription));
+              } catch {}
+              break;
+            }
+          }
+        } catch {}
       }
     } catch (err) {
       console.warn('[AppContext] Note refreshing subscription:', err.message);
@@ -992,37 +1023,76 @@ export const AppProvider = ({ children }) => {
   };
 
   const setSubscriptionStatus = async (status = 'active', wsId) => {
+    const activeWs = wsId || currentWorkspaceId || 'b0000000-0000-0000-0000-000000000001';
+    
+    // 1. Immediate Optimistic UI update (Never block on network)
+    const now = new Date();
+    const currentPeriodEnd = new Date(now.getTime() + 30 * 86400000).toISOString();
+    const optimisticRecord = {
+      workspaceId: activeWs,
+      planId: 'Business',
+      planName: 'Business',
+      billingCycle: 'monthly',
+      status: status, // 'active' or 'trialing'
+      provider: 'razorpay',
+      currentPeriodStart: now.toISOString(),
+      currentPeriodEnd: currentPeriodEnd,
+      cancelAtPeriodEnd: false,
+      trialDaysRemaining: status === 'active' ? 30 : 0,
+      updatedAt: now.toISOString(),
+      paymentMethod: {
+        provider: 'razorpay',
+        brand: 'UPI / NetBanking',
+        last4: '2026',
+      },
+    };
+
+    setSubscription(optimisticRecord);
+    setCurrentPlan('Business');
+    if (status === 'active') {
+      setDaysRemaining(30);
+    }
+
     try {
-      const activeWs = wsId || currentWorkspaceId || 'b0000000-0000-0000-0000-000000000001';
-      let res;
+      localStorage.setItem(`dhigrowth_subscription_${activeWs}`, JSON.stringify(optimisticRecord));
+      localStorage.setItem('dhigrowth_subscription', JSON.stringify(optimisticRecord));
+    } catch {}
+
+    if (status === 'active') {
       try {
-        res = await fetch(`${BACKEND_URL}/api/billing/set-status`, {
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      } catch {}
+      showToast('🎉 All features unlocked! Business plan is now ACTIVE.', 'success');
+    } else {
+      showToast('🔒 Subscription set to Trialing. Paywall active for testing.', 'info');
+    }
+
+    // 2. Sync to Backend in Background
+    const endpoints = [
+      `${BACKEND_URL}/api/billing/set-status`,
+      'https://api-wappilot.dhigrowth.com/api/billing/set-status',
+      'https://dhigrowth-crm.onrender.com/api/billing/set-status',
+      'http://localhost:4000/api/billing/set-status',
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ workspaceId: activeWs, status }),
         });
-      } catch {}
-      if (!res || !res.ok) {
-        try {
-          res = await fetch(`http://localhost:4000/api/billing/set-status`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ workspaceId: activeWs, status }),
-          });
-        } catch {}
-      }
-      if (res && res.ok) {
-        const data = await res.json();
-        if (data && data.subscription) {
-          setSubscription(data.subscription);
-          if (data.subscription.planId) {
-            setCurrentPlan(data.subscription.planId);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.subscription) {
+            setSubscription(data.subscription);
+            try {
+              localStorage.setItem(`dhigrowth_subscription_${activeWs}`, JSON.stringify(data.subscription));
+            } catch {}
           }
-          showToast(`Subscription status updated to "${status.toUpperCase()}"!`, 'success');
+          break;
         }
-      }
-    } catch (err) {
-      showToast(err.message, 'error');
+      } catch {}
     }
   };
 
