@@ -75,18 +75,18 @@ export const MobileBottomNav = () => {
                 }
               }}
               className={`relative flex flex-col items-center justify-center h-full w-full py-1.5 transition-all duration-150 cursor-pointer active:scale-95 ${
-                isActive ? 'text-[#7C3AED]' : 'text-[#667085] hover:text-[#101828]'
+                isActive ? 'text-[#0284C7]' : 'text-[#667085] hover:text-[#101828]'
               }`}
             >
               {/* Active thumb indicator */}
               {isActive && (
-                <span className="absolute top-0 inset-x-4 h-0.5 bg-[#7C3AED] rounded-full" />
+                <span className="absolute top-0 inset-x-4 h-0.5 bg-[#0284C7] rounded-full" />
               )}
 
               <div className="relative flex items-center justify-center">
                 <Icon
                   className={`w-5 h-5 transition-transform ${
-                    isActive ? 'scale-110 text-[#7C3AED] stroke-[2.5]' : 'stroke-2'
+                    isActive ? 'scale-110 text-[#0284C7] stroke-[2.5]' : 'stroke-2'
                   }`}
                 />
 
@@ -105,7 +105,7 @@ export const MobileBottomNav = () => {
 
               <span
                 className={`text-[10px] mt-1 font-medium truncate max-w-[56px] leading-tight ${
-                  isActive ? 'font-bold text-[#7C3AED]' : 'text-[#667085]'
+                  isActive ? 'font-bold text-[#0284C7]' : 'text-[#667085]'
                 }`}
               >
                 {item.label}

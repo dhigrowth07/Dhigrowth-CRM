@@ -2,7 +2,7 @@ import React from 'react';
 import { User } from 'lucide-react';
 
 const AVATAR_PALETTES = [
-  { bg: 'bg-[#F4F0FD]', text: 'text-[#7C3AED]', border: 'border-[#E9D8FD]' },
+  { bg: 'bg-[#F0F9FF]', text: 'text-[#0284C7]', border: 'border-[#BAE6FD]' },
   { bg: 'bg-[#EFF8FF]', text: 'text-[#0086C9]', border: 'border-[#B2DDFF]' },
   { bg: 'bg-[#ECFDF3]', text: 'text-[#027A48]', border: 'border-[#A6F4C5]' },
   { bg: 'bg-[#FEF6EE]', text: 'text-[#B93815]', border: 'border-[#F9DBAF]' },

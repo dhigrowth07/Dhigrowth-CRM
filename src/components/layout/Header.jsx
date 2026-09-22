@@ -113,10 +113,10 @@ export const Header = () => {
         {/* Credits Badge */}
         <button
           onClick={() => setActiveTab('wallet')}
-          className="flex items-center gap-1 sm:gap-1.5 bg-[#F9F5FF] hover:bg-[#F4F0FD] border border-[#E9D8FD] px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-[#6941C6] cursor-pointer transition-colors shrink-0"
+          className="flex items-center gap-1 sm:gap-1.5 bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-[#0284C7] cursor-pointer transition-colors shrink-0"
           title="Click to manage credits and wallet"
         >
-          <div className="w-4 h-4 rounded-full bg-[#7C3AED] text-white flex items-center justify-center text-[10px] shrink-0 font-bold">
+          <div className="w-4 h-4 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-[10px] shrink-0 font-bold">
             $
           </div>
           <span className="font-mono tracking-tight font-bold text-[11px] sm:text-xs">
@@ -130,7 +130,7 @@ export const Header = () => {
             onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
             className="flex items-center gap-2 bg-white hover:bg-[#F9FAFB] border border-[#EAECF0] px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer shadow-2xs"
           >
-            <div className="w-6 h-6 rounded-full bg-[#7C3AED] text-white flex items-center justify-center text-[10px] font-bold">
+            <div className="w-6 h-6 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-[10px] font-bold">
               {(currentUser?.name?.[0] || currentUser?.username?.[0] || 'S').toUpperCase()}
             </div>
             <span className="text-xs font-semibold text-[#344054]">
@@ -139,7 +139,7 @@ export const Header = () => {
             {isSuperAdmin ? (
               <span className="text-xs" title="Super Administrator">👑</span>
             ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-bold font-mono">ADMIN</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 font-bold font-mono">ADMIN</span>
             ) : null}
             <ChevronDown className="w-3.5 h-3.5 text-[#98A2B3]" />
           </button>
@@ -163,10 +163,10 @@ export const Header = () => {
                   setActiveTab('meta-api');
                   setIsWorkspaceDropdownOpen(false);
                 }}
-                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F4F0FD] hover:text-[#7C3AED] rounded-xl font-medium cursor-pointer transition-colors flex items-center justify-between"
+                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F0F9FF] hover:text-[#0284C7] rounded-xl font-medium cursor-pointer transition-colors flex items-center justify-between"
               >
                 <span>Meta WhatsApp API</span>
-                <span className="text-[9px] bg-[#F4F0FD] text-[#7C3AED] px-1.5 py-0.5 rounded font-mono font-bold border border-[#E9D8FD]">API</span>
+                <span className="text-[9px] bg-[#F0F9FF] text-[#0284C7] px-1.5 py-0.5 rounded font-mono font-bold border border-[#BAE6FD]">API</span>
               </button>
 
               <button
@@ -174,7 +174,7 @@ export const Header = () => {
                   setActiveTab('usage');
                   setIsWorkspaceDropdownOpen(false);
                 }}
-                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F4F0FD] hover:text-[#7C3AED] rounded-xl font-medium cursor-pointer transition-colors"
+                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F0F9FF] hover:text-[#0284C7] rounded-xl font-medium cursor-pointer transition-colors"
               >
                 Usage & Limits
               </button>
@@ -184,7 +184,7 @@ export const Header = () => {
                   setIsUpgradeModalOpen(true);
                   setIsWorkspaceDropdownOpen(false);
                 }}
-                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F4F0FD] hover:text-[#7C3AED] rounded-xl font-medium cursor-pointer transition-colors"
+                className="w-full text-left px-3 py-2 text-xs text-[#344054] hover:bg-[#F0F9FF] hover:text-[#0284C7] rounded-xl font-medium cursor-pointer transition-colors"
               >
                 Subscription & Plans
               </button>
@@ -208,7 +208,7 @@ export const Header = () => {
         {/* User Initial Circle */}
         <button
           onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-          className="w-8 h-8 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white flex items-center justify-center text-xs font-bold shadow-xs cursor-pointer transition-colors"
+          className="w-8 h-8 rounded-full bg-[#0284C7] hover:bg-[#0369A1] text-white flex items-center justify-center text-xs font-bold shadow-xs cursor-pointer transition-colors"
           title="Account Menu"
         >
           {(currentUser?.name?.[0] || currentUser?.username?.[0] || 'S').toUpperCase()}

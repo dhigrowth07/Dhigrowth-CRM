@@ -253,8 +253,8 @@ export const BroadcastDueModal = ({ onClose }) => {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-center text-[#7C3AED] shadow-xs">
-            <Zap className="w-6 h-6 text-[#7C3AED]" />
+          <div className="w-12 h-12 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7] shadow-xs">
+            <Zap className="w-6 h-6 text-[#0284C7]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -306,12 +306,12 @@ export const BroadcastDueModal = ({ onClose }) => {
                 <div className="text-[10px] text-[#667085]">Per contact</div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD]">
-                <div className="text-[10px] font-bold text-[#7C3AED] uppercase tracking-wider font-mono">Receipt Mode</div>
-                <div className="text-lg font-black text-[#6D28D9] mt-0.5">
+              <div className="p-3 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]">
+                <div className="text-[10px] font-bold text-[#0284C7] uppercase tracking-wider font-mono">Receipt Mode</div>
+                <div className="text-lg font-black text-[#0369A1] mt-0.5">
                   Auto-Pilot
                 </div>
-                <div className="text-[10px] text-[#7C3AED]">On payment</div>
+                <div className="text-[10px] text-[#0284C7]">On payment</div>
               </div>
             </div>
 
@@ -340,7 +340,7 @@ export const BroadcastDueModal = ({ onClose }) => {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {res.invoiceId && (
-                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#F4F0FD] text-[#7C3AED] border border-[#E9D8FD]">
+                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#F0F9FF] text-[#0284C7] border border-[#BAE6FD]">
                           {res.invoiceId}
                         </span>
                       )}
@@ -359,7 +359,7 @@ export const BroadcastDueModal = ({ onClose }) => {
             </div>
 
             {/* Automated Paid Receipt Guarantee Box */}
-            <div className="p-4 bg-gradient-to-r from-[#F0FDF4] via-[#F4F0FD] to-[#F0FDF4] border-2 border-[#86EFAC] rounded-2xl text-left flex items-start gap-3 shadow-xs">
+            <div className="p-4 bg-gradient-to-r from-[#F0FDF4] via-[#F0F9FF] to-[#F0FDF4] border-2 border-[#86EFAC] rounded-2xl text-left flex items-start gap-3 shadow-xs">
               <div className="w-9 h-9 rounded-xl bg-[#16A34A] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                 <ShieldCheck className="w-5 h-5 text-white" />
               </div>
@@ -398,7 +398,7 @@ export const BroadcastDueModal = ({ onClose }) => {
             <div className="p-3.5 bg-[#FAF8F5] border border-[#EAECF0] rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#344054]">Target Recipients</span>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F4F0FD] text-[#7C3AED] font-mono border border-[#E9D8FD]">
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F0F9FF] text-[#0284C7] font-mono border border-[#BAE6FD]">
                   {effectiveChats.length} Contacts
                 </span>
               </div>
@@ -434,7 +434,7 @@ export const BroadcastDueModal = ({ onClose }) => {
                   placeholder="DhiGrowth WhatsApp CRM & AI Business Concierge"
                   value={broadcastDesc}
                   onChange={(e) => setBroadcastDesc(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
               </div>
 
@@ -449,19 +449,19 @@ export const BroadcastDueModal = ({ onClose }) => {
                     placeholder="2499"
                     value={broadcastAmount}
                     onChange={(e) => setBroadcastAmount(e.target.value)}
-                    className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8 pr-3.5 py-2.5 rounded-xl text-xs text-[#101828] font-bold focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8 pr-3.5 py-2.5 rounded-xl text-xs text-[#101828] font-bold focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               </div>
             </div>
 
             {/* Custom Template Editor */}
-            <div className="border border-[#E9D8FD] bg-[#FDFBFF] rounded-2xl p-4 space-y-3 shadow-2xs">
+            <div className="border border-[#BAE6FD] bg-[#F0F9FF]/20 rounded-2xl p-4 space-y-3 shadow-2xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <MessageSquare className="w-4 h-4 text-[#7C3AED]" />
+                  <MessageSquare className="w-4 h-4 text-[#0284C7]" />
                   <span className="text-xs font-bold text-[#101828]">WhatsApp Message Template</span>
-                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-[#EDE9FE] text-[#6D28D9]">
+                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-[#E0F2FE] text-[#0369A1]">
                     Customizable
                   </span>
                 </div>
@@ -474,7 +474,7 @@ export const BroadcastDueModal = ({ onClose }) => {
                       setSelectedPreset('formal');
                       setCustomTemplate(formal.text);
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#667085] hover:text-[#7C3AED] cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#667085] hover:text-[#0284C7] cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" />
                     <span>Reset</span>
@@ -482,7 +482,7 @@ export const BroadcastDueModal = ({ onClose }) => {
                   <button
                     type="button"
                     onClick={() => setShowPreview(!showPreview)}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7C3AED] hover:text-[#6D28D9] cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0284C7] hover:text-[#0369A1] cursor-pointer"
                   >
                     {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     <span>{showPreview ? 'Hide Preview' : 'Live Preview'}</span>
@@ -501,7 +501,7 @@ export const BroadcastDueModal = ({ onClose }) => {
                       onClick={() => handleSelectPreset(p.id)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                         isActive
-                          ? 'bg-[#7C3AED] text-white shadow-xs'
+                          ? 'bg-[#0284C7] text-white shadow-xs'
                           : 'bg-white border border-[#EAECF0] text-[#475467] hover:bg-[#F9FAFB]'
                       }`}
                     >
@@ -533,10 +533,10 @@ export const BroadcastDueModal = ({ onClose }) => {
                       type="button"
                       onClick={() => handleInsertTag(t.tag)}
                       title={`Click to insert ${t.tag} (${t.desc})`}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-white border border-[#D8B4FE] text-[#7C3AED] hover:bg-[#F4F0FD] hover:border-[#9333EA] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-white border border-[#BAE6FD] text-[#0284C7] hover:bg-[#F0F9FF] hover:border-[#0284C7] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
                     >
                       <span>{t.tag}</span>
-                      <span className="text-[9px] font-sans font-medium text-[#9333EA] opacity-80">({t.label})</span>
+                      <span className="text-[9px] font-sans font-medium text-[#0369A1] opacity-80">({t.label})</span>
                     </button>
                   ))}
                 </div>
@@ -556,7 +556,7 @@ export const BroadcastDueModal = ({ onClose }) => {
                     }
                   }}
                   placeholder="Enter your custom message template here. Use {{name}}, {{amount}}, {{invoiceId}}, {{description}}, {{paymentLink}}..."
-                  className="w-full bg-white border border-[#D0D5DD] p-3 rounded-xl text-xs font-mono text-[#101828] focus:outline-none focus:border-[#7C3AED] leading-relaxed shadow-inner"
+                  className="w-full bg-white border border-[#D0D5DD] p-3 rounded-xl text-xs font-mono text-[#101828] focus:outline-none focus:border-[#0284C7] leading-relaxed shadow-inner"
                 />
                 <div className="flex justify-between items-center text-[10px] text-[#667085] mt-1 px-1">
                   <span>Supports WhatsApp Markdown: *bold*, _italic_</span>
@@ -566,7 +566,7 @@ export const BroadcastDueModal = ({ onClose }) => {
 
               {/* Live WhatsApp Bubble Preview */}
               {showPreview && (
-                <div className="pt-2 border-t border-[#E9D8FD]/60 space-y-1.5">
+                <div className="pt-2 border-t border-[#BAE6FD]/60 space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-bold text-[#475467]">
                     <span className="flex items-center gap-1 text-[#15803D]">
                       <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-ping" />
@@ -609,12 +609,12 @@ export const BroadcastDueModal = ({ onClose }) => {
             </div>
 
             {/* Workflow Explanation Banner */}
-            <div className="p-3.5 bg-[#F4F0FD] border border-[#E9D8FD] rounded-2xl text-[11px] text-[#6D28D9] space-y-1.5">
-              <div className="font-bold flex items-center gap-1.5 text-[#7C3AED]">
+            <div className="p-3.5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-2xl text-[11px] text-[#0369A1] space-y-1.5">
+              <div className="font-bold flex items-center gap-1.5 text-[#0284C7]">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Auto-Receipt Guarantee:</span>
               </div>
-              <p className="text-[11px] text-[#5B21B6] leading-relaxed">
+              <p className="text-[11px] text-[#0369A1] leading-relaxed">
                 When a recipient clicks their customized payment link and completes payment, our cloud backend immediately generates and sends their official <strong>Green Paid Receipt PDF</strong> with verified Transaction ID back to their WhatsApp automatically!
               </p>
             </div>
@@ -631,7 +631,7 @@ export const BroadcastDueModal = ({ onClose }) => {
               <button
                 type="submit"
                 disabled={isBroadcasting || effectiveChats.length === 0}
-                className="flex-1 py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isBroadcasting ? (
                   <>

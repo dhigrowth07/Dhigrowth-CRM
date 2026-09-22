@@ -242,7 +242,7 @@ export const Sidebar = () => {
             title={currentUser?.organization || (currentUser?.name ? `${currentUser.name}'s Workspace` : 'Workspace')}
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-xs shrink-0 ring-1 ring-[#EAECF0] uppercase shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 ring-1 ring-[#EAECF0] uppercase shadow-2xs">
                 {(currentUser?.name || currentUser?.username || 'W').charAt(0)}
               </div>
               {!isSidebarCollapsed && (
@@ -254,7 +254,7 @@ export const Sidebar = () => {
                     {(currentUser?.isSuperAdmin || currentUser?.username?.toLowerCase() === 'admin') ? (
                       <span className="text-xs" title="Super Administrator">👑</span>
                     ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-bold font-mono">ADMIN</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 font-bold font-mono">ADMIN</span>
                     ) : null}
                   </div>
                   <div className="text-[10px] font-medium text-[#98A2B3] uppercase tracking-wider font-mono truncate max-w-[120px]">
@@ -300,7 +300,7 @@ export const Sidebar = () => {
                         isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
                       } ${
                         isActive
-                          ? 'bg-[#F4F0FD] text-[#7C3AED] font-semibold'
+                          ? 'bg-[#F0F9FF] text-[#0284C7] font-semibold'
                           : 'text-[#475467] hover:text-[#101828] hover:bg-[#F9FAFB]'
                       }`}
                     >
@@ -310,7 +310,7 @@ export const Sidebar = () => {
                         ) : (
                           <Icon
                             className={`w-4 h-4 shrink-0 ${
-                              isActive ? 'text-[#7C3AED]' : 'text-[#667085] group-hover:text-[#344054]'
+                              isActive ? 'text-[#0284C7]' : 'text-[#667085] group-hover:text-[#344054]'
                             }`}
                           />
                         )}
@@ -320,7 +320,7 @@ export const Sidebar = () => {
                       {!isSidebarCollapsed && (
                         <div className="flex items-center gap-1.5 shrink-0">
                           {isGated ? (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#F4F0FD] text-[#7C3AED] border border-[#E9D8FD] flex items-center gap-1 shadow-2xs">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#F0F9FF] text-[#0284C7] border border-[#BAE6FD] flex items-center gap-1 shadow-2xs">
                               <Lock className="w-2.5 h-2.5" />
                               <span>PRO</span>
                             </span>
@@ -334,7 +334,7 @@ export const Sidebar = () => {
                                 <span className={`w-2 h-2 rounded-full ${item.dotColor}`} />
                               )}
                               {item.hasDot && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7]" />
                               )}
                               {item.hasArrow && (
                                 <ArrowUpRight className="w-3.5 h-3.5 text-[#98A2B3]" />
@@ -345,7 +345,7 @@ export const Sidebar = () => {
                       )}
 
                       {isSidebarCollapsed && isGated && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#7C3AED] rounded-full ring-1 ring-white" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#0284C7] rounded-full ring-1 ring-white" />
                       )}
 
                       {isSidebarCollapsed && !isGated && item.id === 'inbox' && totalUnreadCount > 0 && (
@@ -364,7 +364,7 @@ export const Sidebar = () => {
       <div className={`border-t border-[#F2F4F7] ${isSidebarCollapsed ? 'p-2' : 'p-3'} flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
           {!isSidebarCollapsed ? (
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-[#7C3AED] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs">
+              <div className="w-7 h-7 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs">
                 {(currentUser?.name?.[0] || currentUser?.username?.[0] || 'S').toUpperCase()}
               </div>
               <div className="text-left min-w-0">
@@ -377,7 +377,7 @@ export const Sidebar = () => {
               </div>
             </div>
           ) : (
-            <div className="w-7 h-7 rounded-full bg-[#7C3AED] text-white flex items-center justify-center text-xs font-bold shadow-2xs">
+            <div className="w-7 h-7 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-xs font-bold shadow-2xs">
               {(currentUser?.name?.[0] || currentUser?.username?.[0] || 'S').toUpperCase()}
             </div>
           )}

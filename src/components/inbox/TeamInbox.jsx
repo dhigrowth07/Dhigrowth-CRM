@@ -1140,7 +1140,7 @@ export const TeamInbox = () => {
     Hot: 'bg-[#FEE2E2] text-[#DC2626] border-[#FECACA]',
     Interested: 'bg-[#DCFCE7] text-[#16A34A] border-[#BBF7D0]',
     Cold: 'bg-[#F1F5F9] text-[#475467] border-[#E2E8F0]',
-    Converted: 'bg-[#F4F0FD] text-[#7C3AED] border-[#E9D8FD]',
+    Converted: 'bg-[#F0F9FF] text-[#0284C7] border-[#BAE6FD]',
   };
 
   return (
@@ -1149,13 +1149,13 @@ export const TeamInbox = () => {
       <div className="md:hidden bg-white border-b border-[#EAECF0] px-3 py-2 shrink-0 z-20 shadow-2xs">
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-[#7C3AED]" />
+            <Users className="w-3.5 h-3.5 text-[#0284C7]" />
             <span className="text-[11px] font-bold text-[#101828]">Switch User / Contact ({chats.length})</span>
           </div>
           <button
             type="button"
             onClick={() => setIsAddContactModalOpen(true)}
-            className="text-[11px] font-bold text-[#7C3AED] hover:underline cursor-pointer flex items-center gap-1"
+            className="text-[11px] font-bold text-[#0284C7] hover:underline cursor-pointer flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New</span>
@@ -1174,7 +1174,7 @@ export const TeamInbox = () => {
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shrink-0 transition-all cursor-pointer border active:scale-95 text-left ${
                   isSelected
-                    ? 'bg-[#F4F0FD] border-[#7C3AED] text-[#7C3AED] font-bold shadow-xs ring-2 ring-[#7C3AED]/20'
+                    ? 'bg-[#F0F9FF] border-[#0284C7] text-[#0284C7] font-bold shadow-xs ring-2 ring-[#0284C7]/20'
                     : 'bg-[#F9FAFB] border-[#EAECF0] text-[#344054] hover:bg-[#F2F4F7]'
                 }`}
               >
@@ -1211,14 +1211,14 @@ export const TeamInbox = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-[#101828]">Messages</h2>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F4F0FD] text-[#7C3AED] font-mono font-bold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F0F9FF] text-[#0284C7] font-mono font-bold">
                 {chats.length}
               </span>
             </div>
             <button
               type="button"
               onClick={() => setIsAddContactModalOpen(true)}
-              className="flex items-center gap-1 text-[11px] font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] px-2.5 py-1 rounded-lg transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
+              className="flex items-center gap-1 text-[11px] font-bold text-white bg-[#0284C7] hover:bg-[#0369A1] px-2.5 py-1 rounded-lg transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>New Contact</span>
@@ -1227,23 +1227,23 @@ export const TeamInbox = () => {
 
           {/* Super Admin Client Profile Selector */}
           {isSuperAdmin && (
-            <div className="bg-gradient-to-r from-violet-50/90 via-purple-50/60 to-indigo-50/90 border border-violet-200/90 rounded-2xl p-2.5 shadow-2xs space-y-1.5">
+            <div className="bg-gradient-to-r from-sky-50/90 via-blue-50/60 to-sky-50/90 border border-sky-200/90 rounded-2xl p-2.5 shadow-2xs space-y-1.5">
               <div className="flex items-center justify-between px-0.5">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#6927DA]">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#0284C7]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span>Client Profile Selector</span>
                 </div>
                 {selectedClientWorkspace !== 'all' ? (
                   <button
                     type="button"
                     onClick={() => selectClientWorkspace('all')}
-                    className="text-[10px] font-bold text-[#7C3AED] hover:underline cursor-pointer flex items-center gap-0.5 active:scale-95 transition-transform"
+                    className="text-[10px] font-bold text-[#0284C7] hover:underline cursor-pointer flex items-center gap-0.5 active:scale-95 transition-transform"
                     title="Switch back to viewing all inboxes"
                   >
                     <span>View All Clients</span>
                   </button>
                 ) : (
-                  <span className="text-[10px] font-semibold text-violet-700 bg-white px-1.5 py-0.5 rounded border border-violet-200 shadow-2xs">
+                  <span className="text-[10px] font-semibold text-sky-700 bg-white px-1.5 py-0.5 rounded border border-sky-200 shadow-2xs">
                     All Clients View
                   </span>
                 )}
@@ -1252,7 +1252,7 @@ export const TeamInbox = () => {
                 <select
                   value={selectedClientWorkspace}
                   onChange={(e) => selectClientWorkspace(e.target.value)}
-                  className="w-full bg-white border border-violet-200 text-[#101828] text-xs font-semibold rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent cursor-pointer shadow-2xs appearance-none truncate"
+                  className="w-full bg-white border border-sky-200 text-[#101828] text-xs font-semibold rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-[#0284C7] focus:border-transparent cursor-pointer shadow-2xs appearance-none truncate"
                 >
                   <option value="all">
                     🌐 All Clients (Global Inbox Feed)
@@ -1267,7 +1267,7 @@ export const TeamInbox = () => {
                     );
                   })}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-violet-600 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-sky-600 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           )}
@@ -1280,10 +1280,10 @@ export const TeamInbox = () => {
                 setBroadcastSummary(null);
                 setIsBroadcastDueModalOpen(true);
               }}
-              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#7C3AED] bg-[#F4F0FD] hover:bg-[#EDE5FA] border border-[#E9D8FD] px-2 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
+              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
               title="Send Payment Due PDF with payment link to all WhatsApp contacts"
             >
-              <Zap className="w-3.5 h-3.5 text-[#7C3AED] group-hover:scale-110 transition-transform shrink-0" />
+              <Zap className="w-3.5 h-3.5 text-[#0284C7] group-hover:scale-110 transition-transform shrink-0" />
               <span className="truncate">Send Due to All</span>
             </button>
             <button
@@ -1304,7 +1304,7 @@ export const TeamInbox = () => {
               placeholder="Search leads, phone, tags..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8.5 pr-3 py-1.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#7C3AED]"
+              className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8.5 pr-3 py-1.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#0284C7]"
             />
           </div>
 
@@ -1320,7 +1320,7 @@ export const TeamInbox = () => {
                 onClick={() => setStatusFilter(f.id)}
                 className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors cursor-pointer ${
                   statusFilter === f.id
-                    ? 'bg-[#7C3AED] text-white font-semibold'
+                    ? 'bg-[#0284C7] text-white font-semibold'
                     : 'bg-[#F9FAFB] text-[#475467] hover:text-[#101828]'
                 }`}
               >
@@ -1342,7 +1342,7 @@ export const TeamInbox = () => {
                 onClick={() => (openChat ? openChat(chat.id) : setActiveChatId(chat.id))}
                 className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all ${
                   isSelected
-                    ? 'bg-[#F4F0FD] border-l-4 border-l-[#7C3AED]'
+                    ? 'bg-[#F0F9FF] border-l-4 border-l-[#0284C7]'
                     : chat.unreadCount > 0
                     ? 'bg-[#F0FDF4]/50 hover:bg-[#F0FDF4]'
                     : 'hover:bg-[#F9FAFB]'
@@ -1351,7 +1351,7 @@ export const TeamInbox = () => {
                 <div className="relative shrink-0">
                   <ContactAvatar name={chat.contactName} size="md" />
                   {chat.aiHandled ? (
-                    <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#7C3AED] rounded-full flex items-center justify-center text-white text-[8px] font-bold shadow-xs" title="AI Auto-Pilot On">
+                    <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#0284C7] rounded-full flex items-center justify-center text-white text-[8px] font-bold shadow-xs" title="AI Auto-Pilot On">
                       🤖
                     </span>
                   ) : (
@@ -1400,8 +1400,8 @@ export const TeamInbox = () => {
 
                   {isSuperAdmin && (chat.clientProfileName || chat.clientCompanyName) && (
                     <div className="pt-1">
-                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-violet-700 bg-violet-50/90 border border-violet-200/90 px-1.5 py-0.5 rounded-md max-w-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-sky-700 bg-sky-50/90 border border-sky-200/90 px-1.5 py-0.5 rounded-md max-w-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
                         <span className="truncate">
                           {chat.clientProfileName || 'Client'}{chat.clientCompanyName ? ` (${chat.clientCompanyName})` : ''}
                         </span>
@@ -1425,7 +1425,7 @@ export const TeamInbox = () => {
               <button
                 type="button"
                 onClick={() => setIsAddContactModalOpen(true)}
-                className="text-xs font-bold text-[#7C3AED] hover:text-[#6D28D9] hover:underline cursor-pointer"
+                className="text-xs font-bold text-[#0284C7] hover:text-[#0369A1] hover:underline cursor-pointer"
               >
                 + Add your first contact
               </button>
@@ -1440,7 +1440,7 @@ export const TeamInbox = () => {
         onDoubleClick={() => setLeftWidth(320)}
         title="Drag horizontally to resize Messages sidebar (Double-click to reset to 320px)"
         className={`hidden md:flex w-1.5 hover:w-2 transition-all cursor-col-resize select-none shrink-0 z-10 items-center justify-center group relative ${
-          isDragging === 'left' ? 'bg-[#7C3AED] w-2' : 'bg-[#EAECF0] hover:bg-[#7C3AED]/70'
+          isDragging === 'left' ? 'bg-[#0284C7] w-2' : 'bg-[#EAECF0] hover:bg-[#0284C7]/70'
         }`}
       >
         <div className="w-0.5 h-7 rounded-full bg-[#98A2B3] group-hover:bg-white transition-colors" />
@@ -1461,7 +1461,7 @@ export const TeamInbox = () => {
             </div>
             <button
               onClick={() => setIsAddContactModalOpen(true)}
-              className="mt-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="mt-2 bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ New Contact</span>
@@ -1492,10 +1492,10 @@ export const TeamInbox = () => {
                   <ContactAvatar name={activeChat.contactName} size="lg" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <h2 className="text-sm font-bold text-[#101828] truncate group-hover:text-[#7C3AED] transition-colors">
+                      <h2 className="text-sm font-bold text-[#101828] truncate group-hover:text-[#0284C7] transition-colors">
                         {activeChat.contactName}
                       </h2>
-                      <ChevronDown className="w-3.5 h-3.5 text-[#7C3AED] md:hidden shrink-0" />
+                      <ChevronDown className="w-3.5 h-3.5 text-[#0284C7] md:hidden shrink-0" />
                       <span className="hidden sm:inline text-xs font-mono text-[#667085]">
                         {activeChat.phone}
                       </span>
@@ -1503,7 +1503,7 @@ export const TeamInbox = () => {
                         {activeChat.tag}
                       </span>
                       {isSuperAdmin && (activeChat.clientProfileName || activeChat.clientCompanyName) && (
-                        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full shadow-2xs">
+                        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full shadow-2xs">
                           <span>🏢</span>
                           <span className="truncate max-w-[160px]">
                             {activeChat.clientProfileName || 'Client'}{activeChat.clientCompanyName ? ` · ${activeChat.clientCompanyName}` : ''}
@@ -1514,8 +1514,8 @@ export const TeamInbox = () => {
                     <div className="text-[11px] text-[#98A2B3] flex items-center gap-2 mt-0.5">
                       <span>{activeChat.city}</span>
                       <span>·</span>
-                      <span className={`font-mono font-semibold flex items-center gap-1.5 ${isAiAutoPilot ? 'text-[#7C3AED]' : 'text-[#16A34A]'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isAiAutoPilot ? 'bg-[#7C3AED] animate-pulse' : 'bg-[#16A34A]'}`} />
+                      <span className={`font-mono font-semibold flex items-center gap-1.5 ${isAiAutoPilot ? 'text-[#0284C7]' : 'text-[#16A34A]'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isAiAutoPilot ? 'bg-[#0284C7] animate-pulse' : 'bg-[#16A34A]'}`} />
                         <span className="truncate max-w-[120px] sm:max-w-none">{isAiAutoPilot ? 'AI Auto-Pilot' : 'Manual Agent'}</span>
                       </span>
                     </div>
@@ -1537,7 +1537,7 @@ export const TeamInbox = () => {
                   <button
                     type="button"
                     onClick={() => setIsMobileContactPickerOpen(true)}
-                    className="text-[10px] font-mono font-bold px-1.5 text-[#7C3AED] hover:underline"
+                    className="text-[10px] font-mono font-bold px-1.5 text-[#0284C7] hover:underline"
                     title="Tap to pick contact"
                   >
                     {currentChatIndex >= 0 ? `${currentChatIndex + 1}/${chats.length}` : 'Switch'}
@@ -1561,7 +1561,7 @@ export const TeamInbox = () => {
                   <button
                     type="button"
                     onClick={() => setIsTemplateSendModalOpen(true)}
-                    className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer bg-[#7C3AED] hover:bg-[#6D28D9] text-white animate-pulse shrink-0"
+                    className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer bg-[#0284C7] hover:bg-[#0369A1] text-white animate-pulse shrink-0"
                     title="Sri Exclusive: Send approved Meta template to new contact to get their first reply and open 24h window"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
@@ -1575,19 +1575,19 @@ export const TeamInbox = () => {
                   onClick={() => toggleAiForChat(activeChat.id)}
                   className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0 ${
                     isAiAutoPilot
-                      ? 'bg-[#F4F0FD] text-[#7C3AED] border border-[#E9D8FD] hover:bg-[#EDE5FA]'
+                      ? 'bg-[#F0F9FF] text-[#0284C7] border border-[#BAE6FD] hover:bg-[#E0F2FE]'
                       : 'bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0] hover:bg-[#D1FAE5]'
                   }`}
                   title={isAiAutoPilot ? "Click to switch to Manual Agent (Turn off AI auto-reply)" : "Click to switch to AI Auto-Pilot (Turn on AI auto-reply)"}
                 >
-                  {isAiAutoPilot ? <Bot className="w-3.5 h-3.5 text-[#7C3AED]" /> : <User className="w-3.5 h-3.5 text-[#16A34A]" />}
+                  {isAiAutoPilot ? <Bot className="w-3.5 h-3.5 text-[#0284C7]" /> : <User className="w-3.5 h-3.5 text-[#16A34A]" />}
                   <span className="hidden sm:inline">{isAiAutoPilot ? 'AI Auto-Pilot ON' : 'Manual Agent Active'}</span>
                 </button>
 
                 {/* Toggle Lead Intelligence Panel */}
                 <button
                   onClick={() => setIsRightCollapsed(!isRightCollapsed)}
-                  className="hidden xl:flex p-2 rounded-xl border border-[#EAECF0] bg-white text-[#667085] hover:text-[#7C3AED] hover:border-[#7C3AED] hover:bg-[#F4F0FD] transition-all cursor-pointer shadow-2xs items-center justify-center shrink-0"
+                  className="hidden xl:flex p-2 rounded-xl border border-[#EAECF0] bg-white text-[#667085] hover:text-[#0284C7] hover:border-[#0284C7] hover:bg-[#F0F9FF] transition-all cursor-pointer shadow-2xs items-center justify-center shrink-0"
                   title={isRightCollapsed ? 'Expand Lead Intelligence Panel' : 'Collapse Lead Intelligence Panel'}
                 >
                   {isRightCollapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
@@ -1599,16 +1599,16 @@ export const TeamInbox = () => {
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-3.5 min-h-0">
           {/* Sri Exclusive: New Contact First-Time Outreach Banner */}
           {isSriUser && isNewContact && (
-            <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border-2 border-[#E9D8FD] rounded-2xl p-4 shadow-sm mb-1">
+            <div className="bg-gradient-to-r from-sky-50 via-blue-50 to-sky-50 border-2 border-[#BAE6FD] rounded-2xl p-4 shadow-sm mb-1">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="w-9 h-9 rounded-xl bg-[#0284C7] text-white flex items-center justify-center shrink-0 shadow-xs">
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="text-xs font-bold text-[#101828]">New Contact Outreach · Awaiting Customer Reply</h4>
-                      <span className="text-[10px] font-mono bg-[#F4F0FD] text-[#7C3AED] font-bold px-2 py-0.5 rounded-full border border-[#E9D8FD]">
+                      <span className="text-[10px] font-mono bg-[#F0F9FF] text-[#0284C7] font-bold px-2 py-0.5 rounded-full border border-[#BAE6FD]">
                         Sri Exclusive
                       </span>
                     </div>
@@ -1624,7 +1624,7 @@ export const TeamInbox = () => {
                       setSelectedTemplateName('hello_world');
                       setIsTemplateSendModalOpen(true);
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold transition-all shadow-xs shrink-0 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3.5 py-2 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold transition-all shadow-xs shrink-0 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Send Approved Template</span>
@@ -1655,15 +1655,15 @@ export const TeamInbox = () => {
                 className={`flex flex-col ${isUser ? 'items-start mr-auto' : 'items-end ml-auto'} max-w-[85%] sm:max-w-md`}
               >
                 {isInvoiceDue ? (
-                  <div className="bg-white border-2 border-[#E9D8FD] rounded-2xl p-4 shadow-sm space-y-3 w-full text-left font-sans">
-                    <div className="flex items-center justify-between gap-2 border-b border-[#F4F0FD] pb-2.5">
+                  <div className="bg-white border-2 border-[#BAE6FD] rounded-2xl p-4 shadow-sm space-y-3 w-full text-left font-sans">
+                    <div className="flex items-center justify-between gap-2 border-b border-[#F0F9FF] pb-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-center text-[#7C3AED]">
-                          <FileText className="w-4 h-4 text-[#7C3AED]" />
+                        <div className="w-8 h-8 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7]">
+                          <FileText className="w-4 h-4 text-[#0284C7]" />
                         </div>
                         <div>
                           <div className="text-xs font-bold text-[#101828]">Invoice Due PDF</div>
-                          <div className="text-[10px] font-mono text-[#7C3AED] font-bold">{invoiceId || 'INV'}</div>
+                          <div className="text-[10px] font-mono text-[#0284C7] font-bold">{invoiceId || 'INV'}</div>
                         </div>
                       </div>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">
@@ -1681,7 +1681,7 @@ export const TeamInbox = () => {
                           href={`http://localhost:4000/api/invoices/${invoiceId || 'sample'}/pdf`}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#F4F0FD] hover:bg-[#EDE5FA] text-[#7C3AED] border border-[#E9D8FD] rounded-xl text-[11px] font-bold transition-all text-center"
+                          className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD] rounded-xl text-[11px] font-bold transition-all text-center"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span>View PDF</span>
@@ -1690,7 +1690,7 @@ export const TeamInbox = () => {
                           href={`http://localhost:4000/invoices/${invoiceId || 'sample'}/pay`}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-[11px] font-bold transition-all text-center shadow-xs"
+                          className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-[11px] font-bold transition-all text-center shadow-xs"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                           <span>Pay Page</span>
@@ -1757,20 +1757,20 @@ export const TeamInbox = () => {
                       isUser
                         ? 'bg-white border border-[#EAECF0] text-[#101828] rounded-tl-xs'
                         : isAi
-                        ? 'bg-[#F4F0FD] border border-[#E9D8FD] text-[#101828] rounded-tr-xs'
-                        : 'bg-[#7C3AED] text-white rounded-tr-xs'
+                        ? 'bg-[#F0F9FF] border border-[#BAE6FD] text-[#101828] rounded-tr-xs'
+                        : 'bg-[#0284C7] text-white rounded-tr-xs'
                     }`}
                   >
                     {isAi && (
-                      <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#7C3AED] font-bold mb-1.5 pb-1 border-b border-[#E9D8FD]">
-                        <Sparkles className="w-3 h-3 text-[#7C3AED]" />
+                      <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#0284C7] font-bold mb-1.5 pb-1 border-b border-[#BAE6FD]">
+                        <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
                         <span>Dhigrowth AI Auto-Pilot</span>
                       </div>
                     )}
 
                     {!isUser && !isAi && (
-                      <div className="flex items-center gap-1 text-[10px] font-mono text-purple-200 font-bold mb-1 pb-1 border-b border-purple-400/30">
-                        <User className="w-3 h-3" />
+                      <div className="flex items-center gap-1 text-[10px] font-mono text-sky-200 font-bold mb-1 pb-1 border-b border-sky-400/30">
+                        <User className="w-3.5 h-3.5" />
                         <span>Support Agent</span>
                       </div>
                     )}
@@ -1850,14 +1850,14 @@ export const TeamInbox = () => {
                   onClick={() => setAiForChat(activeChat.id, true)}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                     isAiAutoPilot
-                      ? 'bg-white text-[#7C3AED] border border-[#E9D8FD] shadow-xs'
+                      ? 'bg-white text-[#0284C7] border border-[#BAE6FD] shadow-xs'
                       : 'text-[#667085] hover:text-[#101828]'
                   }`}
                   title="AI Auto-Pilot: AI automatically answers incoming questions."
                 >
-                  <Bot className="w-3 h-3 text-[#7C3AED]" />
+                  <Bot className="w-3 h-3 text-[#0284C7]" />
                   <span>AI Auto-Pilot</span>
-                  {isAiAutoPilot && <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] animate-pulse" />}
+                  {isAiAutoPilot && <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />}
                 </button>
               </div>
 
@@ -1875,10 +1875,10 @@ export const TeamInbox = () => {
                 <button
                   type="button"
                   onClick={() => setIsTemplateSendModalOpen(true)}
-                  className="px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-[11px] font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1 shadow-xs ring-2 ring-purple-300 animate-pulse"
+                  className="px-2.5 py-1 rounded-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white text-[11px] font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1 shadow-xs ring-2 ring-sky-300 animate-pulse"
                   title="Sri Exclusive: Send template to new contact to get first reply"
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   <span>✨ Send First Template</span>
                 </button>
               )}
@@ -1886,7 +1886,7 @@ export const TeamInbox = () => {
               <button
                 type="button"
                 onClick={handleOpenInvoiceModal}
-                className="px-2.5 py-1 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                className="px-2.5 py-1 rounded-full bg-[#0284C7] hover:bg-[#0369A1] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
                 title="Create and send official Payment Due PDF with payment link to WhatsApp"
               >
                 <FileText className="w-3 h-3" />
@@ -1897,10 +1897,10 @@ export const TeamInbox = () => {
                 type="button"
                 onClick={handleGenerateAiReply}
                 disabled={isGeneratingAi}
-                className="px-2.5 py-1 rounded-full bg-[#F4F0FD] border border-[#E9D8FD] hover:border-[#7C3AED] text-[#7C3AED] text-[11px] font-bold shrink-0 transition-colors cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] hover:border-[#0284C7] text-[#0284C7] text-[11px] font-bold shrink-0 transition-colors cursor-pointer flex items-center gap-1"
                 title="Auto-draft response with AI"
               >
-                <Sparkles className="w-3 h-3 text-[#7C3AED]" />
+                <Sparkles className="w-3 h-3 text-[#0284C7]" />
                 <span>{isGeneratingAi ? 'Drafting...' : 'AI Draft'}</span>
               </button>
 
@@ -1908,7 +1908,7 @@ export const TeamInbox = () => {
               <button
                 type="button"
                 onClick={() => setInputMessage('Yes please, confirmed COD order for Bandra West.')}
-                className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#7C3AED] text-[#475467] hover:text-[#7C3AED] text-[11px] shrink-0 transition-colors cursor-pointer hidden sm:inline-flex"
+                className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#0284C7] text-[#475467] hover:text-[#0284C7] text-[11px] shrink-0 transition-colors cursor-pointer hidden sm:inline-flex"
               >
                 📦 COD Confirm
               </button>
@@ -1916,7 +1916,7 @@ export const TeamInbox = () => {
               <button
                 type="button"
                 onClick={() => setInputMessage('Use promo code LAUNCH10 for an extra 10% off today!')}
-                className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#7C3AED] text-[#475467] hover:text-[#7C3AED] text-[11px] shrink-0 transition-colors cursor-pointer hidden md:inline-flex"
+                className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#0284C7] text-[#475467] hover:text-[#0284C7] text-[11px] shrink-0 transition-colors cursor-pointer hidden md:inline-flex"
               >
                 🎟️ Promo
               </button>
@@ -1924,7 +1924,7 @@ export const TeamInbox = () => {
           </div>
 
           {/* Dedicated Full-Width Multi-Line Textarea */}
-          <div className="relative bg-[#F9FAFB] border border-[#EAECF0] rounded-2xl p-2.5 focus-within:border-[#7C3AED] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#7C3AED]/10 transition-all shadow-2xs">
+          <div className="relative bg-[#F9FAFB] border border-[#EAECF0] rounded-2xl p-2.5 focus-within:border-[#0284C7] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#0284C7]/10 transition-all shadow-2xs">
             <textarea
               rows={2}
               placeholder={
@@ -1951,7 +1951,7 @@ export const TeamInbox = () => {
                 <button
                   type="button"
                   onClick={handleGenerateAiReply}
-                  className="p-1 hover:text-[#7C3AED] hover:bg-[#F4F0FD] rounded-lg transition-colors cursor-pointer text-xs font-semibold flex items-center gap-1 text-[#7C3AED] shrink-0"
+                  className="p-1 hover:text-[#0284C7] hover:bg-[#F0F9FF] rounded-lg transition-colors cursor-pointer text-xs font-semibold flex items-center gap-1 text-[#0284C7] shrink-0"
                   title="Generate smart AI draft"
                 >
                   <Wand2 className="w-3.5 h-3.5" />
@@ -2085,7 +2085,7 @@ export const TeamInbox = () => {
           onDoubleClick={() => setRightWidth(340)}
           title="Drag horizontally to resize Lead Intelligence panel (Double-click to reset to 340px)"
           className={`hidden xl:flex w-1.5 hover:w-2 transition-all cursor-col-resize select-none shrink-0 z-10 items-center justify-center group relative ${
-            isDragging === 'right' ? 'bg-[#7C3AED] w-2' : 'bg-[#EAECF0] hover:bg-[#7C3AED]/70'
+            isDragging === 'right' ? 'bg-[#0284C7] w-2' : 'bg-[#EAECF0] hover:bg-[#0284C7]/70'
           }`}
         >
           <div className="w-0.5 h-7 rounded-full bg-[#98A2B3] group-hover:bg-white transition-colors" />
@@ -2103,7 +2103,7 @@ export const TeamInbox = () => {
             onClick={() => setActiveTabSide('profile')}
             className={`flex-1 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
               activeTabSide === 'profile'
-                ? 'border-[#7C3AED] text-[#7C3AED] bg-[#F4F0FD]/60'
+                ? 'border-[#0284C7] text-[#0284C7] bg-[#F0F9FF]/60'
                 : 'border-transparent text-[#667085] hover:text-[#101828]'
             }`}
           >
@@ -2113,7 +2113,7 @@ export const TeamInbox = () => {
             onClick={() => setActiveTabSide('notes')}
             className={`flex-1 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
               activeTabSide === 'notes'
-                ? 'border-[#7C3AED] text-[#7C3AED] bg-[#F4F0FD]/60'
+                ? 'border-[#0284C7] text-[#0284C7] bg-[#F0F9FF]/60'
                 : 'border-transparent text-[#667085] hover:text-[#101828]'
             }`}
           >
@@ -2146,7 +2146,7 @@ export const TeamInbox = () => {
                     </div>
                     <button
                       onClick={() => handleOpenEditModal(activeChat)}
-                      className="p-2 rounded-xl border border-[#EAECF0] bg-white text-[#475467] hover:text-[#7C3AED] hover:border-[#7C3AED] hover:bg-[#F4F0FD] transition-all cursor-pointer shadow-xs"
+                      className="p-2 rounded-xl border border-[#EAECF0] bg-white text-[#475467] hover:text-[#0284C7] hover:border-[#0284C7] hover:bg-[#F0F9FF] transition-all cursor-pointer shadow-xs"
                       title="Edit Contact"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -2163,7 +2163,7 @@ export const TeamInbox = () => {
                         onClick={() => updateLeadTag(activeChat.id, stage)}
                         className={`py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
                           activeChat.tag === stage
-                            ? `${tagColors[stage]} shadow-xs ring-1 ring-[#7C3AED]`
+                            ? `${tagColors[stage]} shadow-xs ring-1 ring-[#0284C7]`
                             : 'border-[#EAECF0] bg-white text-[#475467] hover:bg-[#F2F4F7]'
                         }`}
                       >
@@ -2177,7 +2177,7 @@ export const TeamInbox = () => {
               {/* AI Extracted Attributes */}
               <div className="space-y-2">
                 <div className="text-xs font-bold text-[#101828] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span>AI Extracted Entities</span>
                 </div>
 
@@ -2195,10 +2195,10 @@ export const TeamInbox = () => {
                   <button
                     type="button"
                     onClick={handleOpenInvoiceModal}
-                    className="w-full py-2 px-3 border border-[#E9D8FD] bg-[#F4F0FD] hover:bg-[#EDE5FA] text-[#7C3AED] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    className="w-full py-2 px-3 border border-[#BAE6FD] bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0284C7] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                     title="Send customized Payment Due PDF to this contact"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#7C3AED]" />
+                    <FileText className="w-3.5 h-3.5 text-[#0284C7]" />
                     <span>Send Due Invoice PDF</span>
                   </button>
 
@@ -2206,7 +2206,7 @@ export const TeamInbox = () => {
                     onClick={() => handleOpenEditModal(activeChat)}
                     className="w-full py-2 px-3 border border-[#D0D5DD] bg-white hover:bg-[#F9FAFB] text-[#344054] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
-                    <Edit3 className="w-3.5 h-3.5 text-[#7C3AED]" />
+                    <Edit3 className="w-3.5 h-3.5 text-[#0284C7]" />
                     <span>Edit Contact Details</span>
                   </button>
 
@@ -2228,11 +2228,11 @@ export const TeamInbox = () => {
                   placeholder="Add internal note for your team..."
                   value={noteInput}
                   onChange={(e) => setNoteInput(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-2.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#7C3AED] resize-none"
+                  className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-2.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#0284C7] resize-none"
                 />
                 <button
                   type="submit"
-                  className="w-full py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  className="w-full py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
                   Save Internal Note
                 </button>
@@ -2244,7 +2244,7 @@ export const TeamInbox = () => {
                     key={n.id}
                     className="p-3 rounded-xl bg-[#F9FAFB] border border-[#EAECF0] text-xs space-y-1"
                   >
-                    <div className="flex justify-between items-center text-[10px] text-[#7C3AED] font-mono font-semibold">
+                    <div className="flex justify-between items-center text-[10px] text-[#0284C7] font-mono font-semibold">
                       <span>{n.author}</span>
                       <span className="text-[#98A2B3]">{n.time}</span>
                     </div>
@@ -2274,7 +2274,7 @@ export const TeamInbox = () => {
 
             <div className="px-5 py-3 border-b border-[#EAECF0] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#7C3AED]" />
+                <Users className="w-4 h-4 text-[#0284C7]" />
                 <div>
                   <h3 className="text-sm font-bold text-[#101828]">Switch Contact / User</h3>
                   <p className="text-[11px] text-[#667085]">Tap any contact to open their chat instantly</p>
@@ -2298,7 +2298,7 @@ export const TeamInbox = () => {
                   placeholder="Search by name, phone or tag..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white border border-[#EAECF0] rounded-xl pl-9 pr-3 py-2 text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full bg-white border border-[#EAECF0] rounded-xl pl-9 pr-3 py-2 text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#0284C7]"
                   autoFocus
                 />
               </div>
@@ -2325,7 +2325,7 @@ export const TeamInbox = () => {
                       }}
                       className={`p-3 rounded-2xl flex items-center gap-3 cursor-pointer transition-all active:scale-[0.98] ${
                         isSelected
-                          ? 'bg-[#F4F0FD] border border-[#E9D8FD]'
+                          ? 'bg-[#F0F9FF] border border-[#BAE6FD]'
                           : 'hover:bg-[#F9FAFB]'
                       }`}
                     >
@@ -2339,7 +2339,7 @@ export const TeamInbox = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className={`text-sm font-bold truncate ${isSelected ? 'text-[#7C3AED]' : 'text-[#101828]'}`}>
+                          <span className={`text-sm font-bold truncate ${isSelected ? 'text-[#0284C7]' : 'text-[#101828]'}`}>
                             {chat.contactName}
                           </span>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -2349,7 +2349,7 @@ export const TeamInbox = () => {
                               </span>
                             )}
                             {isSelected && (
-                              <span className="text-[10px] bg-[#7C3AED] text-white font-bold px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] bg-[#0284C7] text-white font-bold px-2 py-0.5 rounded-full">
                                 Active
                               </span>
                             )}
@@ -2367,8 +2367,8 @@ export const TeamInbox = () => {
                         </div>
                         {isSuperAdmin && (chat.clientProfileName || chat.clientCompanyName) && (
                           <div className="mt-1">
-                            <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded-md border border-violet-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                            <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded-md border border-sky-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
                               <span>{chat.clientProfileName || 'Client'}{chat.clientCompanyName ? ` (${chat.clientCompanyName})` : ''}</span>
                             </span>
                           </div>
@@ -2388,7 +2388,7 @@ export const TeamInbox = () => {
                   setIsMobileContactPickerOpen(false);
                   setIsAddContactModalOpen(true);
                 }}
-                className="w-full py-2.5 bg-[#F4F0FD] hover:bg-[#EDE5FA] text-[#7C3AED] border border-[#E9D8FD] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>+ Create New Contact</span>
@@ -2410,8 +2410,8 @@ export const TeamInbox = () => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-center text-[#7C3AED]">
-                <Users className="w-5 h-5 text-[#7C3AED]" />
+              <div className="w-10 h-10 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7]">
+                <Users className="w-5 h-5 text-[#0284C7]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-[#101828]">Add New Lead Contact</h3>
@@ -2426,7 +2426,7 @@ export const TeamInbox = () => {
                   <select
                     value={formTargetWorkspace}
                     onChange={(e) => setFormTargetWorkspace(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-violet-200 px-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED] font-medium"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-sky-200 px-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] font-medium"
                   >
                     {clientTenants.map((client) => {
                       const wsId = client.workspaceId || client.id;
@@ -2448,7 +2448,7 @@ export const TeamInbox = () => {
                   placeholder="e.g. Vikramaditya Rao"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
               </div>
 
@@ -2460,7 +2460,7 @@ export const TeamInbox = () => {
                   placeholder="+91 98765 43210"
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED] font-mono"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] font-mono"
                 />
               </div>
 
@@ -2471,7 +2471,7 @@ export const TeamInbox = () => {
                   placeholder="vikram@company.com"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
               </div>
 
@@ -2481,7 +2481,7 @@ export const TeamInbox = () => {
                   <select
                     value={formTag}
                     onChange={(e) => setFormTag(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   >
                     <option value="Hot">🔥 Hot</option>
                     <option value="Interested">Interested</option>
@@ -2494,7 +2494,7 @@ export const TeamInbox = () => {
                   <select
                     value={formChannel}
                     onChange={(e) => setFormChannel(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   >
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Instagram">Instagram</option>
@@ -2510,14 +2510,14 @@ export const TeamInbox = () => {
                   placeholder="e.g. Mumbai, IN"
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition-all shadow-xs mt-2 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all shadow-xs mt-2 cursor-pointer flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -2545,8 +2545,8 @@ export const TeamInbox = () => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-center text-[#7C3AED]">
-                <Edit3 className="w-5 h-5 text-[#7C3AED]" />
+              <div className="w-10 h-10 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7]">
+                <Edit3 className="w-5 h-5 text-[#0284C7]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-[#101828]">Edit Contact Details</h3>
@@ -2563,7 +2563,7 @@ export const TeamInbox = () => {
                   placeholder="e.g. Sri"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
               </div>
 
@@ -2575,7 +2575,7 @@ export const TeamInbox = () => {
                   placeholder="+91 84384 89970"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED] font-mono"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] font-mono"
                 />
               </div>
 
@@ -2586,7 +2586,7 @@ export const TeamInbox = () => {
                   placeholder="sri@example.com"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
               </div>
 
@@ -2596,7 +2596,7 @@ export const TeamInbox = () => {
                   <select
                     value={editTag}
                     onChange={(e) => setEditTag(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   >
                     <option value="Hot">🔥 Hot</option>
                     <option value="Interested">Interested</option>
@@ -2611,7 +2611,7 @@ export const TeamInbox = () => {
                     placeholder="e.g. Mumbai, IN"
                     value={editCity}
                     onChange={(e) => setEditCity(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               </div>
@@ -2624,7 +2624,7 @@ export const TeamInbox = () => {
                     placeholder="e.g. ₹2,499"
                     value={editDealValue}
                     onChange={(e) => setEditDealValue(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
                 <div>
@@ -2634,7 +2634,7 @@ export const TeamInbox = () => {
                     placeholder="e.g. Omnichannel CRM Lead"
                     value={editProduct}
                     onChange={(e) => setEditProduct(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               </div>
@@ -2651,7 +2651,7 @@ export const TeamInbox = () => {
                 <button
                   type="submit"
                   disabled={isUpdatingContact}
-                  className="flex-1 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isUpdatingContact ? (
                     <>
@@ -2723,8 +2723,8 @@ export const TeamInbox = () => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-center text-[#7C3AED]">
-                <FileText className="w-6 h-6 text-[#7C3AED]" />
+              <div className="w-11 h-11 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7]">
+                <FileText className="w-6 h-6 text-[#0284C7]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-[#101828]">Create & Send Invoice PDF</h3>
@@ -2742,7 +2742,7 @@ export const TeamInbox = () => {
                     placeholder="Sri"
                     value={invoiceName}
                     onChange={(e) => setInvoiceName(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
                 <div>
@@ -2753,7 +2753,7 @@ export const TeamInbox = () => {
                     placeholder="+91 97914 71277"
                     value={invoicePhone}
                     onChange={(e) => setInvoicePhone(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED] font-mono"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] font-mono"
                   />
                 </div>
               </div>
@@ -2766,7 +2766,7 @@ export const TeamInbox = () => {
                     placeholder="sri@example.com"
                     value={invoiceEmail}
                     onChange={(e) => setInvoiceEmail(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
                 <div>
@@ -2776,7 +2776,7 @@ export const TeamInbox = () => {
                     placeholder="Bangalore, IN"
                     value={invoiceCity}
                     onChange={(e) => setInvoiceCity(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               </div>
@@ -2789,7 +2789,7 @@ export const TeamInbox = () => {
                   placeholder="DhiGrowth WhatsApp CRM & AI Concierge Setup"
                   value={invoiceDesc}
                   onChange={(e) => setInvoiceDesc(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
               </div>
 
@@ -2804,17 +2804,17 @@ export const TeamInbox = () => {
                     placeholder="2499"
                     value={invoiceAmount}
                     onChange={(e) => setInvoiceAmount(e.target.value)}
-                    className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8 pr-3.5 py-2.5 rounded-xl text-xs text-[#101828] font-bold focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8 pr-3.5 py-2.5 rounded-xl text-xs text-[#101828] font-bold focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               </div>
 
-              <div className="p-3 bg-[#F4F0FD] border border-[#E9D8FD] rounded-2xl text-[11px] text-[#6D28D9] space-y-1">
+              <div className="p-3 bg-[#F0F9FF] border border-[#BAE6FD] rounded-2xl text-[11px] text-[#0369A1] space-y-1">
                 <div className="font-bold flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span>Automated Workflow Highlights:</span>
                 </div>
-                <ul className="list-disc pl-4 space-y-0.5 text-[10px] text-[#5B21B6]">
+                <ul className="list-disc pl-4 space-y-0.5 text-[10px] text-[#0369A1]">
                   <li>Generates high-resolution vector PDF with DhiGrowth branding & Red "PAYMENT DUE" badge.</li>
                   <li>Uploads PDF directly to Meta Cloud API and delivers as an attachment to WhatsApp.</li>
                   <li>Includes secure dynamic checkout link with UPI, NetBanking & Cards.</li>
@@ -2834,7 +2834,7 @@ export const TeamInbox = () => {
                 <button
                   type="submit"
                   disabled={isSendingInvoice}
-                  className="flex-1 py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isSendingInvoice ? (
                     <>
@@ -2859,15 +2859,15 @@ export const TeamInbox = () => {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#EAECF0] animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-5 border-b border-[#EAECF0] flex items-center justify-between bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50">
+            <div className="p-5 border-b border-[#EAECF0] flex items-center justify-between bg-gradient-to-r from-sky-50 via-blue-50 to-sky-50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-[#0284C7] text-white flex items-center justify-center shadow-xs">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-[#101828]">Send First Template</h3>
-                    <span className="text-[10px] font-mono bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full border border-purple-200">
+                    <span className="text-[10px] font-mono bg-sky-100 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-200">
                       Sri User Exclusive
                     </span>
                   </div>
@@ -2913,7 +2913,7 @@ export const TeamInbox = () => {
                 <select
                   value={selectedTemplateName}
                   onChange={(e) => setSelectedTemplateName(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] font-bold focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] font-bold focus:outline-none focus:border-[#0284C7]"
                 >
                   {templateOptions.map((t) => (
                     <option key={t.name} value={t.name}>
@@ -2927,7 +2927,7 @@ export const TeamInbox = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-[#344054]">Personalized Message Preview:</span>
-                  <span className="text-[10px] font-mono text-[#7C3AED] font-bold">
+                  <span className="text-[10px] font-mono text-[#0284C7] font-bold">
                     Variable &#123;&#123;1&#125;&#125; = {activeChat.contactName || 'Valued Client'}
                   </span>
                 </div>
@@ -2943,12 +2943,12 @@ export const TeamInbox = () => {
               </div>
 
               {/* Meta Policy Explanation */}
-              <div className="p-3 bg-[#F4F0FD] border border-[#E9D8FD] rounded-2xl text-[11px] text-[#6D28D9] space-y-1">
+              <div className="p-3 bg-[#F0F9FF] border border-[#BAE6FD] rounded-2xl text-[11px] text-[#0369A1] space-y-1">
                 <div className="font-bold flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span>Why send a template for new contacts?</span>
                 </div>
-                <p className="text-[10px] text-[#5B21B6] leading-relaxed">
+                <p className="text-[10px] text-[#0369A1] leading-relaxed">
                   Meta's WhatsApp Cloud API policy requires businesses to initiate conversations with new contacts using an approved template. Once <strong>{activeChat.contactName}</strong> replies, your <strong>24-hour conversational window unlocks</strong>, allowing standard messages and Dhigrowth AI auto-pilot!
                 </p>
               </div>
@@ -2967,7 +2967,7 @@ export const TeamInbox = () => {
                   type="button"
                   onClick={handleSendFirstTemplate}
                   disabled={isSendingTemplate}
-                  className="flex-1 py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isSendingTemplate ? (
                     <>

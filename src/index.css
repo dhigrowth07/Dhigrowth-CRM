@@ -17,10 +17,10 @@
     --text-muted: #475467;
     --text-dim: #98A2B3;
     
-    --primary-purple: #7C3AED;
-    --primary-purple-hover: #6D28D9;
-    --purple-light: #F4F0FD;
-    --purple-border: #E9D8FD;
+    --primary-purple: #0284C7;
+    --primary-purple-hover: #0369A1;
+    --purple-light: #F0F9FF;
+    --purple-border: #BAE6FD;
     --green-accent: #16A34A;
   }
 
@@ -50,15 +50,15 @@
 }
 
 .sendiee-banner-purple {
-  background: linear-gradient(90deg, #F6F3FF 0%, #FAF8FF 100%);
-  border: 1px solid #EBE4FF;
+  background: linear-gradient(90deg, #F0F9FF 0%, #F8FAFC 100%);
+  border: 1px solid #BAE6FD;
   border-radius: 1rem;
   transition: all 0.2s ease-in-out;
 }
 
 .sendiee-banner-claim {
-  background: linear-gradient(90deg, #F8F5FE 0%, #FAF8FE 100%);
-  border: 1px solid #ECE6FF;
+  background: linear-gradient(90deg, #F0F9FF 0%, #E0F2FE 100%);
+  border: 1px solid #BAE6FD;
   border-radius: 1rem;
   transition: all 0.2s ease-in-out;
 }
@@ -69,19 +69,19 @@
 }
 
 .hover-item-card:hover {
-  border-color: #7C3AED !important;
-  background-color: #FAF5FF !important;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.08);
+  border-color: #0284C7 !important;
+  background-color: #F0F9FF !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.12);
 }
 
 .hover-item-card:hover .arrow-icon {
-  color: #7C3AED !important;
+  color: #0284C7 !important;
   transform: translateX(3px);
 }
 
 .hover-item-card:hover .icon-box {
-  background-color: #EDE5FA !important;
-  color: #6D28D9 !important;
+  background-color: #E0F2FE !important;
+  color: #0369A1 !important;
 }
 
 .hover-lift {

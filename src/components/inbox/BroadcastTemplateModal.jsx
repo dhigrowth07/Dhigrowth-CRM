@@ -561,9 +561,9 @@ export const BroadcastTemplateModal = ({ onClose }) => {
 
                 {/* AI Concierge Intelligence Hint */}
                 <div className="mt-3 p-2.5 bg-white/90 backdrop-blur-xs rounded-xl border border-[#CBD5E1] text-[11px] text-[#475467] flex items-start gap-2 z-10">
-                  <Bot className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
+                  <Bot className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-[#7C3AED]">Automated AI Follow-up: </span>
+                    <span className="font-bold text-[#0284C7]">Automated AI Follow-up: </span>
                     When contacts tap <span className="font-semibold text-emerald-700">"{button1Text}"</span>, Dhigrowth AI Concierge immediately acknowledges their interest and guides them to book a call or share details!
                   </div>
                 </div>

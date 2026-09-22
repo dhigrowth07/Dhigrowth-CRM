@@ -142,7 +142,7 @@ export const MobileDrawer = () => {
         {/* Drawer Header */}
         <div className="px-5 py-3 border-b border-[#EAECF0] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white flex items-center justify-center font-bold text-sm shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0EA5E9] to-[#0284C7] text-white flex items-center justify-center font-bold text-sm shadow-sm">
               {(currentUser?.name?.[0] || currentUser?.username?.[0] || 'S').toUpperCase()}
             </div>
             <div>
@@ -187,14 +187,14 @@ export const MobileDrawer = () => {
                       onClick={() => handleSelect(item.id)}
                       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[44px] active:scale-[0.99] ${
                         isActive
-                          ? 'bg-[#F4F0FD] text-[#7C3AED] font-bold shadow-2xs'
+                          ? 'bg-[#F0F9FF] text-[#0284C7] font-bold shadow-2xs'
                           : 'text-[#344054] hover:bg-[#F9FAFB]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                            isActive ? 'bg-[#7C3AED] text-white' : 'text-[#667085]'
+                            isActive ? 'bg-[#0284C7] text-white' : 'text-[#667085]'
                           }`}
                         >
                           <Icon className="w-4 h-4" />
