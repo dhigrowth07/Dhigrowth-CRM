@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
@@ -240,10 +241,54 @@ export async function loginTenant({ email, password, username }) {
     };
   }
 
-
+  // 3. Check local tenants.json store for registered tenant users
+  try {
+    const tenantsFile = path.resolve(__dirname, 'tenants.json');
+    if (fs.existsSync(tenantsFile)) {
+      const tenantsList = JSON.parse(fs.readFileSync(tenantsFile, 'utf8') || '[]');
+      const matched = tenantsList.find(
+        (t) => cleanIdentifier === t.username?.toLowerCase() || cleanIdentifier === t.email?.toLowerCase()
+      );
+      if (matched) {
+        let isPassValid = false;
+        if (matched.passwordHash) {
+          try {
+            isPassValid = bcrypt.compareSync(cleanPass, matched.passwordHash);
+          } catch {}
+        }
+        if (!isPassValid && matched.password) {
+          isPassValid = cleanPass === matched.password;
+        }
+        if (isPassValid) {
+          return {
+            success: true,
+            user: {
+              id: matched.id,
+              name: matched.name,
+              username: matched.username,
+              email: matched.email,
+              role: matched.role || 'CRM User',
+              isAdmin: Boolean(matched.isAdmin),
+              isSuperAdmin: false,
+              organization: matched.companyName || `${matched.name}'s Workspace`,
+            },
+            workspace: {
+              id: matched.workspaceId,
+              name: matched.companyName || `${matched.name}'s Workspace`,
+              slug: matched.slug || matched.username,
+              plan: matched.plan || 'business',
+            },
+            isFirstTimeOnboarding: false,
+          };
+        }
+      }
+    }
+  } catch (tErr) {
+    console.warn('[AuthService] tenants.json check note:', tErr.message);
+  }
 
   if (!supabase) {
-    throw new Error('Database is currently offline. Please use administrator credentials.');
+    throw new Error('Invalid email or password.');
   }
 
   // 2. Query Supabase users table

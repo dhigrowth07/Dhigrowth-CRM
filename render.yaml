@@ -1,0 +1,71 @@
+services:
+  # ==============================================================================
+  # 1. WAP PILOT Backend (Node.js / Express Web Service)
+  # ==============================================================================
+  - type: web
+    name: wapppilot-backend
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: node server/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: META_WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: META_WHATSAPP_WABA_ID
+        sync: false
+      - key: META_WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: META_WHATSAPP_VERIFY_TOKEN
+        value: dhigrowth_webhook_secret_2026
+      - key: VITE_DEFAULT_WORKSPACE_ID
+        value: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_PROVIDER
+        value: gemini
+      - key: AI_MODEL
+        value: gemini-1.5-flash
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+  # ==============================================================================
+  # 2. WAP PILOT Frontend (Vite React SPA Static Site)
+  # ==============================================================================
+  - type: static
+    name: wapppilot-frontend
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_BACKEND_URL
+        fromService:
+          type: web
+          name: wapppilot-backend
+          property: host
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_DEFAULT_WORKSPACE_ID
+        value: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+      - key: VITE_RAZORPAY_KEY_ID
+        sync: false

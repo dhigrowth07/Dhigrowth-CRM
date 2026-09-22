@@ -381,6 +381,80 @@
         "sampleRevenue": "₹84,000",
         "roas": "11.2x"
       }
+    ],
+    "a0000000-0000-0000-0000-000000000001": [
+      {
+        "id": "camp_diwali_vip_2026",
+        "name": "Diwali Festive VIP Flash Sale",
+        "channel": "WhatsApp",
+        "templateName": "flash_sale_promo_2026",
+        "status": "completed",
+        "audienceType": "VIP Customers & High Value Leads",
+        "targetCount": 2450,
+        "sentCount": 2450,
+        "deliveredCount": 2410,
+        "readCount": 2310,
+        "repliedCount": 840,
+        "failedCount": 40,
+        "scheduledAt": null,
+        "createdAt": "2026-09-17T04:38:42.133Z",
+        "completedAt": "2026-09-17T04:40:42.133Z",
+        "variableMapping": [
+          {
+            "index": 1,
+            "field": "name",
+            "fallback": "Valued Customer"
+          },
+          {
+            "index": 2,
+            "field": "tier",
+            "fallback": "VIP Club"
+          },
+          {
+            "index": 3,
+            "field": "discount",
+            "fallback": "30%"
+          }
+        ],
+        "sampleRevenue": "₹2,48,000",
+        "roas": "18.4x"
+      },
+      {
+        "id": "camp_webinar_drip_reminder",
+        "name": "AI Agent Masterclass 1-Hour Reminder",
+        "channel": "WhatsApp",
+        "templateName": "vip_webinar_reminder_2026",
+        "status": "completed",
+        "audienceType": "Registered Attendees",
+        "targetCount": 1200,
+        "sentCount": 1200,
+        "deliveredCount": 1184,
+        "readCount": 1090,
+        "repliedCount": 312,
+        "failedCount": 16,
+        "scheduledAt": null,
+        "createdAt": "2026-09-20T04:38:42.133Z",
+        "completedAt": "2026-09-20T04:39:42.133Z",
+        "variableMapping": [
+          {
+            "index": 1,
+            "field": "first_name",
+            "fallback": "Founder"
+          },
+          {
+            "index": 2,
+            "field": "topic",
+            "fallback": "WhatsApp AI Automation"
+          },
+          {
+            "index": 3,
+            "field": "minutes",
+            "fallback": "60"
+          }
+        ],
+        "sampleRevenue": "₹84,000",
+        "roas": "11.2x"
+      }
     ]
   }
 }

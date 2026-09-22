@@ -87,6 +87,9 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   // Navigation & Theme State
   const [activeTab, setActiveTab] = useState('dashboard');
+  if (typeof window !== 'undefined') {
+    window.__setActiveTab = setActiveTab;
+  }
   const [theme, setTheme] = useState('light');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -293,7 +296,7 @@ export const AppProvider = ({ children }) => {
   // SaaS Subscription & Unified Checkout State (Stripe / Razorpay)
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutData, setCheckoutData] = useState({ planId: 'Growth', billingCycle: 'monthly', provider: 'razorpay' });
-  const [subscription, setSubscription] = useState(null);
+  const [subscription, setSubscription] = useState({ status: 'active', planId: 'Growth', planName: 'Growth Plan' });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
 

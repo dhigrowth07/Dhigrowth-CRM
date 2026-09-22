@@ -46,25 +46,6 @@
         "updatedAt": "2026-09-19T05:10:00.000Z"
       },
       {
-        "id": "tpl_test_product_launch_1789562723381",
-        "name": "test_product_launch",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "NONE",
-        "header_content": null,
-        "body_text": "Hey {{1}}, welcome to {{2}}!",
-        "footer_text": "Reply STOP to unsub",
-        "buttons": [],
-        "variables": [
-          "var_1",
-          "var_2"
-        ],
-        "syncedWithMeta": false,
-        "createdAt": "2026-09-16T12:45:23.381Z",
-        "updatedAt": "2026-09-16T12:45:23.381Z"
-      },
-      {
         "id": "tpl_welcome_greeting",
         "name": "welcome_greeting_v2",
         "category": "UTILITY",
@@ -221,6 +202,7 @@
         "rejectionReason": null,
         "metaTemplateId": "2074071630135449"
       }
-    ]
+    ],
+    "a0000000-0000-0000-0000-000000000001": []
   }
 }

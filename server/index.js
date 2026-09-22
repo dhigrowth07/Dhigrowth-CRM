@@ -148,15 +148,25 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 2. Meta Webhook Handshake (GET /, /webhook, /api/webhook)
+// 2. Meta Webhook Handshake (GET /webhook, /api/webhook, and conditional /)
 app.get('/webhook', handleMetaVerification);
-app.get('/', handleMetaVerification);
 app.get('/api/webhook', handleMetaVerification);
+app.get('/', (req, res, next) => {
+  if (req.query['hub.mode'] === 'subscribe') {
+    return handleMetaVerification(req, res);
+  }
+  next();
+});
 
-// 3. Meta Webhook Inbound Message Receiver (POST /, /webhook, /api/webhook)
+// 3. Meta Webhook Inbound Message Receiver (POST /webhook, /api/webhook, and conditional /)
 app.post('/webhook', handleInboundWebhook);
-app.post('/', handleInboundWebhook);
 app.post('/api/webhook', handleInboundWebhook);
+app.post('/', (req, res, next) => {
+  if (req.body && (req.body.object === 'whatsapp_business_account' || req.body.object === 'instagram' || req.body.object === 'page')) {
+    return handleInboundWebhook(req, res);
+  }
+  next();
+});
 
 // 4. Test Inbound Simulator Endpoint (Allows instant testing without Meta tunnel)
 app.post('/api/test-inbound', async (req, res) => {
@@ -1937,6 +1947,95 @@ app.post('/api/automations/:id/test', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// =================================================================
+// Multi-Tenant Authentication & Workspace Member Endpoints
+// =================================================================
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, username, identifier, password } = req.body || {};
+    console.log('🔑 [Login Attempt]', { identifier, username, email, hasPass: Boolean(password) });
+    const result = await loginTenant({
+      email: email || identifier,
+      username: username || identifier,
+      password,
+    });
+    console.log('✅ [Login Success]', result.user?.username, result.user?.role);
+    res.json(result);
+  } catch (err) {
+    console.warn('❌ [Login Failed]', err.message);
+    res.status(401).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const result = await registerTenant(req.body);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/workspace/members', async (req, res) => {
+  try {
+    const workspaceId = req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const members = await getWorkspaceMembers(workspaceId);
+    res.json({ success: true, members });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/workspace/members/invite', async (req, res) => {
+  try {
+    const result = await inviteWorkspaceMember(req.body);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/workspace/members/:id', async (req, res) => {
+  try {
+    const { workspaceId } = req.query;
+    const result = await removeWorkspaceMember(req.params.id, workspaceId);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Production Static Frontend SPA Delivery (Single container / Unified deployment)
+const distPath = path.resolve(__dirname, '../dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/webhook') || req.path === '/health') {
+      return next();
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html>
+  <head><title>WAP PILOT - Webhook Gateway</title></head>
+  <body style="font-family:system-ui,-apple-system,sans-serif;background:#F9FAFB;color:#101828;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
+    <div style="background:#fff;border:1px solid #EAECF0;border-radius:24px;padding:36px;max-width:520px;box-shadow:0 10px 25px rgba(0,0,0,0.05);text-align:center;">
+      <div style="font-size:40px;margin-bottom:12px;">🚀</div>
+      <h2 style="margin:0 0 8px 0;color:#7C3AED;">WAP PILOT Webhook Gateway is Live</h2>
+      <p style="color:#475467;font-size:14px;line-height:1.5;">Your backend server and Meta WhatsApp Cloud API webhooks are running smoothly.</p>
+      <div style="background:#F4F0FD;border:1px solid #E9D8FD;border-radius:12px;padding:12px;text-align:left;font-size:13px;margin:20px 0;color:#344054;">
+        <div><strong>Webhook URL:</strong> <code>/webhook</code></div>
+        <div style="margin-top:4px;"><strong>Health Status:</strong> <a href="/health" style="color:#7C3AED;">/health</a></div>
+      </div>
+      <p style="color:#667085;font-size:12px;margin:0;">To render the Web Dashboard on this domain, update your Render Build Command to:<br/><code style="background:#F2F4F7;padding:3px 6px;border-radius:6px;font-weight:bold;color:#101828;">npm install && npm run build</code></p>
+    </div>
+  </body>
+</html>`);
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`\n================================================================`);

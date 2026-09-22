@@ -21,7 +21,7 @@
         "gstin": "",
         "billingEmail": "admin@dhigrowth.com"
       },
-      "updatedAt": "2026-09-17T05:49:24.259Z"
+      "updatedAt": "2026-09-22T07:05:10.364Z"
     },
     "ws-test": {
       "workspaceId": "ws-test",
@@ -64,6 +64,20 @@
         "billingEmail": "maddy@gmail.com"
       },
       "updatedAt": "2026-09-17T05:41:20.559Z"
+    },
+    "a0000000-0000-0000-0000-000000000001": {
+      "workspaceId": "a0000000-0000-0000-0000-000000000001",
+      "planId": "Growth",
+      "planName": "Growth",
+      "billingCycle": "monthly",
+      "status": "active",
+      "provider": "razorpay",
+      "currentPeriodStart": "2026-09-22T06:56:01.166Z",
+      "currentPeriodEnd": "2026-10-22T06:56:01.166Z",
+      "cancelAtPeriodEnd": false,
+      "trialDaysRemaining": 30,
+      "paymentMethod": null,
+      "billingDetails": {}
     }
   },
   "invoices": [
