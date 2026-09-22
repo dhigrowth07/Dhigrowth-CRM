@@ -1441,27 +1441,42 @@ export const ClientPortal = () => {
                         </label>
                         <button
                           type="button"
-                          onClick={() => copyToClipboard(`${BACKEND_URL}/webhook`, 'Webhook URL')}
+                          onClick={() => copyToClipboard('https://api-wappilot.dhigrowth.com/webhook', 'Webhook URL')}
                           className="text-[11px] text-[#7C3AED] hover:text-[#6D28D9] font-semibold cursor-pointer flex items-center gap-1"
                         >
                           {copiedKey === 'Webhook URL' ? <Check className="w-3 h-3 text-[#16A34A]" /> : <Copy className="w-3 h-3" />}
                           <span>Copy</span>
                         </button>
                       </div>
-                      <div className="flex items-center bg-[#F9FAFB] border border-[#EAECF0] rounded-xl px-3.5 py-2 text-xs font-mono text-[#7C3AED]">
-                        {BACKEND_URL}/webhook
-                      </div>
+                      <input
+                        type="text"
+                        readOnly
+                        value="https://api-wappilot.dhigrowth.com/webhook"
+                        className="w-full px-3.5 py-2.5 bg-[#F9FAFB] border border-[#EAECF0] rounded-xl text-xs font-mono text-[#7C3AED] select-all cursor-default focus:outline-none"
+                        title="Fixed production webhook callback URL"
+                      />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-[#344054]">
-                        Verify Token
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-[#344054]">
+                          Verify Token
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(verifyToken || 'dhigrowth_webhook_secret_2026', 'Verify Token')}
+                          className="text-[11px] text-[#7C3AED] hover:text-[#6D28D9] font-semibold cursor-pointer flex items-center gap-1"
+                        >
+                          {copiedKey === 'Verify Token' ? <Check className="w-3 h-3 text-[#16A34A]" /> : <Copy className="w-3 h-3" />}
+                          <span>Copy</span>
+                        </button>
+                      </div>
                       <input
                         type="text"
-                        value={verifyToken}
-                        onChange={(e) => setVerifyToken(e.target.value)}
-                        className="w-full px-3.5 py-2 bg-[#F9FAFB] border border-[#D0D5DD] rounded-xl text-xs font-mono text-[#101828] focus:bg-white focus:outline-none focus:border-[#7C3AED]"
+                        readOnly
+                        value={verifyToken || 'dhigrowth_webhook_secret_2026'}
+                        className="w-full px-3.5 py-2.5 bg-[#F9FAFB] border border-[#EAECF0] rounded-xl text-xs font-mono text-[#101828] select-all cursor-default focus:outline-none"
+                        title="Fixed production webhook verify token"
                       />
                     </div>
                   </div>
