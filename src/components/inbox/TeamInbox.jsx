@@ -74,6 +74,11 @@ export const TeamInbox = () => {
     adminViewProfile,
     subscription,
     openCheckout,
+    isSuperAdmin,
+    selectedClientWorkspace,
+    selectClientWorkspace,
+    clientTenants,
+    getChatCountForWorkspace,
   } = useApp();
 
   useEffect(() => {
@@ -94,6 +99,20 @@ export const TeamInbox = () => {
 
   // New Contact & Delete Modal State
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
+  const [formTargetWorkspace, setFormTargetWorkspace] = useState(() => {
+    return selectedClientWorkspace && selectedClientWorkspace !== 'all'
+      ? selectedClientWorkspace
+      : (clientTenants?.[0]?.workspaceId || clientTenants?.[0]?.id || 'b0000000-0000-0000-0000-000000000001');
+  });
+
+  useEffect(() => {
+    if (selectedClientWorkspace && selectedClientWorkspace !== 'all') {
+      setFormTargetWorkspace(selectedClientWorkspace);
+    } else if (clientTenants?.length > 0) {
+      setFormTargetWorkspace(clientTenants[0].workspaceId || clientTenants[0].id);
+    }
+  }, [selectedClientWorkspace, clientTenants]);
+
   const [contactToDelete, setContactToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1042,6 +1061,7 @@ export const TeamInbox = () => {
         tag: formTag,
         city: formCity.trim() || 'Mumbai, IN',
         channel: formChannel.toLowerCase(),
+        workspaceId: isSuperAdmin ? formTargetWorkspace : currentWorkspaceId,
       });
       setFormName('');
       setFormPhone('');
@@ -1205,6 +1225,53 @@ export const TeamInbox = () => {
             </button>
           </div>
 
+          {/* Super Admin Client Profile Selector */}
+          {isSuperAdmin && (
+            <div className="bg-gradient-to-r from-violet-50/90 via-purple-50/60 to-indigo-50/90 border border-violet-200/90 rounded-2xl p-2.5 shadow-2xs space-y-1.5">
+              <div className="flex items-center justify-between px-0.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#6927DA]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
+                  <span>Client Profile Selector</span>
+                </div>
+                {selectedClientWorkspace !== 'all' ? (
+                  <button
+                    type="button"
+                    onClick={() => selectClientWorkspace('all')}
+                    className="text-[10px] font-bold text-[#7C3AED] hover:underline cursor-pointer flex items-center gap-0.5 active:scale-95 transition-transform"
+                    title="Switch back to viewing all inboxes"
+                  >
+                    <span>View All Clients</span>
+                  </button>
+                ) : (
+                  <span className="text-[10px] font-semibold text-violet-700 bg-white px-1.5 py-0.5 rounded border border-violet-200 shadow-2xs">
+                    All Clients View
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedClientWorkspace}
+                  onChange={(e) => selectClientWorkspace(e.target.value)}
+                  className="w-full bg-white border border-violet-200 text-[#101828] text-xs font-semibold rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent cursor-pointer shadow-2xs appearance-none truncate"
+                >
+                  <option value="all">
+                    🌐 All Clients (Global Inbox Feed)
+                  </option>
+                  {clientTenants.map((client) => {
+                    const wsId = client.workspaceId || client.id;
+                    const count = getChatCountForWorkspace(wsId);
+                    return (
+                      <option key={wsId} value={wsId}>
+                        👤 {client.name} — {client.companyName || 'Client Profile'} ({count} threads)
+                      </option>
+                    );
+                  })}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-violet-600 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          )}
+
           {/* Quick Broadcast Actions (2-column responsive pills) */}
           <div className="grid grid-cols-2 gap-1.5">
             <button
@@ -1330,6 +1397,17 @@ export const TeamInbox = () => {
                       </span>
                     )}
                   </div>
+
+                  {isSuperAdmin && (chat.clientProfileName || chat.clientCompanyName) && (
+                    <div className="pt-1">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-violet-700 bg-violet-50/90 border border-violet-200/90 px-1.5 py-0.5 rounded-md max-w-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
+                        <span className="truncate">
+                          {chat.clientProfileName || 'Client'}{chat.clientCompanyName ? ` (${chat.clientCompanyName})` : ''}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -1424,6 +1502,14 @@ export const TeamInbox = () => {
                       <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${tagColors[activeChat.tag]}`}>
                         {activeChat.tag}
                       </span>
+                      {isSuperAdmin && (activeChat.clientProfileName || activeChat.clientCompanyName) && (
+                        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full shadow-2xs">
+                          <span>🏢</span>
+                          <span className="truncate max-w-[160px]">
+                            {activeChat.clientProfileName || 'Client'}{activeChat.clientCompanyName ? ` · ${activeChat.clientCompanyName}` : ''}
+                          </span>
+                        </span>
+                      )}
                     </div>
                     <div className="text-[11px] text-[#98A2B3] flex items-center gap-2 mt-0.5">
                       <span>{activeChat.city}</span>
@@ -2279,6 +2365,14 @@ export const TeamInbox = () => {
                             </span>
                           )}
                         </div>
+                        {isSuperAdmin && (chat.clientProfileName || chat.clientCompanyName) && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded-md border border-violet-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                              <span>{chat.clientProfileName || 'Client'}{chat.clientCompanyName ? ` (${chat.clientCompanyName})` : ''}</span>
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -2326,6 +2420,26 @@ export const TeamInbox = () => {
             </div>
 
             <form onSubmit={handleCreateContact} className="space-y-3">
+              {isSuperAdmin && (
+                <div>
+                  <label className="text-xs font-semibold text-[#475467]">Target Client Profile</label>
+                  <select
+                    value={formTargetWorkspace}
+                    onChange={(e) => setFormTargetWorkspace(e.target.value)}
+                    className="w-full mt-1 bg-[#F9FAFB] border border-violet-200 px-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED] font-medium"
+                  >
+                    {clientTenants.map((client) => {
+                      const wsId = client.workspaceId || client.id;
+                      return (
+                        <option key={wsId} value={wsId}>
+                          👤 {client.name} — {client.companyName || 'Client Profile'}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="text-xs font-semibold text-[#475467]">Full Name</label>
                 <input

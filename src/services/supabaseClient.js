@@ -68,11 +68,11 @@ export const ensureWorkspaceExists = async (workspaceId, workspaceName = 'Client
 // 1. Fetch Contacts
 export const getContacts = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('contacts')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: false });
+  let query = supabase.from('contacts').select('*');
+  if (workspaceId && workspaceId !== 'all') {
+    query = query.eq('workspace_id', workspaceId);
+  }
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching contacts:', error);
     return null;
@@ -227,11 +227,13 @@ export const getChannels = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
 // 3. Fetch Conversations
 export const getConversations = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
   if (!supabase) return [];
-  const { data, error } = await supabase
+  let query = supabase
     .from('conversations')
-    .select('id, contact_id, channel_id, channel_type, status, last_message_text, last_message_at, unread_count')
-    .eq('workspace_id', workspaceId)
-    .order('last_message_at', { ascending: false });
+    .select('id, contact_id, channel_id, channel_type, status, last_message_text, last_message_at, unread_count, workspace_id');
+  if (workspaceId && workspaceId !== 'all') {
+    query = query.eq('workspace_id', workspaceId);
+  }
+  const { data, error } = await query.order('last_message_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching conversations:', error);
@@ -280,11 +282,11 @@ export const getMessages = async (conversationId) => {
 // 4b. Fetch all Messages for the workspace
 export const getWorkspaceMessages = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('sent_at', { ascending: true });
+  let query = supabase.from('messages').select('*');
+  if (workspaceId && workspaceId !== 'all') {
+    query = query.eq('workspace_id', workspaceId);
+  }
+  const { data, error } = await query.order('sent_at', { ascending: true });
   if (error) {
     console.error('Error fetching workspace messages:', error);
     return [];
@@ -413,9 +415,11 @@ export const subscribeToWorkspaceRealtime = (workspaceId, handlers = {}) => {
   const onWalletChange = handlers.onWalletChange;
   const onChannelChange = handlers.onChannelChange;
 
-  const channelId = `realtime_ws_${workspaceId.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const channelId = `realtime_ws_${String(workspaceId || 'all').replace(/[^a-zA-Z0-9]/g, '_')}`;
 
   const channel = supabase.channel(channelId);
+
+  const wsFilter = workspaceId && workspaceId !== 'all' ? { filter: `workspace_id=eq.${workspaceId}` } : {};
 
   // 1. Inbound & Outbound Messages WebSocket Stream
   channel.on(
@@ -424,7 +428,7 @@ export const subscribeToWorkspaceRealtime = (workspaceId, handlers = {}) => {
       event: '*',
       schema: 'public',
       table: 'messages',
-      filter: `workspace_id=eq.${workspaceId}`,
+      ...wsFilter,
     },
     (payload) => {
       if (onNewMessage) {
@@ -440,7 +444,7 @@ export const subscribeToWorkspaceRealtime = (workspaceId, handlers = {}) => {
       event: '*',
       schema: 'public',
       table: 'contacts',
-      filter: `workspace_id=eq.${workspaceId}`,
+      ...wsFilter,
     },
     (payload) => {
       if (onContactChange) onContactChange(payload);
@@ -454,7 +458,7 @@ export const subscribeToWorkspaceRealtime = (workspaceId, handlers = {}) => {
       event: '*',
       schema: 'public',
       table: 'conversations',
-      filter: `workspace_id=eq.${workspaceId}`,
+      ...wsFilter,
     },
     (payload) => {
       if (onConversationChange) onConversationChange(payload);

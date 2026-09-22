@@ -158,6 +158,31 @@ export const AppProvider = ({ children }) => {
 
   const isAuthenticated = Boolean(currentUser);
 
+  // Super Administrator check (Master Platform Owner)
+  const isSuperAdmin = Boolean(
+    currentUser?.isSuperAdmin ||
+    currentUser?.username?.toLowerCase() === 'admin' ||
+    currentUser?.role === 'Super Administrator'
+  );
+
+  // Client tenants list (excluding Super Admin)
+  const clientTenants = useMemo(() => {
+    return (tenants || []).filter(
+      (t) => !t.isSuperAdmin && t.username?.toLowerCase() !== 'admin' && t.role !== 'Super Administrator'
+    );
+  }, [tenants]);
+
+  // Super Admin Client Profile Selector: 'all' (Global Feed) or a specific tenant's workspaceId
+  const [selectedClientWorkspace, setSelectedClientWorkspace] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('dhigrowth_superadmin_selected_workspace');
+        if (saved) return saved;
+      }
+    } catch {}
+    return 'all';
+  });
+
   // Active individual profile key (e.g. currentUser slug/username or 'sri')
   const [adminViewProfile, setAdminViewProfile] = useState('sri');
   const activeProfileKey = useMemo(() => {
@@ -1584,21 +1609,157 @@ export const AppProvider = ({ children }) => {
   };
 
   // Chats List partitioned strictly per workspace
+  // Helper to load single workspace chats with metadata
+  const getChatsForSingleWorkspace = (wsId) => {
+    const rawChats = getInitialChatsForWorkspace(wsId);
+    const matchedClient = (tenants || []).find((t) => (t.workspaceId || t.id) === wsId);
+    const clientName = matchedClient?.name || (wsId === DEFAULT_WORKSPACE_ID ? 'Sri' : 'Client');
+    const clientCompany = matchedClient?.companyName || (wsId === DEFAULT_WORKSPACE_ID ? 'Dhigrowth CRM' : 'Workspace');
+
+    return (rawChats || []).map((c) => ({
+      ...c,
+      workspaceId: wsId,
+      clientProfileName: c.clientProfileName || clientName,
+      clientCompanyName: c.clientCompanyName || clientCompany,
+    }));
+  };
+
+  // Helper to load all client workspaces chats merged for Super Admin
+  const getAllClientWorkspacesChats = () => {
+    const all = [];
+    const seenIds = new Set();
+
+    const clientProfiles = (tenants || []).filter(
+      (t) => !t.isSuperAdmin && t.username?.toLowerCase() !== 'admin' && t.role !== 'Super Administrator'
+    );
+
+    clientProfiles.forEach((t) => {
+      const wsId = t.workspaceId || t.id;
+      const tenantChats = getChatsForSingleWorkspace(wsId);
+      tenantChats.forEach((c) => {
+        if (!seenIds.has(c.id)) {
+          seenIds.add(c.id);
+          all.push(c);
+        }
+      });
+    });
+
+    // Also include DEFAULT_WORKSPACE_ID (Sri) if not already included
+    if (!seenIds.has('c1') && !seenIds.has('c2')) {
+      const defaultChats = getChatsForSingleWorkspace(DEFAULT_WORKSPACE_ID);
+      defaultChats.forEach((c) => {
+        if (!seenIds.has(c.id)) {
+          seenIds.add(c.id);
+          all.push(c);
+        }
+      });
+    }
+
+    all.sort((a, b) => (b.lastMessageTimestamp || 0) - (a.lastMessageTimestamp || 0));
+    return all;
+  };
+
+  const getChatCountForWorkspace = (wsId) => {
+    try {
+      const saved = localStorage.getItem(`dhigrowth_chats_${wsId}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed.length;
+      }
+      if (wsId === DEFAULT_WORKSPACE_ID) return 3;
+    } catch {}
+    return 0;
+  };
+
+  // Helper to persist updated chats into localStorage per workspace
+  const persistChatUpdate = (targetChatId, chatUpdater) => {
+    setChats((prev) => {
+      const updated = chatUpdater(prev);
+      const targetChat = updated.find((c) => c.id === targetChatId) || prev.find((c) => c.id === targetChatId);
+      const targetWs = targetChat?.workspaceId || (isSuperAdmin && selectedClientWorkspace !== 'all' ? selectedClientWorkspace : currentWorkspaceId);
+
+      try {
+        const saved = localStorage.getItem(`dhigrowth_chats_${targetWs}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const savedTarget = updated.find((c) => c.id === targetChatId);
+          if (savedTarget) {
+            const idx = parsed.findIndex((c) => c.id === targetChatId);
+            if (idx >= 0) {
+              parsed[idx] = savedTarget;
+            } else {
+              parsed.unshift(savedTarget);
+            }
+            localStorage.setItem(`dhigrowth_chats_${targetWs}`, JSON.stringify(parsed));
+          }
+        } else {
+          const wsChats = updated.filter((c) => (c.workspaceId || targetWs) === targetWs);
+          localStorage.setItem(`dhigrowth_chats_${targetWs}`, JSON.stringify(wsChats));
+        }
+      } catch {}
+
+      return updated;
+    });
+  };
+
+  // Chats List: Super Admin sees all or selected client profile; regular tenants see only their isolated workspace
   const [chats, setChats] = useState(() => {
-    return getInitialChatsForWorkspace(currentWorkspaceId);
+    if (isSuperAdmin) {
+      if (selectedClientWorkspace === 'all') {
+        return getAllClientWorkspacesChats();
+      }
+      return getChatsForSingleWorkspace(selectedClientWorkspace);
+    }
+    return getChatsForSingleWorkspace(currentWorkspaceId);
   });
 
   const [activeChatId, setActiveChatId] = useState(() => {
-    const initial = getInitialChatsForWorkspace(currentWorkspaceId);
-    return initial.length > 0 ? initial[0].id : null;
+    const initialChats = isSuperAdmin
+      ? (selectedClientWorkspace === 'all' ? getAllClientWorkspacesChats() : getChatsForSingleWorkspace(selectedClientWorkspace))
+      : getChatsForSingleWorkspace(currentWorkspaceId);
+    return initialChats.length > 0 ? initialChats[0].id : null;
   });
 
-  // Strict Tenant Isolation: When workspace ID changes, immediately swap local chats
+  // Strict Tenant Isolation & Super Admin client switching
   useEffect(() => {
-    const initial = getInitialChatsForWorkspace(currentWorkspaceId);
-    setChats(initial);
-    setActiveChatId(initial.length > 0 ? initial[0].id : null);
-  }, [currentWorkspaceId]);
+    if (isSuperAdmin) {
+      const updated = selectedClientWorkspace === 'all'
+        ? getAllClientWorkspacesChats()
+        : getChatsForSingleWorkspace(selectedClientWorkspace);
+      setChats(updated);
+      setActiveChatId((prev) => {
+        if (prev && updated.some((c) => c.id === prev)) return prev;
+        return updated.length > 0 ? updated[0].id : null;
+      });
+    } else {
+      const updated = getChatsForSingleWorkspace(currentWorkspaceId);
+      setChats(updated);
+      setActiveChatId((prev) => {
+        if (prev && updated.some((c) => c.id === prev)) return prev;
+        return updated.length > 0 ? updated[0].id : null;
+      });
+    }
+  }, [currentWorkspaceId, isSuperAdmin, selectedClientWorkspace]);
+
+  // Client profile switcher for Super Admin
+  const selectClientWorkspace = (wsIdOrAll) => {
+    setSelectedClientWorkspace(wsIdOrAll);
+    try {
+      localStorage.setItem('dhigrowth_superadmin_selected_workspace', wsIdOrAll);
+    } catch {}
+
+    let nextChats = [];
+    if (wsIdOrAll === 'all') {
+      nextChats = getAllClientWorkspacesChats();
+      showToast('Showing all inbox messages across all client profiles', 'info');
+    } else {
+      nextChats = getChatsForSingleWorkspace(wsIdOrAll);
+      const matched = tenants.find((t) => (t.workspaceId || t.id) === wsIdOrAll);
+      showToast(`Filtered inbox to ${matched?.name || 'client'} profile`, 'info');
+    }
+    setChats(nextChats);
+    setActiveChatId(nextChats.length > 0 ? nextChats[0].id : null);
+  };
 
   // Campaigns List
   const [campaigns, setCampaigns] = useState([
@@ -1648,8 +1809,11 @@ export const AppProvider = ({ children }) => {
 
     const syncCloudData = async () => {
       try {
+        const queryWsId = isSuperAdmin ? selectedClientWorkspace : currentWorkspaceId;
+        const targetSingleWs = queryWsId === 'all' ? DEFAULT_WORKSPACE_ID : queryWsId;
+
         // 1. Fetch live wallet balance
-        const walletResult = await getWalletData(currentWorkspaceId);
+        const walletResult = await getWalletData(targetSingleWs);
         if (walletResult?.wallet && isMounted) {
           const balance = parseFloat(walletResult.wallet.balance_usd) || 0;
           setCredits(balance);
@@ -1657,7 +1821,7 @@ export const AppProvider = ({ children }) => {
         }
 
         // 2. Fetch live channels status
-        const channelsResult = await getChannels(currentWorkspaceId);
+        const channelsResult = await getChannels(targetSingleWs);
         if (channelsResult && channelsResult.length > 0 && isMounted) {
           const updated = { ...channels };
           channelsResult.forEach((ch) => {
@@ -1673,9 +1837,9 @@ export const AppProvider = ({ children }) => {
 
         // 3. Fetch live contacts, conversations, and messages
         const [contactsResult, convsResult, msgsResult] = await Promise.all([
-          getContacts(currentWorkspaceId),
-          getConversations(currentWorkspaceId),
-          getWorkspaceMessages(currentWorkspaceId),
+          getContacts(queryWsId),
+          getConversations(queryWsId),
+          getWorkspaceMessages(queryWsId),
         ]);
 
         if (contactsResult && isMounted) {
@@ -1688,9 +1852,11 @@ export const AppProvider = ({ children }) => {
           if (contactsResult.length === 0) {
             setChats([]);
             setActiveChatId(null);
-            try {
-              localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify([]));
-            } catch {}
+            if (queryWsId !== 'all') {
+              try {
+                localStorage.setItem(`dhigrowth_chats_${queryWsId}`, JSON.stringify([]));
+              } catch {}
+            }
             return;
           }
 
@@ -1740,8 +1906,16 @@ export const AppProvider = ({ children }) => {
             const convObj = (convsResult || []).find((cv) => cv.contact_id === c.id || cv.id === conversationId);
             const isAiHandled = convObj?.status ? (convObj.status === 'bot_active' || convObj.status === 'ai') : true;
 
+            const chatWs = c.workspace_id || (queryWsId !== 'all' ? queryWsId : DEFAULT_WORKSPACE_ID);
+            const matchedClient = (tenants || []).find((t) => (t.workspaceId || t.id) === chatWs);
+            const clientName = matchedClient?.name || (chatWs === DEFAULT_WORKSPACE_ID ? 'Sri' : 'Client');
+            const clientCompany = matchedClient?.companyName || (chatWs === DEFAULT_WORKSPACE_ID ? 'Dhigrowth CRM' : 'Workspace');
+
             return {
               id: c.id,
+              workspaceId: chatWs,
+              clientProfileName: clientName,
+              clientCompanyName: clientCompany,
               conversationId,
               contactName: c.full_name,
               avatar: null,
@@ -1814,9 +1988,23 @@ export const AppProvider = ({ children }) => {
             // Always prioritize newest active conversation at top
             updated.sort((a, b) => (b.lastMessageTimestamp || 0) - (a.lastMessageTimestamp || 0));
 
-            try {
-              localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify(updated));
-            } catch {}
+            if (queryWsId === 'all') {
+              const byWs = {};
+              updated.forEach((ch) => {
+                const w = ch.workspaceId || DEFAULT_WORKSPACE_ID;
+                if (!byWs[w]) byWs[w] = [];
+                byWs[w].push(ch);
+              });
+              Object.entries(byWs).forEach(([w, list]) => {
+                try {
+                  localStorage.setItem(`dhigrowth_chats_${w}`, JSON.stringify(list));
+                } catch {}
+              });
+            } else {
+              try {
+                localStorage.setItem(`dhigrowth_chats_${queryWsId}`, JSON.stringify(updated));
+              } catch {}
+            }
             return updated;
           });
 
@@ -1834,7 +2022,8 @@ export const AppProvider = ({ children }) => {
     syncCloudData();
 
     // Connect Realtime WebSocket Stream (Completely replaces 2-second HTTP polling!)
-    const subscription = subscribeToWorkspaceRealtime(currentWorkspaceId, {
+    const queryWsId = isSuperAdmin ? selectedClientWorkspace : currentWorkspaceId;
+    const subscription = subscribeToWorkspaceRealtime(queryWsId, {
       onNewMessage: (newMsg) => {
         if (!isMounted || !newMsg) return;
         const msgTimestamp = new Date(newMsg.sent_at || newMsg.created_at || Date.now()).getTime();
@@ -1869,11 +2058,9 @@ export const AppProvider = ({ children }) => {
           }
 
           const target = prev[targetIndex];
-          if (target.messages.some((m) => m.id === newMsg.id)) return prev;
+          const exists = (target.messages || []).some((m) => m.id === newMsg.id);
+          if (exists) return prev;
 
-          const isCurrentActive = target.id === activeChatId;
-
-          // Sound and desktop notification on inbound messages
           if (isInbound) {
             playNotificationSound();
             showDesktopNotification(target.contactName, newMsg.content);
@@ -1882,29 +2069,24 @@ export const AppProvider = ({ children }) => {
 
           const updatedTarget = {
             ...target,
-            conversationId: target.conversationId || newMsg.conversation_id,
-            messages: [...target.messages, formatted],
-            lastSeen: 'Just now',
+            messages: [...(target.messages || []), formatted],
+            lastSeen: formatted.time,
             lastMessageTimestamp: msgTimestamp,
-            unreadCount: isCurrentActive ? 0 : (target.unreadCount || 0) + 1,
+            unreadCount: isInbound ? (target.unreadCount || 0) + 1 : target.unreadCount,
           };
 
-          // MOVE TO TOP (Newest message comes means it shows first!)
           const remaining = prev.filter((_, idx) => idx !== targetIndex);
           const updated = [updatedTarget, ...remaining];
+
+          const targetWs = target.workspaceId || (queryWsId !== 'all' ? queryWsId : DEFAULT_WORKSPACE_ID);
           try {
-            localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify(updated));
+            localStorage.setItem(`dhigrowth_chats_${targetWs}`, JSON.stringify(updated.filter(c => (c.workspaceId || targetWs) === targetWs)));
           } catch {}
           return updated;
         });
       },
+
       onContactChange: (payload) => {
-        if (!isMounted) return;
-        console.log('⚡ [WebSocket] Contact change event received:', payload?.eventType);
-        syncCloudData();
-      },
-      onConversationChange: (payload) => {
-        if (!isMounted) return;
         console.log('⚡ [WebSocket] Conversation event received:', payload?.eventType);
         syncCloudData();
       },
@@ -1946,7 +2128,7 @@ export const AppProvider = ({ children }) => {
         subscription.unsubscribe();
       }
     };
-  }, [currentWorkspaceId]);
+  }, [currentWorkspaceId, isSuperAdmin, selectedClientWorkspace]);
 
   // Toast Helper
   const showToast = (message, type = 'success') => {
@@ -1975,14 +2157,8 @@ export const AppProvider = ({ children }) => {
   // Open Chat and clear unread badge
   const openChat = (chatId) => {
     setActiveChatId(chatId);
-    setChats((prev) => {
-      const target = prev.find((c) => c.id === chatId);
-      if (!target || !target.unreadCount) return prev;
-      const updated = prev.map((c) => (c.id === chatId ? { ...c, unreadCount: 0 } : c));
-      try {
-        localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify(updated));
-      } catch {}
-      return updated;
+    persistChatUpdate(chatId, (prev) => {
+      return prev.map((c) => (c.id === chatId ? { ...c, unreadCount: 0 } : c));
     });
   };
 
@@ -1999,22 +2175,18 @@ export const AppProvider = ({ children }) => {
       timestamp: now,
     };
 
-    setChats((prev) => {
+    persistChatUpdate(activeChatId, (prev) => {
       const targetIndex = prev.findIndex((c) => c.id === activeChatId);
       if (targetIndex === -1) return prev;
       const target = prev[targetIndex];
       const updatedTarget = {
         ...target,
-        messages: [...target.messages, newMsg],
+        messages: [...(target.messages || []), newMsg],
         lastSeen: 'Just now',
         lastMessageTimestamp: now,
       };
       const remaining = prev.filter((_, idx) => idx !== targetIndex);
-      const updated = [updatedTarget, ...remaining];
-      try {
-        localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify(updated));
-      } catch {}
-      return updated;
+      return [updatedTarget, ...remaining];
     });
 
     setMetrics((prev) => ({
@@ -2026,10 +2198,19 @@ export const AppProvider = ({ children }) => {
       let isAiEnabled = true;
       let targetContactName = 'Valued Client';
       let targetChannel = 'whatsapp';
+      let targetWs = currentWorkspaceId;
 
       // 1. Check local storage for the most up-to-date chat state
+      const activeChatObj = chats.find((c) => c.id === activeChatId);
+      if (activeChatObj) {
+        targetWs = activeChatObj.workspaceId || targetWs;
+        if (activeChatObj.aiHandled === false) isAiEnabled = false;
+        targetContactName = activeChatObj.contactName || targetContactName;
+        targetChannel = activeChatObj.channel || targetChannel;
+      }
+
       try {
-        const saved = localStorage.getItem(`dhigrowth_chats_${currentWorkspaceId}`);
+        const saved = localStorage.getItem(`dhigrowth_chats_${targetWs}`);
         if (saved) {
           const parsed = JSON.parse(saved);
           const matched = parsed.find((c) => c.id === activeChatId);
@@ -2040,14 +2221,6 @@ export const AppProvider = ({ children }) => {
           }
         }
       } catch {}
-
-      // 2. Also check current React state
-      const activeChatObj = chats.find((c) => c.id === activeChatId);
-      if (activeChatObj) {
-        if (activeChatObj.aiHandled === false) isAiEnabled = false;
-        targetContactName = activeChatObj.contactName || targetContactName;
-        targetChannel = activeChatObj.channel || targetChannel;
-      }
 
       // CRITICAL: If Manual Agent is turned on, AI auto-reply MUST NOT WORK!
       if (!isAiEnabled) {
@@ -2069,6 +2242,7 @@ export const AppProvider = ({ children }) => {
                 customerMessage: text,
                 customerName: activeChatObj?.contactName || 'Valued Client',
                 channelType: activeChatObj?.channel || 'whatsapp',
+                workspaceId: targetWs,
               }),
             });
           } catch {}
@@ -2082,6 +2256,7 @@ export const AppProvider = ({ children }) => {
                   customerMessage: text,
                   customerName: activeChatObj?.contactName || 'Valued Client',
                   channelType: activeChatObj?.channel || 'whatsapp',
+                  workspaceId: targetWs,
                 }),
               });
             } catch {}
@@ -2114,22 +2289,18 @@ export const AppProvider = ({ children }) => {
 
         playNotificationSound();
 
-        setChats((prevChats) => {
+        persistChatUpdate(activeChatId, (prevChats) => {
           const targetIndex = prevChats.findIndex((c) => c.id === activeChatId);
           if (targetIndex === -1) return prevChats;
           const target = prevChats[targetIndex];
           const updatedTarget = {
             ...target,
-            messages: [...target.messages, aiMsg],
+            messages: [...(target.messages || []), aiMsg],
             lastSeen: 'Just now',
             lastMessageTimestamp: aiTime,
           };
           const remaining = prevChats.filter((_, idx) => idx !== targetIndex);
-          const updated = [updatedTarget, ...remaining];
-          try {
-            localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify(updated));
-          } catch {}
-          return updated;
+          return [updatedTarget, ...remaining];
         });
 
         setMetrics((prev) => ({
@@ -2145,21 +2316,19 @@ export const AppProvider = ({ children }) => {
     let targetConvId = null;
     let targetContactName = '';
     let targetPhone = '';
+    let targetWs = currentWorkspaceId;
 
-    setChats((prev) => {
-      const updated = prev.map((c) => {
+    persistChatUpdate(chatId, (prev) => {
+      return prev.map((c) => {
         if (c.id === chatId) {
           targetConvId = c.conversationId || c.id;
           targetContactName = c.contactName;
           targetPhone = c.phone;
+          targetWs = c.workspaceId || targetWs;
           return { ...c, aiHandled: Boolean(isAiEnabled) };
         }
         return c;
       });
-      try {
-        localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify(updated));
-      } catch {}
-      return updated;
     });
 
     // Notify backend server so Meta incoming webhooks immediately respect Manual Agent mode!
@@ -2168,7 +2337,7 @@ export const AppProvider = ({ children }) => {
         phone: targetPhone,
         conversationId: targetConvId,
         isAiEnabled: Boolean(isAiEnabled),
-        workspaceId: currentWorkspaceId,
+        workspaceId: targetWs,
       };
 
       fetch(`${BACKEND_URL}/api/conversations/set-agent-mode`, {
@@ -2206,20 +2375,21 @@ export const AppProvider = ({ children }) => {
 
   const addInternalNote = (chatId, text) => {
     if (!text.trim()) return;
+    const authorName = currentUser?.name || currentUser?.username || 'Admin';
     const note = {
       id: `n-${Date.now()}`,
-      author: 'Sri (Admin)',
+      author: authorName,
       text,
       time: 'Just now',
     };
-    setChats((prev) =>
+    persistChatUpdate(chatId, (prev) =>
       prev.map((c) => (c.id === chatId ? { ...c, notes: [note, ...(c.notes || [])] } : c))
     );
     showToast('Internal note saved to contact timeline', 'success');
   };
 
   const updateLeadTag = (chatId, newTag) => {
-    setChats((prev) =>
+    persistChatUpdate(chatId, (prev) =>
       prev.map((c) => (c.id === chatId ? { ...c, tag: newTag } : c))
     );
     showToast(`Lead stage updated to "${newTag}"`, 'success');
@@ -2227,12 +2397,16 @@ export const AppProvider = ({ children }) => {
 
   const createLead = async (leadData) => {
     let newDbId = `c-${Date.now()}`;
+    const targetWs = leadData.workspaceId || (isSuperAdmin && selectedClientWorkspace !== 'all' ? selectedClientWorkspace : currentWorkspaceId);
+    const matchedClient = (tenants || []).find((t) => (t.workspaceId || t.id) === targetWs);
+    const clientName = matchedClient?.name || (targetWs === DEFAULT_WORKSPACE_ID ? 'Sri' : 'Client');
+    const clientCompany = matchedClient?.companyName || (targetWs === DEFAULT_WORKSPACE_ID ? 'Dhigrowth CRM' : 'Workspace');
 
     // 1. Save to Supabase if configured
     if (isSupabaseConfigured) {
       try {
         const res = await createDbContact({
-          workspaceId: currentWorkspaceId,
+          workspaceId: targetWs,
           fullName: leadData.name,
           phoneNumber: leadData.phone,
           email: leadData.email,
@@ -2252,6 +2426,9 @@ export const AppProvider = ({ children }) => {
 
     const newLead = {
       id: newDbId,
+      workspaceId: targetWs,
+      clientProfileName: clientName,
+      clientCompanyName: clientCompany,
       contactName: leadData.name,
       avatar: leadData.avatar || null,
       phone: leadData.phone,
@@ -2274,7 +2451,7 @@ export const AppProvider = ({ children }) => {
         {
           id: `init-${Date.now()}`,
           sender: 'ai',
-          text: `Hello! 👋 Welcome to **DhiGrowth IT Services**.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 **App Development**\n🤖 **AI Business Solutions & Development**\n💬 **WhatsApp CRM & Automation**\n💻 **Custom IT Solutions**\n\nTell us what your business needs, and let’s build something powerful together! 🚀`,
+          text: `Hello! 👋 Welcome to **${clientCompany}**.\n\nHow can our AI Business Concierge help you today? 🤖\n\nTell us what your business needs, and let’s build something powerful together! 🚀`,
           time: 'Just now',
         },
       ],
@@ -2283,7 +2460,9 @@ export const AppProvider = ({ children }) => {
     setChats((prev) => {
       const updated = [newLead, ...prev];
       try {
-        localStorage.setItem(`dhigrowth_chats_${currentWorkspaceId}`, JSON.stringify(updated));
+        const saved = localStorage.getItem(`dhigrowth_chats_${targetWs}`);
+        const parsed = saved ? JSON.parse(saved) : [];
+        localStorage.setItem(`dhigrowth_chats_${targetWs}`, JSON.stringify([newLead, ...parsed]));
       } catch {}
       return updated;
     });
@@ -2294,11 +2473,12 @@ export const AppProvider = ({ children }) => {
       spread: 60,
       origin: { y: 0.6 },
     });
-    showToast(`Contact "${leadData.name}" saved to database!`, 'success');
+    showToast(`Contact "${leadData.name}" saved for ${clientName} (${clientCompany})!`, 'success');
   };
 
   const updateLead = async (contactId, updatedData) => {
     const targetChat = chats.find((c) => c.id === contactId);
+    const targetWs = targetChat?.workspaceId || (isSuperAdmin && selectedClientWorkspace !== 'all' ? selectedClientWorkspace : currentWorkspaceId);
 
     // 1. Update in Supabase if configured
     if (isSupabaseConfigured) {
@@ -2318,7 +2498,7 @@ export const AppProvider = ({ children }) => {
               ...(updatedData.attributes || {}),
             },
           },
-          currentWorkspaceId,
+          targetWs,
           targetChat?.phone
         );
       } catch (err) {
@@ -2326,8 +2506,8 @@ export const AppProvider = ({ children }) => {
       }
     }
 
-    // 2. Update local state
-    setChats((prev) =>
+    // 2. Update local state and storage
+    persistChatUpdate(contactId, (prev) =>
       prev.map((c) => {
         if (c.id === contactId) {
           return {
@@ -2356,19 +2536,28 @@ export const AppProvider = ({ children }) => {
 
   const deleteLead = async (contactId) => {
     const targetChat = chats.find((c) => c.id === contactId);
+    const targetWs = targetChat?.workspaceId || (isSuperAdmin && selectedClientWorkspace !== 'all' ? selectedClientWorkspace : currentWorkspaceId);
 
     // 1. Delete from Supabase if configured
     if (isSupabaseConfigured) {
       try {
-        await deleteDbContact(contactId, currentWorkspaceId, targetChat?.phone);
+        await deleteDbContact(contactId, targetWs, targetChat?.phone);
       } catch (err) {
         console.warn('Supabase delete contact notice:', err);
       }
     }
 
-    // 2. Remove from local state
+    // 2. Remove from local state and storage
     setChats((prev) => {
       const remaining = prev.filter((c) => c.id !== contactId);
+      try {
+        const saved = localStorage.getItem(`dhigrowth_chats_${targetWs}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const updatedSaved = parsed.filter((c) => c.id !== contactId);
+          localStorage.setItem(`dhigrowth_chats_${targetWs}`, JSON.stringify(updatedSaved));
+        }
+      } catch {}
       return remaining;
     });
 
@@ -2519,6 +2708,12 @@ export const AppProvider = ({ children }) => {
         fetchAiConfig,
         isAiConfigLoading,
         // Multi-Tenant Super Admin state & handlers
+        isSuperAdmin,
+        selectedClientWorkspace,
+        setSelectedClientWorkspace,
+        selectClientWorkspace,
+        clientTenants,
+        getChatCountForWorkspace,
         tenants,
         createTenantUser,
         deleteTenantUser,
