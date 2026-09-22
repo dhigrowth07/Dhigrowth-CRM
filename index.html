@@ -2,7 +2,17 @@
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <script>
+      // Disable gesture & pinch zoom on mobile & tablets (iOS WebKit / Android)
+      document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+      document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+      document.addEventListener('gestureend', function (e) { e.preventDefault(); });
+      // Disable trackpad/mouse pinch-zoom on tablets & hybrids
+      document.addEventListener('wheel', function (e) {
+        if (e.ctrlKey) { e.preventDefault(); }
+      }, { passive: false });
+    </script>
     <title>WAPPPILOT — AI WhatsApp, Instagram & Messenger Marketing | Official Meta Partner</title>
     <link rel="icon" type="image/png" href="/wapppilot-logo.png" />
     <meta name="description" content="WAPPPILOT: The omnichannel AI marketing platform. Official Meta Business Partner. WhatsApp Cloud API, IG comment-to-DM, Messenger automation, AI calling and more." />
