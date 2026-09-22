@@ -20,7 +20,7 @@ const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supaba
  * Return public Meta OAuth configuration for the frontend Facebook SDK
  */
 export function getMetaOAuthConfig() {
-  const backendUrl = process.env.RENDER_EXTERNAL_URL || process.env.VITE_BACKEND_URL || 'https://dhigrowth-backend-8tlq.onrender.com';
+  const backendUrl = process.env.VITE_BACKEND_URL || process.env.RENDER_EXTERNAL_URL || 'https://api-wappilot.dhigrowth.com';
   return {
     appId: process.env.META_APP_ID || process.env.VITE_META_APP_ID || '1611291237194962',
     configId: process.env.META_CONFIG_ID || process.env.VITE_META_CONFIG_ID || '',

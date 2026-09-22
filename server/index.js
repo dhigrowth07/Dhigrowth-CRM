@@ -2048,8 +2048,8 @@ app.listen(PORT, () => {
   console.log(`⚡ Health Check: http://localhost:${PORT}/health`);
   console.log(`================================================================\n`);
 
-  // Automatic Keep-Alive to prevent Render free instance from sleeping
-  const RENDER_APP_URL = process.env.RENDER_EXTERNAL_URL || process.env.VITE_BACKEND_URL || 'https://dhigrowth-backend-8tlq.onrender.com';
+  // Automatic Keep-Alive to prevent server instance from sleeping
+  const RENDER_APP_URL = process.env.VITE_BACKEND_URL || process.env.RENDER_EXTERNAL_URL || 'https://api-wappilot.dhigrowth.com';
   if (RENDER_APP_URL) {
     const cleanUrl = RENDER_APP_URL.replace(/\/+$/, '');
     setInterval(async () => {

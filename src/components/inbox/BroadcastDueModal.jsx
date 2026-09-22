@@ -224,7 +224,7 @@ export const BroadcastDueModal = ({ onClose }) => {
     .replace(/\{\{\s*invoiceId\s*\}\}/gi, 'INV-785016')
     .replace(/\{\{\s*id\s*\}\}/gi, 'INV-785016')
     .replace(/\{\{\s*description\s*\}\}/gi, broadcastDesc || 'WhatsApp CRM & Automation')
-    .replace(/\{\{\s*paymentLink\s*\}\}/gi, 'https://dhigrowth-backend-8tlq.onrender.com/invoices/INV-785016/pay');
+    .replace(/\{\{\s*paymentLink\s*\}\}/gi, 'https://api-wappilot.dhigrowth.com/invoices/INV-785016/pay');
 
   // Format WhatsApp basic markup for preview
   const formatWhatsAppText = (text) => {

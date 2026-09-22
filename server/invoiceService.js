@@ -370,7 +370,7 @@ export async function markInvoicePaid(invoiceId, {
   // If still not in memory, construct it gracefully from parameters
   if (!invoice) {
     console.log(`ℹ️ [Invoice Auto-Construct] Invoice ${invoiceId} not found in memory, creating record...`);
-    const resolvedBaseUrl = (baseUrl || process.env.RENDER_EXTERNAL_URL || process.env.VITE_BACKEND_URL || 'https://dhigrowth-backend-8tlq.onrender.com').replace(/\/+$/, '');
+    const resolvedBaseUrl = (baseUrl || process.env.VITE_BACKEND_URL || process.env.RENDER_EXTERNAL_URL || 'https://api-wappilot.dhigrowth.com').replace(/\/+$/, '');
     invoice = {
       id: invoiceId,
       customerName: customerName || 'Valued Client',
@@ -795,7 +795,7 @@ export async function broadcastDueInvoicesToAll({
   description = 'WAPPPILOT WhatsApp CRM & AI Business Concierge',
   amount = 2499,
   messageTemplate = '',
-  baseUrl = 'https://dhigrowth-backend-8tlq.onrender.com',
+  baseUrl = 'https://api-wappilot.dhigrowth.com',
   workspaceId = 'b0000000-0000-0000-0000-000000000001',
   userId = null,
   username = 'sri',

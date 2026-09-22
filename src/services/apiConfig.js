@@ -9,6 +9,7 @@ const isLocalhost =
     window.location.hostname.startsWith('192.168.')
   );
 
-export const BACKEND_URL = isLocalhost
-  ? 'http://localhost:4000'
-  : (import.meta.env.VITE_BACKEND_URL || 'https://api-wappilot.dhigrowth.com' || 'https://dhigrowth-crm.onrender.com').replace(/\/+$/, '');
+export const BACKEND_URL = (
+  import.meta.env.VITE_BACKEND_URL ||
+  (isLocalhost ? 'http://localhost:4000' : 'https://api-wappilot.dhigrowth.com')
+).replace(/\/+$/, '');
