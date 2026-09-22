@@ -36,6 +36,13 @@ export const MetaApiSettings = () => {
     setIsUpgradeModalOpen
   } = useApp();
 
+  const isSuperAdmin = Boolean(
+    currentUser?.isSuperAdmin ||
+    currentUser?.username?.toLowerCase() === 'admin' ||
+    currentUser?.role?.toLowerCase() === 'super administrator' ||
+    currentUser?.role?.toLowerCase() === 'super_admin'
+  );
+
   // Form State
   const [phoneNumberId, setPhoneNumberId] = useState(metaConfig?.phoneNumberId || '');
   const [accessToken, setAccessToken] = useState(metaConfig?.accessToken || '');
@@ -417,54 +424,56 @@ export const MetaApiSettings = () => {
                 />
               </div>
 
-              {/* 4. Webhook Callback URL & Verify Token */}
-              <div className="pt-2 border-t border-[#EAECF0] space-y-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-[#344054]">
-                      Webhook Callback URL (Inbound Messages)
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard('https://api-wappilot.dhigrowth.com/webhook', 'Webhook URL')}
-                      className="text-[11px] text-[#7C3AED] hover:text-[#6D28D9] font-semibold cursor-pointer flex items-center gap-1"
-                    >
-                      {copiedKey === 'Webhook URL' ? <Check className="w-3 h-3 text-[#16A34A]" /> : <Copy className="w-3 h-3" />}
-                      <span>Copy</span>
-                    </button>
+              {/* 4. Webhook Callback URL & Verify Token (Super Admin Only) */}
+              {isSuperAdmin && (
+                <div className="pt-2 border-t border-[#EAECF0] space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#344054]">
+                        Webhook Callback URL (Inbound Messages)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard('https://api-wappilot.dhigrowth.com/webhook', 'Webhook URL')}
+                        className="text-[11px] text-[#7C3AED] hover:text-[#6D28D9] font-semibold cursor-pointer flex items-center gap-1"
+                      >
+                        {copiedKey === 'Webhook URL' ? <Check className="w-3 h-3 text-[#16A34A]" /> : <Copy className="w-3 h-3" />}
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      readOnly
+                      value="https://api-wappilot.dhigrowth.com/webhook"
+                      className="w-full px-3.5 py-2.5 bg-[#F9FAFB] border border-[#EAECF0] rounded-xl text-xs font-mono text-[#7C3AED] select-all cursor-default focus:outline-none"
+                      title="Fixed production webhook callback URL"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    readOnly
-                    value="https://api-wappilot.dhigrowth.com/webhook"
-                    className="w-full px-3.5 py-2.5 bg-[#F9FAFB] border border-[#EAECF0] rounded-xl text-xs font-mono text-[#7C3AED] select-all cursor-default focus:outline-none"
-                    title="Fixed production webhook callback URL"
-                  />
-                </div>
 
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-[#344054]">
-                      Webhook Verify Token
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(verifyToken || 'dhigrowth_webhook_secret_2026', 'Verify Token')}
-                      className="text-[11px] text-[#7C3AED] hover:text-[#6D28D9] font-semibold cursor-pointer flex items-center gap-1"
-                    >
-                      {copiedKey === 'Verify Token' ? <Check className="w-3 h-3 text-[#16A34A]" /> : <Copy className="w-3 h-3" />}
-                      <span>Copy</span>
-                    </button>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#344054]">
+                        Webhook Verify Token
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(verifyToken || 'dhigrowth_webhook_secret_2026', 'Verify Token')}
+                        className="text-[11px] text-[#7C3AED] hover:text-[#6D28D9] font-semibold cursor-pointer flex items-center gap-1"
+                      >
+                        {copiedKey === 'Verify Token' ? <Check className="w-3 h-3 text-[#16A34A]" /> : <Copy className="w-3 h-3" />}
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      readOnly
+                      value={verifyToken || 'dhigrowth_webhook_secret_2026'}
+                      className="w-full px-3.5 py-2.5 bg-[#F9FAFB] border border-[#EAECF0] rounded-xl text-xs font-mono text-[#101828] select-all cursor-default focus:outline-none"
+                      title="Fixed production webhook verify token"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    readOnly
-                    value={verifyToken || 'dhigrowth_webhook_secret_2026'}
-                    className="w-full px-3.5 py-2.5 bg-[#F9FAFB] border border-[#EAECF0] rounded-xl text-xs font-mono text-[#101828] select-all cursor-default focus:outline-none"
-                    title="Fixed production webhook verify token"
-                  />
                 </div>
-              </div>
+              )}
 
               {/* Submit Buttons */}
               <div className="pt-3 flex items-center justify-end gap-3">
