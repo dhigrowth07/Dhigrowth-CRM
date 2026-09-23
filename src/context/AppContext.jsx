@@ -359,22 +359,27 @@ export const AppProvider = ({ children }) => {
 
       // Backward compatibility aliases
       if (navId === 'inbox') {
+        if (perms['inbox'] === true) return true;
         if (perms['inbox'] === false || perms['team_inbox'] === false || perms['teamInbox'] === false) return false;
         return true;
       }
       if (navId === 'leads') {
+        if (perms['leads'] === true) return true;
         if (perms['leads'] === false || perms['crm_leads'] === false) return false;
         return true;
       }
       if (navId === 'ai-assistants') {
+        if (perms['ai-assistants'] === true) return true;
         if (perms['ai-assistants'] === false || perms['ai_studio'] === false || perms['aiStudio'] === false) return false;
         return true;
       }
       if (navId === 'meta-api') {
+        if (perms['meta-api'] === true) return true;
         if (perms['meta-api'] === false || perms['meta_api'] === false || perms['metaKeys'] === false) return false;
         return true;
       }
       if (navId === 'send_due_all') {
+        if (perms['send_due_all'] === true) return true;
         if (perms['send_due_all'] === false || perms['sendDueToAll'] === false) return false;
         return true;
       }
@@ -965,12 +970,54 @@ export const AppProvider = ({ children }) => {
               } catch {}
 
               const existingPerms = idx >= 0 ? merged[idx]?.permissions : null;
-              // Explicit local permissions must never be wiped out by stale cloud defaults
+              // Cloud permissions configured by Super Admin are the authoritative source of truth
               const combinedPerms = {
-                ...(ct.permissions || {}),
                 ...(existingPerms || {}),
                 ...(savedPerms || {}),
+                ...(ct.permissions || {}),
               };
+
+              // Immediately sync dedicated tenant cache in localStorage with cloud
+              try {
+                localStorage.setItem(`dhigrowth_tenant_perms_${cleanUser}`, JSON.stringify(combinedPerms));
+                if (ct.id) {
+                  localStorage.setItem(`dhigrowth_tenant_perms_${ct.id}`, JSON.stringify(combinedPerms));
+                }
+              } catch {}
+
+              // If currently active user is this tenant, immediately synchronize permissions
+              if (
+                currentUser &&
+                (currentUser.id === ct.id ||
+                  currentUser.workspaceId === ct.workspaceId ||
+                  currentUser.username?.toLowerCase() === cleanUser)
+              ) {
+                setCurrentUser((prevUser) => {
+                  if (!prevUser) return prevUser;
+                  const updatedUser = { ...prevUser, permissions: combinedPerms };
+                  try {
+                    localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
+                    localStorage.setItem(`dhigrowth_auth_session_${cleanUser}`, JSON.stringify(updatedUser));
+                  } catch {}
+                  return updatedUser;
+                });
+              }
+
+              // Also sync impersonatedTenant if viewing as this tenant
+              if (
+                impersonatedTenant &&
+                (impersonatedTenant.id === ct.id ||
+                  impersonatedTenant.username?.toLowerCase() === cleanUser)
+              ) {
+                setImpersonatedTenant((prevImp) => {
+                  if (!prevImp) return prevImp;
+                  const nextImp = { ...prevImp, permissions: combinedPerms };
+                  try {
+                    localStorage.setItem('dhigrowth_impersonated_tenant', JSON.stringify(nextImp));
+                  } catch {}
+                  return nextImp;
+                });
+              }
 
               const mergedTenant = {
                 ...(idx >= 0 ? merged[idx] : {}),
@@ -1006,7 +1053,41 @@ export const AppProvider = ({ children }) => {
     fetchMetaConfig();
     fetchAiConfig();
     fetchTenantsCloud();
-  }, []);
+
+    // Live sync polling: check cloud tenants every 3 seconds so Super Admin changes reflect immediately for user
+    const interval = setInterval(() => {
+      fetchTenantsCloud();
+    }, 3000);
+
+    const onFocus = () => {
+      fetchTenantsCloud();
+    };
+
+    const handlePermissionsChanged = () => {
+      fetchTenantsCloud();
+    };
+
+    const handleStorageEvent = (e) => {
+      if (
+        e.key?.startsWith('dhigrowth_tenant_perms_') ||
+        e.key === 'dhigrowth_tenants' ||
+        e.key === 'dhigrowth_auth_session'
+      ) {
+        fetchTenantsCloud();
+      }
+    };
+
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('dhigrowth_permissions_changed', handlePermissionsChanged);
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('dhigrowth_permissions_changed', handlePermissionsChanged);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, [currentUser?.username, impersonatedTenant?.username]);
 
   // Bcrypt hashed passwords for secure authentication (Cost Factor: 10)
   const USER_PASSWORD_HASHES = {
@@ -1679,15 +1760,29 @@ export const AppProvider = ({ children }) => {
       return updated;
     });
 
-    // 3. Update currentUser session if active
+    // 3. Update currentUser session if active or stored
+    try {
+      const rawStored = localStorage.getItem('dhigrowth_auth_session');
+      if (rawStored) {
+        const parsed = JSON.parse(rawStored);
+        if (parsed.id === identifier || parsed.username?.toLowerCase() === tenantUser) {
+          parsed.permissions = updatedPerms;
+          localStorage.setItem('dhigrowth_auth_session', JSON.stringify(parsed));
+        }
+      }
+      const tenantStored = localStorage.getItem(`dhigrowth_auth_session_${tenantUser}`);
+      if (tenantStored) {
+        const parsed = JSON.parse(tenantStored);
+        parsed.permissions = updatedPerms;
+        localStorage.setItem(`dhigrowth_auth_session_${tenantUser}`, JSON.stringify(parsed));
+      }
+    } catch {}
+
     if (currentUser?.id === identifier || currentUser?.username?.toLowerCase() === tenantUser) {
       setCurrentUser((prev) => {
         if (!prev) return prev;
         const currentP = prev.permissions || {};
         const updatedUser = { ...prev, permissions: { ...currentP, [permissionKey]: nextVal } };
-        try {
-          localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
-        } catch {}
         return updatedUser;
       });
     }
@@ -1707,6 +1802,10 @@ export const AppProvider = ({ children }) => {
         return next;
       });
     }
+
+    try {
+      window.dispatchEvent(new CustomEvent('dhigrowth_permissions_changed', { detail: { tenantUser, permissions: updatedPerms } }));
+    } catch {}
 
     // 4. Sync immediately to backend
     try {
@@ -1764,14 +1863,28 @@ export const AppProvider = ({ children }) => {
       return updated;
     });
 
-    // 3. Update currentUser session if active
+    // 3. Update currentUser session if active or stored
+    try {
+      const rawStored = localStorage.getItem('dhigrowth_auth_session');
+      if (rawStored) {
+        const parsed = JSON.parse(rawStored);
+        if (parsed.id === identifier || parsed.username?.toLowerCase() === tenantUser) {
+          parsed.permissions = mergedPerms;
+          localStorage.setItem('dhigrowth_auth_session', JSON.stringify(parsed));
+        }
+      }
+      const tenantStored = localStorage.getItem(`dhigrowth_auth_session_${tenantUser}`);
+      if (tenantStored) {
+        const parsed = JSON.parse(tenantStored);
+        parsed.permissions = mergedPerms;
+        localStorage.setItem(`dhigrowth_auth_session_${tenantUser}`, JSON.stringify(parsed));
+      }
+    } catch {}
+
     if (currentUser?.id === identifier || currentUser?.username?.toLowerCase() === tenantUser) {
       setCurrentUser((prev) => {
         if (!prev) return prev;
         const updatedUser = { ...prev, permissions: mergedPerms };
-        try {
-          localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
-        } catch {}
         return updatedUser;
       });
     }
@@ -1791,6 +1904,10 @@ export const AppProvider = ({ children }) => {
         return next;
       });
     }
+
+    try {
+      window.dispatchEvent(new CustomEvent('dhigrowth_permissions_changed', { detail: { tenantUser, permissions: mergedPerms } }));
+    } catch {}
 
     // 4. Sync immediately to backend
     try {
