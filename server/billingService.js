@@ -277,8 +277,8 @@ export async function createCheckoutSession({
   }
 
   // 2. Razorpay Order Integration (UPI, Indian NetBanking, Cards)
-  const rzpKeyId = process.env.RAZORPAY_KEY_ID;
-  const rzpKeySecret = process.env.RAZORPAY_KEY_SECRET;
+  const rzpKeyId = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TcdoZxzN0dIYoP';
+  const rzpKeySecret = process.env.RAZORPAY_KEY_SECRET || '6wEKCUJ0UXAZm6ESRTaIY4R0';
 
   if (rzpKeyId && rzpKeySecret && !rzpKeyId.includes('placeholder')) {
     try {
@@ -329,7 +329,7 @@ export async function createCheckoutSession({
   return {
     provider: 'razorpay',
     isSandbox: true,
-    keyId: 'rzp_test_dhigrowth_sandbox',
+    keyId: rzpKeyId,
     orderId: `order_${orderReferenceId}`,
     orderReferenceId,
     amount: totalAmount,
