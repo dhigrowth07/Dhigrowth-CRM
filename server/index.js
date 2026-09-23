@@ -133,7 +133,62 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+
+// Static directory for uploaded images and media
+const uploadsDir = path.resolve(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
+// Image Upload Endpoint for WhatsApp Templates and Media Attachments
+app.post('/api/upload/image', (req, res) => {
+  try {
+    const { data, filename } = req.body;
+    if (!data) {
+      return res.status(400).json({ success: false, error: 'No image data provided' });
+    }
+
+    let buffer;
+    let ext = 'png';
+    const matches = data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (matches && matches.length === 3) {
+      const mime = matches[1];
+      if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg';
+      else if (mime.includes('webp')) ext = 'webp';
+      else if (mime.includes('gif')) ext = 'gif';
+      else if (mime.includes('svg')) ext = 'svg';
+      else ext = 'png';
+      buffer = Buffer.from(matches[2], 'base64');
+    } else {
+      buffer = Buffer.from(data, 'base64');
+    }
+
+    const cleanBase = (filename || 'template_image').replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeName = `${Date.now()}_${cleanBase}.${ext}`;
+    const filePath = path.join(uploadsDir, safeName);
+    fs.writeFileSync(filePath, buffer);
+
+    const relativeUrl = `/uploads/${safeName}`;
+    const host = req.get('host') || 'localhost:4000';
+    const protocol = req.protocol || 'http';
+    const fullUrl = `${protocol}://${host}${relativeUrl}`;
+
+    console.log(`📸 [Upload API] Image saved: ${safeName} (${(buffer.length / 1024).toFixed(1)} KB) -> ${fullUrl}`);
+
+    res.json({
+      success: true,
+      url: fullUrl,
+      relativeUrl,
+      filename: safeName,
+    });
+  } catch (err) {
+    console.error('[Upload API] Error saving image:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // 1. Health check & Diagnostics
 app.get('/health', (req, res) => {

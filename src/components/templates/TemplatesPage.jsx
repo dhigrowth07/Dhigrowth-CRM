@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FileText,
   Plus,
@@ -28,6 +28,7 @@ import {
   AlertCircle,
   Shield,
   UploadCloud,
+  Type,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
@@ -210,10 +211,92 @@ export const TemplatesPage = () => {
   const [formName, setFormName] = useState('');
   const [formTriggers, setFormTriggers] = useState('');
   const [formCategory, setFormCategory] = useState('utility');
-  const [formHeaderType, setFormHeaderType] = useState('NONE'); // 'NONE' | 'IMAGE'
+  const [formHeaderType, setFormHeaderType] = useState('NONE'); // 'NONE' | 'TEXT' | 'IMAGE'
+  const [formHeaderText, setFormHeaderText] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formBody, setFormBody] = useState('');
   const [formReSubmitMeta, setFormReSubmitMeta] = useState(true);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Helper to validate whether a string is a valid image URL, data URL, or uploaded path
+  const isValidImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim();
+    if (trimmed.startsWith('data:image/')) return true;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return true;
+    if (trimmed.startsWith('/uploads/')) return true;
+    return false;
+  };
+
+  // Image File Upload Handler (Supports local PNG/JPG/WebP/SVG upload)
+  const handleImageFileSelect = async (e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP, SVG)', 'error');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Image file size must be less than 10MB', 'error');
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Data = reader.result;
+      setFormImageUrl(base64Data);
+
+      try {
+        const res = await fetch('/api/upload/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: base64Data,
+            filename: file.name,
+          }),
+        });
+
+        let uploadResult = null;
+        if (res.ok) {
+          uploadResult = await res.json();
+        } else {
+          const fbRes = await fetch('http://localhost:4000/api/upload/image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              data: base64Data,
+              filename: file.name,
+            }),
+          });
+          if (fbRes.ok) uploadResult = await fbRes.json();
+        }
+
+        if (uploadResult?.url) {
+          setFormImageUrl(uploadResult.url);
+          showToast(`✓ Image "${file.name}" uploaded & attached!`, 'success');
+        } else {
+          showToast(`✓ Image "${file.name}" attached!`, 'success');
+        }
+      } catch (uploadErr) {
+        console.warn('[Template Image Upload] Local preview retained:', uploadErr);
+        showToast(`✓ Image "${file.name}" attached locally!`, 'success');
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
+
+    reader.onerror = () => {
+      setIsUploadingImage(false);
+      showToast('Error reading image file', 'error');
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   // Meta Approval Async Action States
   const [submittingApprovalId, setSubmittingApprovalId] = useState(null);
@@ -377,6 +460,7 @@ export const TemplatesPage = () => {
     setFormTriggers('');
     setFormCategory('utility');
     setFormHeaderType('NONE');
+    setFormHeaderText('');
     setFormImageUrl('');
     setFormBody('');
     setFormReSubmitMeta(true);
@@ -385,12 +469,29 @@ export const TemplatesPage = () => {
 
   const handleOpenEdit = (template) => {
     setEditingTemplate(template);
-    setFormName(template.name);
+    setFormName(template.name || '');
     setFormTriggers(template.footer_text || '');
     setFormCategory((template.category || 'utility').toLowerCase());
-    const hasImg = template.header_type === 'IMAGE' || Boolean(template.header_content);
-    setFormHeaderType(hasImg ? 'IMAGE' : 'NONE');
-    setFormImageUrl(template.header_content || '');
+
+    const rawHeaderType = (template.header_type || '').toUpperCase();
+    if (rawHeaderType === 'IMAGE') {
+      setFormHeaderType('IMAGE');
+      setFormImageUrl(template.header_content || '');
+      setFormHeaderText('');
+    } else if (rawHeaderType === 'TEXT' || (template.header_content && !isValidImageUrl(template.header_content))) {
+      setFormHeaderType('TEXT');
+      setFormHeaderText(template.header_content || template.header_text || '');
+      setFormImageUrl('');
+    } else if (template.header_content && isValidImageUrl(template.header_content)) {
+      setFormHeaderType('IMAGE');
+      setFormImageUrl(template.header_content);
+      setFormHeaderText('');
+    } else {
+      setFormHeaderType('NONE');
+      setFormImageUrl('');
+      setFormHeaderText('');
+    }
+
     setFormBody(template.body_text || '');
     setFormReSubmitMeta(true);
   };
@@ -507,10 +608,16 @@ export const TemplatesPage = () => {
       return;
     }
 
+    if (formHeaderType === 'IMAGE' && formImageUrl.trim() && !isValidImageUrl(formImageUrl.trim())) {
+      showToast('Please upload an image file or provide a valid URL starting with https://. If you want a text title, select "Text Title".', 'error');
+      return;
+    }
+
     setIsSaving(true);
-    const hasImage = formHeaderType === 'IMAGE' && Boolean(formImageUrl.trim());
-    const headerType = hasImage ? 'IMAGE' : null;
-    const headerContent = hasImage ? formImageUrl.trim() : null;
+    const hasImage = formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl.trim());
+    const isTextHeader = formHeaderType === 'TEXT' && Boolean(formHeaderText.trim());
+    const headerType = hasImage ? 'IMAGE' : (isTextHeader ? 'TEXT' : null);
+    const headerContent = hasImage ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
 
     try {
       // 1. Create on Meta Template API
@@ -524,8 +631,9 @@ export const TemplatesPage = () => {
             name: formName.trim(),
             category: formCategory.toUpperCase(),
             language: 'en_US',
-            headerType: formHeaderType,
-            headerImageUrl: formImageUrl.trim(),
+            headerType: headerType || 'NONE',
+            headerImageUrl: hasImage ? headerContent : null,
+            headerText: isTextHeader ? headerContent : null,
             bodyText: formBody.trim(),
             footerText: formTriggers.trim(),
             submitToMeta: formReSubmitMeta,
@@ -547,8 +655,9 @@ export const TemplatesPage = () => {
               name: formName.trim(),
               category: formCategory.toUpperCase(),
               language: 'en_US',
-              headerType: formHeaderType,
-              headerImageUrl: formImageUrl.trim(),
+              headerType: headerType || 'NONE',
+              headerImageUrl: hasImage ? headerContent : null,
+              headerText: isTextHeader ? headerContent : null,
               bodyText: formBody.trim(),
               footerText: formTriggers.trim(),
               submitToMeta: formReSubmitMeta,
@@ -634,10 +743,16 @@ export const TemplatesPage = () => {
     e.preventDefault();
     if (!editingTemplate || !formName.trim() || !formBody.trim()) return;
 
+    if (formHeaderType === 'IMAGE' && formImageUrl.trim() && !isValidImageUrl(formImageUrl.trim())) {
+      showToast('Please upload an image file or provide a valid URL starting with https://. If you want a text title, select "Text Title".', 'error');
+      return;
+    }
+
     setIsSaving(true);
-    const hasImage = formHeaderType === 'IMAGE' && Boolean(formImageUrl.trim());
-    const headerType = hasImage ? 'IMAGE' : 'NONE';
-    const headerContent = hasImage ? formImageUrl.trim() : null;
+    const hasImage = formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl.trim());
+    const isTextHeader = formHeaderType === 'TEXT' && Boolean(formHeaderText.trim());
+    const headerType = hasImage ? 'IMAGE' : (isTextHeader ? 'TEXT' : 'NONE');
+    const headerContent = hasImage ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
 
     try {
       // 1. Call Backend Update API with optional Meta re-submission
@@ -651,7 +766,8 @@ export const TemplatesPage = () => {
             name: formName.trim(),
             category: formCategory.toUpperCase(),
             headerType,
-            headerImageUrl: headerContent,
+            headerImageUrl: hasImage ? headerContent : null,
+            headerText: isTextHeader ? headerContent : null,
             bodyText: formBody.trim(),
             footerText: formTriggers.trim(),
             reSubmitToMeta: formReSubmitMeta,
@@ -673,7 +789,8 @@ export const TemplatesPage = () => {
               name: formName.trim(),
               category: formCategory.toUpperCase(),
               headerType,
-              headerImageUrl: headerContent,
+              headerImageUrl: hasImage ? headerContent : null,
+              headerText: isTextHeader ? headerContent : null,
               bodyText: formBody.trim(),
               footerText: formTriggers.trim(),
               reSubmitToMeta: formReSubmitMeta,
@@ -686,53 +803,62 @@ export const TemplatesPage = () => {
         } catch {}
       }
 
-      // Also update in Supabase if configured
       try {
         await updateTemplate(editingTemplate.id, {
           name: formName.trim(),
           body_text: formBody.trim(),
           footer_text: formTriggers.trim(),
           category: formCategory,
+          status: formReSubmitMeta ? 'pending' : (editingTemplate.status || 'approved'),
           header_type: headerType,
           header_content: headerContent,
         });
       } catch {}
 
-      const nextStatus = metaUpdated?.status || (formReSubmitMeta ? 'PENDING' : (editingTemplate.status || 'APPROVED'));
+      const updatedObj = metaUpdated || {
+        ...editingTemplate,
+        name: formName.trim(),
+        body_text: formBody.trim(),
+        footer_text: formTriggers.trim(),
+        category: formCategory.toUpperCase(),
+        status: formReSubmitMeta ? 'PENDING' : editingTemplate.status,
+        header_type: headerType,
+        header_content: headerContent,
+      };
 
       setTemplates((prev) => {
-        const updated = prev.map((t) =>
+        const next = prev.map((t) => (t.id === editingTemplate.id ? updatedObj : t));
+        try {
+          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setEditingTemplate(null);
+      showToast(`Template "${formName}" updated successfully!`, 'success');
+    } catch (err) {
+      console.error('Error updating template:', err);
+      setTemplates((prev) => {
+        const next = prev.map((t) =>
           t.id === editingTemplate.id
             ? {
                 ...t,
-                ...(metaUpdated || {}),
                 name: formName.trim(),
                 body_text: formBody.trim(),
                 footer_text: formTriggers.trim(),
-                category: formCategory.toUpperCase(),
+                category: formCategory,
                 header_type: headerType,
                 header_content: headerContent,
-                status: nextStatus,
-                syncedWithMeta: formReSubmitMeta ? true : t.syncedWithMeta,
               }
             : t
         );
         try {
-          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(updated));
+          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(next));
         } catch {}
-        return updated;
+        return next;
       });
-
       setEditingTemplate(null);
-      if (formReSubmitMeta) {
-        showToast(`Template "${formName}" updated & submitted to Meta for approval!`, 'success');
-      } else {
-        showToast(`Template "${formName}" updated successfully!`, 'success');
-      }
-    } catch (err) {
-      console.error('Error updating template:', err);
-      showToast(`Template updated!`, 'info');
-      setEditingTemplate(null);
+      showToast(`Template "${formName}" updated locally!`, 'success');
     } finally {
       setIsSaving(false);
     }
@@ -1300,13 +1426,13 @@ export const TemplatesPage = () => {
                   <button
                     onClick={() => handleSubmitForApproval(template)}
                     disabled={submittingApprovalId === template.id}
-                    className="px-2.5 py-1.5 rounded-xl border border-[#7C3AED]/30 bg-[#F4F0FD] hover:bg-[#EDE5FA] text-[11px] font-bold text-[#7C3AED] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    className="px-2.5 py-1.5 rounded-xl border border-[#0284C7]/30 bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[11px] font-bold text-[#0284C7] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
                     title="Submit template directly to Meta WhatsApp Cloud API for official review"
                   >
                     {submittingApprovalId === template.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#7C3AED]" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0284C7]" />
                     ) : (
-                      <UploadCloud className="w-3.5 h-3.5 text-[#7C3AED]" />
+                      <UploadCloud className="w-3.5 h-3.5 text-[#0284C7]" />
                     )}
                     <span>{submittingApprovalId === template.id ? 'Submitting...' : 'Submit to Meta'}</span>
                   </button>
@@ -1315,17 +1441,17 @@ export const TemplatesPage = () => {
                   <button
                     onClick={() => handleCheckStatus(template)}
                     disabled={checkingStatusId === template.id}
-                    className="px-2 py-1.5 rounded-xl border border-[#EAECF0] hover:border-[#7C3AED] bg-white text-[11px] font-bold text-[#344054] hover:text-[#7C3AED] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    className="px-2 py-1.5 rounded-xl border border-[#EAECF0] hover:border-[#0284C7] bg-white text-[11px] font-bold text-[#344054] hover:text-[#0284C7] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
                     title="Query live Meta Graph API for template status"
                   >
-                    <RotateCw className={`w-3.5 h-3.5 text-[#667085] ${checkingStatusId === template.id ? 'animate-spin text-[#7C3AED]' : ''}`} />
+                    <RotateCw className={`w-3.5 h-3.5 text-[#667085] ${checkingStatusId === template.id ? 'animate-spin text-[#0284C7]' : ''}`} />
                     <span className="hidden sm:inline">{checkingStatusId === template.id ? 'Checking...' : 'Status'}</span>
                   </button>
 
                   {/* Edit Template */}
                   <button
                     onClick={() => handleOpenEdit(template)}
-                    className="px-2.5 py-1.5 rounded-xl border border-[#EAECF0] hover:border-[#7C3AED] bg-white text-[11px] font-bold text-[#344054] hover:text-[#7C3AED] transition-all cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-xl border border-[#EAECF0] hover:border-[#0284C7] bg-white text-[11px] font-bold text-[#344054] hover:text-[#0284C7] transition-all cursor-pointer flex items-center gap-1"
                     title="Edit template content and keywords"
                   >
                     <Edit3 className="w-3 h-3" />
@@ -1348,7 +1474,7 @@ export const TemplatesPage = () => {
 
         {filteredTemplates.length === 0 && (
           <div className="col-span-full py-16 text-center bg-white border border-[#EAECF0] rounded-3xl p-8 space-y-3 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-[#F4F0FD] text-[#7C3AED] flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-[#F0F9FF] text-[#0284C7] flex items-center justify-center mx-auto">
               <FileText className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-[#101828]">No Templates Configured Yet</h3>
@@ -1358,7 +1484,7 @@ export const TemplatesPage = () => {
             <button
               type="button"
               onClick={handleOpenCreate}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Create First Template</span>
@@ -1382,15 +1508,15 @@ export const TemplatesPage = () => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-center text-[#7C3AED]">
-                <MessageSquare className="w-5 h-5 text-[#7C3AED]" />
+              <div className="w-10 h-10 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7]">
+                <MessageSquare className="w-5 h-5 text-[#0284C7]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-[#101828]">
                   {editingTemplate ? `Edit Template: ${editingTemplate.name}` : 'Create Auto-Reply Template'}
                 </h3>
                 <p className="text-xs text-[#667085]">
-                  Define the trigger words and the exact message WhatsApp should send back
+                  Define the trigger words, optional header media, and the exact message WhatsApp should send back
                 </p>
               </div>
             </div>
@@ -1403,7 +1529,7 @@ export const TemplatesPage = () => {
                   placeholder="e.g. Welcome Greeting (Hi / Hello)"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   required
                 />
               </div>
@@ -1417,7 +1543,7 @@ export const TemplatesPage = () => {
                   placeholder="e.g. hi, hello, hey, start, menu"
                   value={formTriggers}
                   onChange={(e) => setFormTriggers(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                 />
                 <p className="text-[10px] text-[#98A2B3] mt-1">
                   When customer sends any of these words, this template message will be dispatched automatically.
@@ -1430,7 +1556,7 @@ export const TemplatesPage = () => {
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
                   >
                     <option value="utility">Utility / Auto-Reply</option>
                     <option value="marketing">Marketing / Promotion</option>
@@ -1446,41 +1572,63 @@ export const TemplatesPage = () => {
                 </div>
               </div>
 
-              {/* Header Media (Text vs Image) */}
-              <div className="p-3.5 bg-[#F9FAFB] border border-[#EAECF0] rounded-2xl space-y-3">
+              {/* Header Media (None, Text Title, or Attach Image) */}
+              <div className="p-4 bg-[#F9FAFB] border border-[#EAECF0] rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <ImageIcon className="w-4 h-4 text-[#7C3AED]" />
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-[#0284C7]" />
                     <label className="text-xs font-bold text-[#344054]">
-                      Header Media (Optional Image Attachment)
+                      Header Component (Optional)
                     </label>
                   </div>
-                  <span className="text-[10px] font-mono text-[#16A34A] bg-[#DCFCE7] px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] font-mono text-[#0284C7] bg-[#F0F9FF] border border-[#BAE6FD] px-2 py-0.5 rounded-full font-bold">
                     Official WhatsApp Supported
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* 3 Header Type Options */}
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       setFormHeaderType('NONE');
                       setFormImageUrl('');
+                      setFormHeaderText('');
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                       formHeaderType === 'NONE'
-                        ? 'bg-white border border-[#EAECF0] text-[#101828] shadow-xs ring-1 ring-[#EAECF0]'
-                        : 'text-[#667085] hover:text-[#101828]'
+                        ? 'bg-white border-2 border-[#0284C7] text-[#0284C7] shadow-xs'
+                        : 'text-[#667085] hover:text-[#101828] bg-white border border-[#EAECF0]'
                     }`}
                   >
-                    Text Only
+                    None (Body Only)
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => setFormHeaderType('IMAGE')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    onClick={() => {
+                      setFormHeaderType('TEXT');
+                      setFormImageUrl('');
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      formHeaderType === 'TEXT'
+                        ? 'bg-white border-2 border-[#0284C7] text-[#0284C7] shadow-xs'
+                        : 'text-[#667085] hover:text-[#101828] bg-white border border-[#EAECF0]'
+                    }`}
+                  >
+                    <Type className="w-3.5 h-3.5" />
+                    <span>Text Title</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormHeaderType('IMAGE');
+                      setFormHeaderText('');
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                       formHeaderType === 'IMAGE'
-                        ? 'bg-[#7C3AED] text-white shadow-xs'
+                        ? 'bg-[#0284C7] text-white shadow-xs'
                         : 'text-[#667085] hover:text-[#101828] bg-white border border-[#EAECF0]'
                     }`}
                   >
@@ -1489,38 +1637,156 @@ export const TemplatesPage = () => {
                   </button>
                 </div>
 
+                {/* TEXT HEADER CONFIGURATION */}
+                {formHeaderType === 'TEXT' && (
+                  <div className="space-y-1.5 pt-2 border-t border-[#EAECF0] animate-in fade-in">
+                    <label className="text-[11px] font-semibold text-[#475467]">
+                      Header Text / Bold Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. DhiGrowth IT Services or Exclusive Announcement"
+                      value={formHeaderText}
+                      onChange={(e) => setFormHeaderText(e.target.value)}
+                      className="w-full bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
+                    />
+                    <p className="text-[10px] text-[#98A2B3]">
+                      Appears as a prominent bold header line at the very top of your WhatsApp message.
+                    </p>
+                  </div>
+                )}
+
+                {/* IMAGE HEADER CONFIGURATION */}
                 {formHeaderType === 'IMAGE' && (
-                  <div className="space-y-2 pt-2 border-t border-[#EAECF0] animate-in fade-in">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-semibold text-[#475467]">
-                        Image Public URL (JPG, PNG, WebP)
-                      </label>
-                      {formImageUrl && (
-                        <span className="text-[10px] text-[#16A34A] font-bold">✓ Attached</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="url"
-                        placeholder="https://example.com/banner.png"
-                        value={formImageUrl}
-                        onChange={(e) => setFormImageUrl(e.target.value)}
-                        className="flex-1 bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
-                      />
-                      {formImageUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setFormImageUrl('')}
-                          className="p-2 text-[#98A2B3] hover:text-[#DC2626] rounded-xl hover:bg-white cursor-pointer"
-                          title="Clear Image"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                  <div className="space-y-3 pt-2 border-t border-[#EAECF0] animate-in fade-in">
+                    {/* Hidden Native File Input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileSelect}
+                      className="hidden"
+                    />
+
+                    {/* Image Attachment Card (when file or valid URL is present) */}
+                    {isValidImageUrl(formImageUrl) ? (
+                      <div className="p-3 bg-white border-2 border-[#BAE6FD] rounded-xl flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#EAECF0] bg-gray-50 shrink-0">
+                          <img
+                            src={formImageUrl}
+                            alt="Selected banner"
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#0284C7]">
+                            <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+                            <span>Image Attached & Ready</span>
+                          </div>
+                          <p className="text-[11px] text-[#667085] truncate mt-0.5">
+                            {formImageUrl.startsWith('data:') ? 'Local image uploaded from device' : formImageUrl}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={isUploadingImage}
+                              className="px-2.5 py-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              {isUploadingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3" />}
+                              <span>Change Image</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormImageUrl('')}
+                              className="px-2.5 py-1 text-[11px] font-bold text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Upload Dropzone (when no valid image attached yet) */
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-5 bg-white border-2 border-dashed border-[#BAE6FD] hover:border-[#0284C7] hover:bg-[#F0F9FF]/50 rounded-xl text-center cursor-pointer transition-all space-y-1.5 group"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-[#F0F9FF] text-[#0284C7] flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
+                          {isUploadingImage ? (
+                            <Loader2 className="w-5 h-5 animate-spin text-[#0284C7]" />
+                          ) : (
+                            <UploadCloud className="w-5 h-5 text-[#0284C7]" />
+                          )}
+                        </div>
+                        <div className="text-xs font-bold text-[#101828]">
+                          {isUploadingImage ? 'Uploading Image...' : 'Click to Upload Image from your Device'}
+                        </div>
+                        <p className="text-[11px] text-[#667085]">
+                          Select JPG, PNG, WebP or SVG from computer/mobile (up to 10MB)
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Or Public URL Input */}
+                    <div className="space-y-1 pt-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-[#475467]">
+                          Or Paste Public Image URL:
+                        </label>
+                        {isValidImageUrl(formImageUrl) && (
+                          <span className="text-[10px] text-[#16A34A] font-bold">✓ Valid URL</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="url"
+                          placeholder="https://example.com/banner.png"
+                          value={formImageUrl}
+                          onChange={(e) => setFormImageUrl(e.target.value)}
+                          className="flex-1 bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
+                        />
+                        {formImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setFormImageUrl('')}
+                            className="p-2 text-[#98A2B3] hover:text-[#DC2626] rounded-xl hover:bg-white cursor-pointer"
+                            title="Clear Image"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Warning if user typed plain text (e.g. "DhiGrowth IT Services") instead of URL/image */}
+                      {Boolean(formImageUrl.trim()) && !isValidImageUrl(formImageUrl.trim()) && (
+                        <div className="p-2.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[11px] text-[#B42318] flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-[#D92D20] shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold">"{formImageUrl.trim()}"</span> looks like a text title rather than an image file!
+                            <div className="mt-1">
+                              👉 If you want a bold text headline, click{' '}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormHeaderText(formImageUrl.trim());
+                                  setFormImageUrl('');
+                                  setFormHeaderType('TEXT');
+                                }}
+                                className="font-bold underline text-[#B42318] hover:text-[#7A271A] cursor-pointer"
+                              >
+                                Switch to "Text Title"
+                              </button>
+                              , or click "Upload Image" to pick a photo from your computer.
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
 
                     {/* Quick Image Presets */}
-                    <div className="space-y-1 pt-1">
+                    <div className="space-y-1.5 pt-1">
                       <span className="text-[10px] text-[#98A2B3] font-mono font-bold uppercase">
                         Quick Preset Banners:
                       </span>
@@ -1532,8 +1798,8 @@ export const TemplatesPage = () => {
                             onClick={() => setFormImageUrl(preset.url)}
                             className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all cursor-pointer ${
                               formImageUrl === preset.url
-                                ? 'bg-[#F4F0FD] border-[#7C3AED] text-[#7C3AED] font-bold'
-                                : 'bg-white border-[#EAECF0] hover:border-[#7C3AED] text-[#344054]'
+                                ? 'bg-[#F0F9FF] border-[#0284C7] text-[#0284C7] font-bold'
+                                : 'bg-white border-[#EAECF0] hover:border-[#0284C7] text-[#344054]'
                             }`}
                           >
                             {preset.label}
@@ -1561,7 +1827,7 @@ export const TemplatesPage = () => {
                   <button
                     type="button"
                     onClick={() => setFormBody((prev) => prev + ' {{1}}')}
-                    className="px-2 py-0.5 rounded-lg bg-[#EFF8FF] hover:bg-[#D1E9FF] border border-[#B2DDFF] text-[#175CD3] text-[10px] font-bold font-mono transition-colors cursor-pointer"
+                    className="px-2 py-0.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] text-[10px] font-bold font-mono transition-colors cursor-pointer"
                     title="Insert {{1}} (e.g. Customer Name)"
                   >
                     + {'{{1}}'} Name
@@ -1569,7 +1835,7 @@ export const TemplatesPage = () => {
                   <button
                     type="button"
                     onClick={() => setFormBody((prev) => prev + ' {{2}}')}
-                    className="px-2 py-0.5 rounded-lg bg-[#EFF8FF] hover:bg-[#D1E9FF] border border-[#B2DDFF] text-[#175CD3] text-[10px] font-bold font-mono transition-colors cursor-pointer"
+                    className="px-2 py-0.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] text-[10px] font-bold font-mono transition-colors cursor-pointer"
                     title="Insert {{2}} (e.g. City, Deal, or Custom param)"
                   >
                     + {'{{2}}'} Custom Param
@@ -1577,7 +1843,7 @@ export const TemplatesPage = () => {
                   <button
                     type="button"
                     onClick={() => setFormBody((prev) => prev + ' {{3}}')}
-                    className="px-2 py-0.5 rounded-lg bg-[#EFF8FF] hover:bg-[#D1E9FF] border border-[#B2DDFF] text-[#175CD3] text-[10px] font-bold font-mono transition-colors cursor-pointer"
+                    className="px-2 py-0.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] text-[10px] font-bold font-mono transition-colors cursor-pointer"
                     title="Insert {{3}} (e.g. Link, Date, or Offer)"
                   >
                     + {'{{3}}'} Link/Offer
@@ -1589,29 +1855,38 @@ export const TemplatesPage = () => {
                   placeholder="Write the exact message WhatsApp should send back..."
                   value={formBody}
                   onChange={(e) => setFormBody(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-3 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED] leading-relaxed resize-none font-sans"
+                  className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-3 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] leading-relaxed resize-none font-sans"
                   required
                 />
               </div>
 
-              {/* Live Preview */}
-              {(formBody || (formHeaderType === 'IMAGE' && formImageUrl)) && (
+              {/* Live WhatsApp Customer Bubble Preview */}
+              {(formBody || (formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl)) || (formHeaderType === 'TEXT' && formHeaderText)) && (
                 <div className="p-3.5 rounded-2xl bg-[#EFEAE2] border border-[#D1D5DB] space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#16A34A]">
                     <Smartphone className="w-3 h-3" />
                     <span>WhatsApp Live Customer Bubble Preview:</span>
                   </div>
                   <div className="bg-white p-3 rounded-2xl text-xs text-[#111B21] shadow-xs leading-relaxed space-y-2 max-w-sm">
-                    {formHeaderType === 'IMAGE' && formImageUrl.trim() && (
-                      <div className="rounded-xl overflow-hidden -mx-1 -mt-1 border border-black/5 max-h-48">
+                    {/* Header Image Preview */}
+                    {formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl.trim()) && (
+                      <div className="rounded-xl overflow-hidden -mx-1 -mt-1 border border-black/5 max-h-48 bg-gray-100 flex items-center justify-center">
                         <img
                           src={formImageUrl.trim()}
                           alt="Template Header Media"
-                          className="w-full h-full object-cover"
+                          className="w-full max-h-48 object-cover"
                           onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                       </div>
                     )}
+
+                    {/* Header Text Title Preview */}
+                    {formHeaderType === 'TEXT' && formHeaderText.trim() && (
+                      <p className="font-bold text-[13px] text-[#111B21] leading-snug pb-1 border-b border-gray-100">
+                        {formHeaderText.trim()}
+                      </p>
+                    )}
+
                     <p className="whitespace-pre-line text-xs">{formBody || 'Type your message above...'}</p>
                     <div className="flex justify-end items-center text-[9px] text-gray-400 font-mono pt-1">
                       <span>1:45 PM</span>
@@ -1621,17 +1896,17 @@ export const TemplatesPage = () => {
               )}
 
               {/* Meta Cloud API Approval Submission Toggle */}
-              <div className="p-3.5 bg-[#F4F0FD] border border-[#E9D8FD] rounded-2xl flex items-start gap-3">
+              <div className="p-3.5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-2xl flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="formReSubmitMeta"
                   checked={formReSubmitMeta}
                   onChange={(e) => setFormReSubmitMeta(e.target.checked)}
-                  className="w-4 h-4 mt-0.5 text-[#7C3AED] rounded border-gray-300 focus:ring-[#7C3AED] cursor-pointer"
+                  className="w-4 h-4 mt-0.5 text-[#0284C7] rounded border-gray-300 focus:ring-[#0284C7] cursor-pointer"
                 />
                 <label htmlFor="formReSubmitMeta" className="text-xs text-[#344054] cursor-pointer leading-relaxed">
-                  <span className="font-bold text-[#7C3AED] flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-[#7C3AED]" />
+                  <span className="font-bold text-[#0284C7] flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-[#0284C7]" />
                     Submit to Meta for Official Approval
                   </span>
                   <span className="text-[11px] text-[#667085] block mt-0.5">
@@ -1654,7 +1929,7 @@ export const TemplatesPage = () => {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  className="px-5 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
                 >
                   {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                   <span>{editingTemplate ? 'Save & Update Live' : 'Create & Activate'}</span>

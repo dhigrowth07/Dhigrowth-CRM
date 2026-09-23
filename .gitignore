@@ -26,3 +26,7 @@ server/metaConfig.json
 *.njsproj
 *.sln
 *.sw?
+
+# Uploaded user media
+public/uploads/*
+!public/uploads/.gitkeep

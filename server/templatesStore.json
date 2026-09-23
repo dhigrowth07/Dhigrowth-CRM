@@ -2,23 +2,61 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
-        "id": "tpl_hello_world",
+        "id": "2950860201937776",
+        "name": "new_client_welcome",
+        "category": "MARKETING",
+        "language": "en",
+        "status": "PENDING",
+        "header_type": "TEXT",
+        "header_content": "{{1}}",
+        "body_text": "\"Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!\"",
+        "footer_text": "",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "\"Thank you!\""
+          }
+        ],
+        "variables": [
+          "var_1",
+          "var_2",
+          "var_3"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T09:27:47.987Z"
+      },
+      {
+        "id": "2074071630135449",
+        "name": "lead_offer_voucher",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "NONE",
+        "header_content": null,
+        "body_text": "Hello {{1}}, here is your special 20% discount coupon {{2}}! Valid today.",
+        "footer_text": "offer, voucher, discount",
+        "buttons": [],
+        "variables": [
+          "var_1",
+          "var_2"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T09:27:47.987Z"
+      },
+      {
+        "id": "1744607210078710",
         "name": "hello_world",
         "category": "UTILITY",
         "language": "en_US",
         "status": "APPROVED",
         "header_type": "TEXT",
-        "header_content": "DhiGrowth IT Services",
-        "body_text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification.",
-        "footer_text": "Tap an option to respond:",
+        "header_content": "Hello World",
+        "body_text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.",
+        "footer_text": "WhatsApp Business Platform sample message",
         "buttons": [],
         "variables": [],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-22T08:57:06.407Z",
-        "reviewNote": "Meta API review queued (Invalid parameter)",
-        "submittedAt": "2026-09-21T07:11:52.262Z",
-        "rejectionReason": null,
-        "metaTemplateId": "1744607210078710"
+        "updatedAt": "2026-09-23T09:27:47.987Z"
       },
       {
         "id": "tpl_hi_4105083089797368",
