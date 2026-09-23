@@ -1220,12 +1220,41 @@ app.post('/api/tenants', (req, res) => {
       (t) => t.id === newTenant.id || t.username?.toLowerCase() === newTenant.username?.toLowerCase()
     );
     if (existingIndex >= 0) {
-      list[existingIndex] = { ...list[existingIndex], ...newTenant };
+      list[existingIndex] = {
+        ...list[existingIndex],
+        ...newTenant,
+        permissions: newTenant.permissions !== undefined ? newTenant.permissions : list[existingIndex].permissions,
+      };
     } else {
       list.push(newTenant);
     }
     saveTenants(list);
-    res.json({ success: true, message: `Tenant "${newTenant.name}" saved!`, tenant: newTenant });
+    res.json({ success: true, message: `Tenant "${newTenant.name || newTenant.username}" saved!`, tenant: list[existingIndex >= 0 ? existingIndex : list.length - 1] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/tenants/permissions', (req, res) => {
+  try {
+    const { identifier, permissions } = req.body;
+    if (!identifier || !permissions) {
+      return res.status(400).json({ success: false, error: 'Identifier and permissions required' });
+    }
+    const cleanId = String(identifier).toLowerCase();
+    const list = loadTenants();
+    const existingIndex = list.findIndex(
+      (t) => t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId
+    );
+    if (existingIndex >= 0) {
+      list[existingIndex].permissions = {
+        ...(list[existingIndex].permissions || {}),
+        ...permissions,
+      };
+      saveTenants(list);
+      return res.json({ success: true, tenant: list[existingIndex] });
+    }
+    res.status(404).json({ success: false, error: 'Tenant not found' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -13,12 +13,8 @@
     "isExternalClient": false,
     "password": "dhigrowth2026",
     "permissions": {
-      "sendDueToAll": true,
-      "teamInbox": true,
-      "metaKeys": true,
-      "aiStudio": true,
-      "fileManager": true,
-      "invoicing": true
+      "dashboard": false,
+      "inbox": false
     },
     "status": "active",
     "createdAt": "2026-09-10T00:00:00.000Z"

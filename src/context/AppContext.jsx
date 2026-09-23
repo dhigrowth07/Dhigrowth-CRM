@@ -184,14 +184,36 @@ export const AppProvider = ({ children }) => {
       const deletedIds = savedDeleted ? JSON.parse(savedDeleted) : [];
 
       const saved = localStorage.getItem('dhigrowth_tenants');
+      let baseList = SEED_TENANTS;
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter(
+          baseList = parsed.filter(
             (t) => !deletedIds.includes(t.id) && !deletedIds.includes(t.username?.toLowerCase())
           );
         }
       }
+
+      // Overlay saved dedicated permissions for each tenant
+      return baseList.map((t) => {
+        const cleanUser = t.username?.toLowerCase();
+        let savedPerms = null;
+        try {
+          const s = localStorage.getItem(`dhigrowth_tenant_perms_${cleanUser}`) ||
+                    localStorage.getItem(`dhigrowth_tenant_perms_${t.id}`);
+          if (s) savedPerms = JSON.parse(s);
+        } catch {}
+        if (savedPerms) {
+          return {
+            ...t,
+            permissions: {
+              ...(t.permissions || {}),
+              ...savedPerms,
+            },
+          };
+        }
+        return t;
+      });
     } catch {}
     return SEED_TENANTS;
   });
@@ -225,6 +247,24 @@ export const AppProvider = ({ children }) => {
         parsed.isSuperAdmin = true;
         parsed.isAdmin = true;
       }
+
+      // Overlay saved tenant permissions for currentUser
+      if (parsed?.username) {
+        const cleanUser = parsed.username.toLowerCase();
+        let savedPerms = null;
+        try {
+          const s = localStorage.getItem(`dhigrowth_tenant_perms_${cleanUser}`) ||
+                    localStorage.getItem(`dhigrowth_tenant_perms_${parsed.id}`);
+          if (s) savedPerms = JSON.parse(s);
+        } catch {}
+        if (savedPerms) {
+          parsed.permissions = {
+            ...(parsed.permissions || {}),
+            ...savedPerms,
+          };
+        }
+      }
+
       return parsed;
     } catch {
       return null;
@@ -868,10 +908,33 @@ export const AppProvider = ({ children }) => {
               const idx = merged.findIndex(
                 (m) => m.id === ct.id || m.username?.toLowerCase() === ct.username?.toLowerCase()
               );
+
+              const cleanUser = ct.username?.toLowerCase();
+              let savedPerms = null;
+              try {
+                const s = localStorage.getItem(`dhigrowth_tenant_perms_${cleanUser}`) ||
+                          localStorage.getItem(`dhigrowth_tenant_perms_${ct.id}`);
+                if (s) savedPerms = JSON.parse(s);
+              } catch {}
+
+              const existingPerms = idx >= 0 ? merged[idx]?.permissions : null;
+              // Explicit local permissions must never be wiped out by stale cloud defaults
+              const combinedPerms = {
+                ...(ct.permissions || {}),
+                ...(existingPerms || {}),
+                ...(savedPerms || {}),
+              };
+
+              const mergedTenant = {
+                ...(idx >= 0 ? merged[idx] : {}),
+                ...ct,
+                permissions: combinedPerms,
+              };
+
               if (idx >= 0) {
-                merged[idx] = { ...merged[idx], ...ct };
+                merged[idx] = mergedTenant;
               } else {
-                merged.push(ct);
+                merged.push(mergedTenant);
               }
             });
             const filtered = merged.filter(
@@ -1481,43 +1544,49 @@ export const AppProvider = ({ children }) => {
   // Toggle Tenant Permission
   const toggleTenantPermission = (identifier, permissionKey, value) => {
     const cleanId = String(identifier || '').toLowerCase();
-    const targetTenant = tenants.find(
+    const targetTenant = (tenants || []).find(
       (t) => t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId
     );
     const tenantUser = targetTenant?.username?.toLowerCase() || cleanId;
+    const currentP = targetTenant?.permissions || {};
+    const currentVal = currentP[permissionKey] !== false;
+    const nextVal = value !== undefined ? value : !currentVal;
 
-    let nextVal;
-    let targetUpdatedTenant = null;
+    const updatedPerms = { ...currentP, [permissionKey]: nextVal };
 
+    // Alias syncing for backwards compatibility
+    if (permissionKey === 'inbox') {
+      updatedPerms.team_inbox = nextVal;
+      updatedPerms.teamInbox = nextVal;
+    } else if (permissionKey === 'leads') {
+      updatedPerms.crm_leads = nextVal;
+    } else if (permissionKey === 'ai-assistants') {
+      updatedPerms.ai_studio = nextVal;
+      updatedPerms.aiStudio = nextVal;
+    } else if (permissionKey === 'meta-api') {
+      updatedPerms.meta_api = nextVal;
+      updatedPerms.metaKeys = nextVal;
+    } else if (permissionKey === 'send_due_all') {
+      updatedPerms.sendDueToAll = nextVal;
+    }
+
+    const targetUpdatedTenant = targetTenant
+      ? { ...targetTenant, permissions: updatedPerms }
+      : { id: identifier, workspaceId: identifier, username: tenantUser, permissions: updatedPerms };
+
+    // 1. Immediately persist to dedicated tenant permissions cache in localStorage
+    try {
+      localStorage.setItem(`dhigrowth_tenant_perms_${tenantUser}`, JSON.stringify(updatedPerms));
+      if (targetTenant?.id) {
+        localStorage.setItem(`dhigrowth_tenant_perms_${targetTenant.id}`, JSON.stringify(updatedPerms));
+      }
+    } catch {}
+
+    // 2. Update React tenants state & localStorage
     setTenants((prev) => {
       const updated = prev.map((t) => {
         if (t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId) {
-          const currentP = t.permissions || {};
-          const currentVal = currentP[permissionKey] !== false;
-          nextVal = value !== undefined ? value : !currentVal;
-          const updatedPerms = { ...currentP, [permissionKey]: nextVal };
-
-          // Alias syncing for backwards compatibility
-          if (permissionKey === 'inbox') {
-            updatedPerms.team_inbox = nextVal;
-            updatedPerms.teamInbox = nextVal;
-          } else if (permissionKey === 'leads') {
-            updatedPerms.crm_leads = nextVal;
-          } else if (permissionKey === 'ai-assistants') {
-            updatedPerms.ai_studio = nextVal;
-            updatedPerms.aiStudio = nextVal;
-          } else if (permissionKey === 'meta-api') {
-            updatedPerms.meta_api = nextVal;
-            updatedPerms.metaKeys = nextVal;
-          } else if (permissionKey === 'send_due_all') {
-            updatedPerms.sendDueToAll = nextVal;
-          }
-
-          targetUpdatedTenant = {
-            ...t,
-            permissions: updatedPerms,
-          };
-          return targetUpdatedTenant;
+          return { ...t, permissions: updatedPerms };
         }
         return t;
       });
@@ -1529,13 +1598,12 @@ export const AppProvider = ({ children }) => {
       return updated;
     });
 
-    // Also update currentUser session if it matches the edited tenant
+    // 3. Update currentUser session if active
     if (currentUser?.id === identifier || currentUser?.username?.toLowerCase() === tenantUser) {
       setCurrentUser((prev) => {
         if (!prev) return prev;
         const currentP = prev.permissions || {};
-        const updatedPerms = { ...currentP, [permissionKey]: nextVal };
-        const updatedUser = { ...prev, permissions: updatedPerms };
+        const updatedUser = { ...prev, permissions: { ...currentP, [permissionKey]: nextVal } };
         try {
           localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
         } catch {}
@@ -1543,22 +1611,20 @@ export const AppProvider = ({ children }) => {
       });
     }
 
-    // Sync to backend in background
-    if (targetUpdatedTenant) {
-      try {
-        fetch(`${BACKEND_URL}/api/tenants`, {
+    // 4. Sync immediately to backend
+    try {
+      fetch(`${BACKEND_URL}/api/tenants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetUpdatedTenant),
+      }).catch(() => {
+        fetch('http://localhost:4000/api/tenants', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(targetUpdatedTenant),
-        }).catch(() => {
-          fetch('http://localhost:4000/api/tenants', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(targetUpdatedTenant),
-          }).catch(() => {});
-        });
-      } catch {}
-    }
+        }).catch(() => {});
+      });
+    } catch {}
 
     showToast(`Updated "${permissionKey}" for ${targetTenant?.name || tenantUser}`, 'success');
   };
@@ -1566,19 +1632,30 @@ export const AppProvider = ({ children }) => {
   // Batch update all permissions for a tenant
   const batchUpdateTenantPermissions = (identifier, newPermissions) => {
     const cleanId = String(identifier || '').toLowerCase();
-    const targetTenant = tenants.find(
+    const targetTenant = (tenants || []).find(
       (t) => t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId
     );
     const tenantUser = targetTenant?.username?.toLowerCase() || cleanId;
+    const currentP = targetTenant?.permissions || {};
+    const mergedPerms = { ...currentP, ...newPermissions };
 
-    let targetUpdatedTenant = null;
+    const targetUpdatedTenant = targetTenant
+      ? { ...targetTenant, permissions: mergedPerms }
+      : { id: identifier, workspaceId: identifier, username: tenantUser, permissions: mergedPerms };
 
+    // 1. Immediately persist to dedicated tenant permissions cache in localStorage
+    try {
+      localStorage.setItem(`dhigrowth_tenant_perms_${tenantUser}`, JSON.stringify(mergedPerms));
+      if (targetTenant?.id) {
+        localStorage.setItem(`dhigrowth_tenant_perms_${targetTenant.id}`, JSON.stringify(mergedPerms));
+      }
+    } catch {}
+
+    // 2. Update React tenants state & localStorage
     setTenants((prev) => {
       const updated = prev.map((t) => {
         if (t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId) {
-          const mergedPerms = { ...(t.permissions || {}), ...newPermissions };
-          targetUpdatedTenant = { ...t, permissions: mergedPerms };
-          return targetUpdatedTenant;
+          return { ...t, permissions: mergedPerms };
         }
         return t;
       });
@@ -1590,6 +1667,7 @@ export const AppProvider = ({ children }) => {
       return updated;
     });
 
+    // 3. Update currentUser session if active
     if (currentUser?.id === identifier || currentUser?.username?.toLowerCase() === tenantUser) {
       setCurrentUser((prev) => {
         if (!prev) return prev;
@@ -1601,21 +1679,20 @@ export const AppProvider = ({ children }) => {
       });
     }
 
-    if (targetUpdatedTenant) {
-      try {
-        fetch(`${BACKEND_URL}/api/tenants`, {
+    // 4. Sync immediately to backend
+    try {
+      fetch(`${BACKEND_URL}/api/tenants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetUpdatedTenant),
+      }).catch(() => {
+        fetch('http://localhost:4000/api/tenants', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(targetUpdatedTenant),
-        }).catch(() => {
-          fetch('http://localhost:4000/api/tenants', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(targetUpdatedTenant),
-          }).catch(() => {});
-        });
-      } catch {}
-    }
+        }).catch(() => {});
+      });
+    } catch {}
 
     showToast(`Updated all permissions for ${targetTenant?.name || tenantUser}`, 'success');
   };
