@@ -48,7 +48,93 @@ export const PRESET_HEADER_IMAGES = [
   { label: '🎟️ Offers & Promo', url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop&q=80' },
 ];
 
+export const DHI_PRESET_TEMPLATES = [
+  {
+    id: 'tpl_ai_discovery',
+    name: 'ai_it_discovery',
+    displayName: 'AI & IT Discovery',
+    badge: 'Recommended',
+    category: 'utility',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: 'DhiGrowth IT Services',
+    body_text: `Hello {{name}}! 👋 Welcome to DhiGrowth IT Services.
+
+Are you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?
+
+Tap below to connect with our team! 🚀`,
+    footer_text: 'hi, hello, discovery, app, ai, crm, start',
+    buttons: [
+      { type: 'QUICK_REPLY', text: "Yes, I'm interested" },
+      { type: 'QUICK_REPLY', text: 'Tell me more' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
+  {
+    id: 'tpl_free_call',
+    name: 'free_15_min_call',
+    displayName: 'Free 15-Min Call',
+    badge: 'Popular',
+    category: 'marketing',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: 'Special Tech Invitation',
+    body_text: `Hi {{name}}! 🚀 We're offering complimentary 15-minute technology consultation sessions this week for ambitious founders.
+
+Would you like us to schedule a quick call with our lead tech architect?`,
+    footer_text: 'call, meeting, consultation, free, appointment, schedule',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, Schedule Call' },
+      { type: 'QUICK_REPLY', text: 'Share Times' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
+  {
+    id: 'tpl_crm_demo',
+    name: 'whatsapp_crm_demo',
+    displayName: 'WhatsApp CRM Demo',
+    badge: 'High Conversion',
+    category: 'utility',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: 'WhatsApp Automation',
+    body_text: `Hello {{name}}! Want to see a live 2-minute demo of 24/7 AI lead capture, broadcast marketing, and automated team inboxes on WhatsApp?`,
+    footer_text: 'crm, demo, automation, bot, live, features',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, Send Demo' },
+      { type: 'QUICK_REPLY', text: 'Chat with Agent' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
+  {
+    id: 'tpl_custom_template',
+    name: 'custom_template',
+    displayName: 'Custom Template',
+    badge: 'Freeform',
+    category: 'marketing',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: 'DhiGrowth IT Services',
+    body_text: `Hi {{name}}! We would love to share our latest updates with you. Would you like more details?`,
+    footer_text: 'updates, details, info, more, custom',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, please' },
+      { type: 'QUICK_REPLY', text: 'Not right now' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
+];
+
 const DEFAULT_TEMPLATES = [
+  ...DHI_PRESET_TEMPLATES,
   {
     id: 'tpl_hi_1789625763989',
     name: 'hi',
@@ -204,10 +290,23 @@ export const TemplatesPage = () => {
         return list.filter((t) => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
       };
 
+      const ensurePresets = (list) => {
+        const cleaned = filterDeleted(list);
+        for (let i = DHI_PRESET_TEMPLATES.length - 1; i >= 0; i--) {
+          const p = DHI_PRESET_TEMPLATES[i];
+          if (!deletedList.includes(p.name) && !deletedList.includes(String(p.id))) {
+            if (!cleaned.some((t) => t.name === p.name || String(t.id) === String(p.id))) {
+              cleaned.unshift({ ...p });
+            }
+          }
+        }
+        return cleaned;
+      };
+
       const saved = localStorage.getItem(`dhigrowth_templates_${currentWorkspaceId}`);
-      if (saved) return filterDeleted(JSON.parse(saved));
+      if (saved) return ensurePresets(JSON.parse(saved));
     } catch {}
-    return isDefaultWorkspace ? DEFAULT_TEMPLATES : [];
+    return DEFAULT_TEMPLATES;
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // all | greetings | services | pricing
@@ -229,6 +328,8 @@ export const TemplatesPage = () => {
   const [formHeaderText, setFormHeaderText] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formBody, setFormBody] = useState('');
+  const [formButton1, setFormButton1] = useState('');
+  const [formButton2, setFormButton2] = useState('');
   const [formReSubmitMeta, setFormReSubmitMeta] = useState(true);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
@@ -358,6 +459,19 @@ export const TemplatesPage = () => {
         return list.filter((t) => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
       };
 
+      const ensurePresets = (list) => {
+        const cleaned = filterDeleted(list);
+        for (let i = DHI_PRESET_TEMPLATES.length - 1; i >= 0; i--) {
+          const p = DHI_PRESET_TEMPLATES[i];
+          if (!deletedList.includes(p.name) && !deletedList.includes(String(p.id))) {
+            if (!cleaned.some((t) => t.name === p.name || String(t.id) === String(p.id))) {
+              cleaned.unshift({ ...p });
+            }
+          }
+        }
+        return cleaned;
+      };
+
       // 1. First check if this user already has a saved template list
       const localSaved = localStorage.getItem(`dhigrowth_templates_${currentWorkspaceId}`);
       let parsedLocal = null;
@@ -365,7 +479,7 @@ export const TemplatesPage = () => {
         try {
           parsedLocal = JSON.parse(localSaved);
           if (Array.isArray(parsedLocal)) {
-            setTemplates(filterDeleted(parsedLocal));
+            setTemplates(ensurePresets(parsedLocal));
           }
         } catch {}
       }
@@ -385,7 +499,7 @@ export const TemplatesPage = () => {
       }
 
       if (metaData && Array.isArray(metaData.templates)) {
-        const cleaned = filterDeleted(metaData.templates);
+        const cleaned = ensurePresets(metaData.templates);
         setTemplates(cleaned);
         try {
           localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
@@ -396,23 +510,18 @@ export const TemplatesPage = () => {
       // 3. Fallback to Supabase
       const data = await getTemplates(currentWorkspaceId);
       if (data && data.length > 0) {
-        const cleaned = filterDeleted(data);
+        const cleaned = ensurePresets(data);
         setTemplates(cleaned);
         try {
           localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
         } catch {}
       } else if (parsedLocal !== null) {
-        setTemplates(filterDeleted(parsedLocal));
-      } else if (currentWorkspaceId === DEFAULT_WORKSPACE_ID) {
-        const cleaned = filterDeleted(DEFAULT_TEMPLATES);
+        setTemplates(ensurePresets(parsedLocal));
+      } else {
+        const cleaned = ensurePresets(DEFAULT_TEMPLATES);
         setTemplates(cleaned);
         try {
           localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
-        } catch {}
-      } else {
-        setTemplates([]);
-        try {
-          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify([]));
         } catch {}
       }
     } catch (err) {
@@ -424,11 +533,7 @@ export const TemplatesPage = () => {
           return;
         } catch {}
       }
-      if (currentWorkspaceId === DEFAULT_WORKSPACE_ID) {
-        setTemplates(DEFAULT_TEMPLATES);
-      } else {
-        setTemplates([]);
-      }
+      setTemplates(DEFAULT_TEMPLATES);
     } finally {
       setIsLoading(false);
     }
@@ -499,15 +604,22 @@ export const TemplatesPage = () => {
     setFormHeaderText('');
     setFormImageUrl('');
     setFormBody('');
+    setFormButton1('');
+    setFormButton2('');
     setFormReSubmitMeta(true);
     setIsCreateModalOpen(true);
   };
 
   const handleOpenEdit = (template) => {
     setEditingTemplate(template);
-    setFormName(template.name || '');
+    setFormName(template.displayName || template.name || '');
     setFormTriggers(template.footer_text || '');
     setFormCategory((template.category || 'utility').toLowerCase());
+
+    const btn1 = template.buttons?.[0]?.text || template.buttons?.[0]?.title || '';
+    const btn2 = template.buttons?.[1]?.text || template.buttons?.[1]?.title || '';
+    setFormButton1(btn1);
+    setFormButton2(btn2);
 
     const rawHeaderType = (template.header_type || '').toUpperCase();
     if (rawHeaderType === 'IMAGE') {
@@ -655,6 +767,14 @@ export const TemplatesPage = () => {
     const headerType = hasImage ? 'IMAGE' : (isTextHeader ? 'TEXT' : null);
     const headerContent = hasImage ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
 
+    const buttons = [];
+    if (formButton1.trim()) {
+      buttons.push({ type: 'QUICK_REPLY', text: formButton1.trim() });
+    }
+    if (formButton2.trim()) {
+      buttons.push({ type: 'QUICK_REPLY', text: formButton2.trim() });
+    }
+
     try {
       // 1. Create on Meta Template API
       let metaTemplate;
@@ -672,6 +792,7 @@ export const TemplatesPage = () => {
             headerText: isTextHeader ? headerContent : null,
             bodyText: formBody.trim(),
             footerText: formTriggers.trim(),
+            buttons,
             submitToMeta: formReSubmitMeta,
           }),
         });
@@ -696,6 +817,7 @@ export const TemplatesPage = () => {
               headerText: isTextHeader ? headerContent : null,
               bodyText: formBody.trim(),
               footerText: formTriggers.trim(),
+              buttons,
               submitToMeta: formReSubmitMeta,
             }),
           });
@@ -717,6 +839,7 @@ export const TemplatesPage = () => {
           status: formReSubmitMeta ? 'pending' : 'approved',
           header_type: headerType,
           header_content: headerContent,
+          buttons,
         });
       } catch {}
 
@@ -724,12 +847,14 @@ export const TemplatesPage = () => {
         id: `tmpl-${Date.now()}`,
         workspace_id: currentWorkspaceId,
         name: formName.trim(),
+        displayName: formName.trim(),
         body_text: formBody.trim(),
         footer_text: formTriggers.trim(),
         category: formCategory.toUpperCase(),
         status: formReSubmitMeta ? 'PENDING' : 'APPROVED',
         header_type: headerType,
         header_content: headerContent,
+        buttons,
         syncedWithMeta: formReSubmitMeta,
       };
 
@@ -753,12 +878,14 @@ export const TemplatesPage = () => {
         id: `tmpl-${Date.now()}`,
         workspace_id: currentWorkspaceId,
         name: formName.trim(),
+        displayName: formName.trim(),
         body_text: formBody.trim(),
         footer_text: formTriggers.trim(),
         category: formCategory,
         status: formReSubmitMeta ? 'PENDING' : 'APPROVED',
         header_type: headerType,
         header_content: headerContent,
+        buttons,
         syncedWithMeta: formReSubmitMeta,
       };
       setTemplates((prev) => {
@@ -790,6 +917,14 @@ export const TemplatesPage = () => {
     const headerType = hasImage ? 'IMAGE' : (isTextHeader ? 'TEXT' : 'NONE');
     const headerContent = hasImage ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
 
+    const buttons = [];
+    if (formButton1.trim()) {
+      buttons.push({ type: 'QUICK_REPLY', text: formButton1.trim() });
+    }
+    if (formButton2.trim()) {
+      buttons.push({ type: 'QUICK_REPLY', text: formButton2.trim() });
+    }
+
     try {
       // 1. Call Backend Update API with optional Meta re-submission
       let metaUpdated = null;
@@ -806,6 +941,7 @@ export const TemplatesPage = () => {
             headerText: isTextHeader ? headerContent : null,
             bodyText: formBody.trim(),
             footerText: formTriggers.trim(),
+            buttons,
             reSubmitToMeta: formReSubmitMeta,
           }),
         });
@@ -829,6 +965,7 @@ export const TemplatesPage = () => {
               headerText: isTextHeader ? headerContent : null,
               bodyText: formBody.trim(),
               footerText: formTriggers.trim(),
+              buttons,
               reSubmitToMeta: formReSubmitMeta,
             }),
           });
@@ -848,18 +985,21 @@ export const TemplatesPage = () => {
           status: formReSubmitMeta ? 'pending' : (editingTemplate.status || 'approved'),
           header_type: headerType,
           header_content: headerContent,
+          buttons,
         });
       } catch {}
 
       const updatedObj = metaUpdated || {
         ...editingTemplate,
         name: formName.trim(),
+        displayName: formName.trim(),
         body_text: formBody.trim(),
         footer_text: formTriggers.trim(),
         category: formCategory.toUpperCase(),
         status: formReSubmitMeta ? 'PENDING' : editingTemplate.status,
         header_type: headerType,
         header_content: headerContent,
+        buttons,
       };
 
       setTemplates((prev) => {
@@ -1042,18 +1182,39 @@ export const TemplatesPage = () => {
     }
 
     if (activeTab === 'greetings') {
-      return (t.footer_text || '').toLowerCase().includes('hi') || (t.footer_text || '').toLowerCase().includes('hello');
+      return (
+        (t.footer_text || '').toLowerCase().includes('hi') ||
+        (t.footer_text || '').toLowerCase().includes('hello') ||
+        (t.name || '').toLowerCase().includes('welcome') ||
+        (t.name || '').toLowerCase().includes('discovery') ||
+        (t.displayName || '').toLowerCase().includes('discovery')
+      );
     }
     if (activeTab === 'services') {
       return (
         (t.footer_text || '').toLowerCase().includes('app') ||
         (t.footer_text || '').toLowerCase().includes('ai') ||
         (t.footer_text || '').toLowerCase().includes('crm') ||
-        (t.footer_text || '').toLowerCase().includes('software')
+        (t.footer_text || '').toLowerCase().includes('demo') ||
+        (t.footer_text || '').toLowerCase().includes('software') ||
+        (t.name || '').toLowerCase().includes('discovery') ||
+        (t.name || '').toLowerCase().includes('crm') ||
+        (t.name || '').toLowerCase().includes('call') ||
+        (t.displayName || '').toLowerCase().includes('crm') ||
+        (t.displayName || '').toLowerCase().includes('call')
       );
     }
     if (activeTab === 'pricing') {
-      return (t.footer_text || '').toLowerCase().includes('price') || (t.footer_text || '').toLowerCase().includes('quote');
+      return (
+        (t.footer_text || '').toLowerCase().includes('price') ||
+        (t.footer_text || '').toLowerCase().includes('quote') ||
+        (t.footer_text || '').toLowerCase().includes('call') ||
+        (t.footer_text || '').toLowerCase().includes('voucher') ||
+        (t.footer_text || '').toLowerCase().includes('offer') ||
+        (t.name || '').toLowerCase().includes('call') ||
+        (t.name || '').toLowerCase().includes('voucher') ||
+        (t.displayName || '').toLowerCase().includes('call')
+      );
     }
     return true;
   });
@@ -1061,8 +1222,9 @@ export const TemplatesPage = () => {
   const welcomeTemplate = templates.length > 0 ? (
     templates.find(
       (t) =>
-        (t.footer_text || '').toLowerCase().includes('hi') &&
-        (t.footer_text || '').toLowerCase().includes('hello')
+        t.name === 'ai_it_discovery' ||
+        t.name === 'hi' ||
+        ((t.footer_text || '').toLowerCase().includes('hi') && (t.footer_text || '').toLowerCase().includes('hello'))
     ) || templates[0]
   ) : null;
 
@@ -1395,27 +1557,44 @@ export const TemplatesPage = () => {
                   </div>
                 )}
 
+                {template.header_type === 'TEXT' && template.header_content && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-[11px] font-bold text-[#0284C7] w-fit shadow-2xs">
+                    <Zap className="w-3.5 h-3.5 text-[#0284C7]" />
+                    <span>Header: {template.header_content}</span>
+                  </div>
+                )}
+
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="px-2 py-0.5 rounded-full bg-[#F0F9FF] text-[#0284C7] text-[10px] font-bold font-mono uppercase">
                         {template.category || 'Utility'}
                       </span>
-                      {Boolean(template.header_content) && (
+                      {template.badge && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD] text-[10px] font-bold font-mono">
+                          {template.badge}
+                        </span>
+                      )}
+                      {Boolean(template.header_content) && template.header_type === 'IMAGE' && (
                         <span className="px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] text-[10px] font-bold font-mono uppercase flex items-center gap-1">
                           <ImageIcon className="w-2.5 h-2.5" />
                           <span>Image</span>
                         </span>
                       )}
-                      {(template.variables?.length > 0 || (template.body_text || '').includes('{{1}}')) && (
+                      {(template.variables?.length > 0 || (template.body_text || '').includes('{{1}}') || (template.body_text || '').includes('{{name}}')) && (
                         <span className="px-2 py-0.5 rounded-full bg-[#EFF8FF] text-[#175CD3] border border-[#B2DDFF] text-[10px] font-bold font-mono">
-                          {template.variables?.length || ((template.body_text || '').match(/\{\{\d+\}\}/g) || []).length} VARS
+                          {template.variables?.length || ((template.body_text || '').match(/\{\{\w+\}\}/g) || []).length} VARS
                         </span>
                       )}
                     </div>
                     <h4 className="text-sm font-bold text-[#101828] truncate group-hover:text-[#0284C7] transition-colors">
-                      {template.name}
+                      {template.displayName || template.name}
                     </h4>
+                    {template.displayName && template.displayName !== template.name && (
+                      <span className="text-[10px] text-[#98A2B3] font-mono block truncate">
+                        key: {template.name}
+                      </span>
+                    )}
                   </div>
 
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono shrink-0 flex items-center gap-1 ${
@@ -1474,6 +1653,29 @@ export const TemplatesPage = () => {
                 <div className="p-3 rounded-xl bg-[#F9FAFB] border border-[#EAECF0] text-xs text-[#344054] line-clamp-4 leading-relaxed font-sans">
                   {template.body_text}
                 </div>
+
+                {/* Quick-Reply Buttons if present */}
+                {Array.isArray(template.buttons) && template.buttons.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-[#98A2B3] uppercase font-mono">
+                      <span>Quick-Reply Buttons ({template.buttons.length}):</span>
+                      <span className="text-[#16A34A] text-[9px] font-semibold flex items-center gap-1">
+                        <Check className="w-2.5 h-2.5" /> 1-Tap Reply
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {template.buttons.map((btn, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <Check className="w-3 h-3 text-[#16A34A]" />
+                          <span>{btn.text || btn.title}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Card Footer Actions */}
@@ -1592,6 +1794,69 @@ export const TemplatesPage = () => {
             </div>
 
             <form onSubmit={editingTemplate ? handleSaveEdit : handleSaveCreate} className="space-y-4">
+              {/* 1. CHOOSE TEMPLATE PRESET */}
+              <div className="space-y-2 pb-2 border-b border-[#EAECF0]">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#101828] uppercase tracking-wider font-mono flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
+                    <span>1. Choose Template Preset</span>
+                  </label>
+                  <span className="text-[10px] text-[#667085]">
+                    Click a preset to auto-fill official WhatsApp template
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {DHI_PRESET_TEMPLATES.map((preset) => {
+                    const isSelected = formName.toLowerCase() === preset.displayName.toLowerCase() || formName.toLowerCase() === preset.name.toLowerCase();
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => {
+                          setFormName(preset.displayName);
+                          setFormTriggers(preset.footer_text || '');
+                          setFormCategory((preset.category || 'utility').toLowerCase());
+                          setFormHeaderType(preset.header_type || 'NONE');
+                          setFormHeaderText(preset.header_content || '');
+                          setFormImageUrl('');
+                          setFormBody(preset.body_text || '');
+                          setFormButton1(preset.buttons?.[0]?.text || '');
+                          setFormButton2(preset.buttons?.[1]?.text || '');
+                        }}
+                        className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between h-24 ${
+                          isSelected
+                            ? 'bg-[#F0F9FF] border-2 border-[#0284C7] shadow-xs ring-2 ring-[#0284C7]/20'
+                            : 'bg-white border-[#EAECF0] hover:border-[#BAE6FD] hover:bg-[#F9FAFB]'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1">
+                            <h5 className="text-xs font-bold text-[#101828] truncate">{preset.displayName}</h5>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
+                          </div>
+                          {preset.badge && (
+                            <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono ${
+                              preset.badge === 'Recommended'
+                                ? 'bg-[#E0F2FE] text-[#0284C7]'
+                                : preset.badge === 'Popular'
+                                ? 'bg-[#E0F2FE] text-[#0369A1]'
+                                : preset.badge === 'High Conversion'
+                                ? 'bg-[#DCFCE7] text-[#16A34A]'
+                                : 'bg-[#F2F4F7] text-[#475467]'
+                            }`}>
+                              {preset.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[#667085] truncate mt-1">
+                          {preset.buttons?.map(b => b.text).join(' • ') || preset.footer_text}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-[#344054]">Template Name</label>
                 <input
@@ -1930,9 +2195,56 @@ export const TemplatesPage = () => {
                 />
               </div>
 
+              {/* Quick-Reply Buttons (Interactive WhatsApp Responses) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-[#344054] flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-[#16A34A]" />
+                    <span>Quick-Reply Buttons (Interactive Options)</span>
+                  </label>
+                  <span className="text-[10px] text-[#667085]">
+                    Up to 2 buttons (max 25 chars each)
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-[#667085] block mb-1">
+                      Button 1 (Positive / Primary)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        maxLength={25}
+                        placeholder="e.g. Yes, I'm interested"
+                        value={formButton1}
+                        onChange={(e) => setFormButton1(e.target.value)}
+                        className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-7 pr-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#16A34A] focus:bg-white"
+                      />
+                      <Check className="w-3.5 h-3.5 text-[#16A34A] absolute left-2 top-2.5" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-[#667085] block mb-1">
+                      Button 2 (Secondary / Tell More)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        maxLength={25}
+                        placeholder="e.g. Tell me more"
+                        value={formButton2}
+                        onChange={(e) => setFormButton2(e.target.value)}
+                        className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-7 pr-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white"
+                      />
+                      <Plus className="w-3.5 h-3.5 text-[#0284C7] absolute left-2 top-2.5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Live WhatsApp Customer Bubble Preview */}
-              {(formBody || (formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl)) || (formHeaderType === 'TEXT' && formHeaderText)) && (
-                <div className="p-3.5 rounded-2xl bg-[#EFEAE2] border border-[#D1D5DB] space-y-1.5">
+              {(formBody || formButton1 || formButton2 || (formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl)) || (formHeaderType === 'TEXT' && formHeaderText)) && (
+                <div className="p-3.5 rounded-2xl bg-[#EFEAE2] border border-[#D1D5DB] space-y-2">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#16A34A]">
                     <Smartphone className="w-3 h-3" />
                     <span>WhatsApp Live Customer Bubble Preview:</span>
@@ -1961,6 +2273,29 @@ export const TemplatesPage = () => {
                     <div className="flex justify-end items-center text-[9px] text-gray-400 font-mono pt-1">
                       <span>1:45 PM</span>
                     </div>
+
+                    {/* Interactive Buttons Preview */}
+                    {(formButton1.trim() || formButton2.trim()) && (
+                      <div className="pt-2 border-t border-gray-100 space-y-1.5 -mx-1">
+                        {formButton1.trim() && (
+                          <div className="w-full py-1.5 px-3 rounded-lg bg-[#F0FDF4] hover:bg-[#DCFCE7] border border-[#BBF7D0] text-[#16A34A] font-bold text-center text-xs flex items-center justify-center gap-1.5 shadow-2xs">
+                            <Check className="w-3 h-3 text-[#16A34A]" />
+                            <span>{formButton1.trim()}</span>
+                          </div>
+                        )}
+                        {formButton2.trim() && (
+                          <div className="w-full py-1.5 px-3 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] font-bold text-center text-xs flex items-center justify-center gap-1.5 shadow-2xs">
+                            <MessageSquare className="w-3 h-3 text-[#0284C7]" />
+                            <span>{formButton2.trim()}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-2 rounded-xl bg-white/70 border border-black/5 text-[11px] text-[#475467] flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+                    <span>When user taps a button on WhatsApp, Sendiee AI Concierge automatically detects and triggers follow-up auto-replies.</span>
                   </div>
                 </div>
               )}

@@ -2,6 +2,86 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
+        "id": "tpl_ai_discovery",
+        "name": "ai_it_discovery",
+        "displayName": "AI & IT Discovery",
+        "badge": "Recommended",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "DhiGrowth IT Services",
+        "body_text": "Hello {{name}}! 👋 Welcome to DhiGrowth IT Services.\n\nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n\nTap below to connect with our team! 🚀",
+        "footer_text": "hi, hello, discovery, app, ai, crm, start",
+        "buttons": [
+          { "type": "QUICK_REPLY", "text": "Yes, I'm interested" },
+          { "type": "QUICK_REPLY", "text": "Tell me more" }
+        ],
+        "variables": ["name"],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:30:00.000Z"
+      },
+      {
+        "id": "tpl_free_call",
+        "name": "free_15_min_call",
+        "displayName": "Free 15-Min Call",
+        "badge": "Popular",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "Special Tech Invitation",
+        "body_text": "Hi {{name}}! 🚀 We're offering complimentary 15-minute technology consultation sessions this week for ambitious founders.\n\nWould you like us to schedule a quick call with our lead tech architect?",
+        "footer_text": "call, meeting, consultation, free, appointment, schedule",
+        "buttons": [
+          { "type": "QUICK_REPLY", "text": "Yes, Schedule Call" },
+          { "type": "QUICK_REPLY", "text": "Share Times" }
+        ],
+        "variables": ["name"],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:30:00.000Z"
+      },
+      {
+        "id": "tpl_crm_demo",
+        "name": "whatsapp_crm_demo",
+        "displayName": "WhatsApp CRM Demo",
+        "badge": "High Conversion",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "WhatsApp Automation",
+        "body_text": "Hello {{name}}! Want to see a live 2-minute demo of 24/7 AI lead capture, broadcast marketing, and automated team inboxes on WhatsApp?",
+        "footer_text": "crm, demo, automation, bot, live, features",
+        "buttons": [
+          { "type": "QUICK_REPLY", "text": "Yes, Send Demo" },
+          { "type": "QUICK_REPLY", "text": "Chat with Agent" }
+        ],
+        "variables": ["name"],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:30:00.000Z"
+      },
+      {
+        "id": "tpl_custom_template",
+        "name": "custom_template",
+        "displayName": "Custom Template",
+        "badge": "Freeform",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "DhiGrowth IT Services",
+        "body_text": "Hi {{name}}! We would love to share our latest updates with you. Would you like more details?",
+        "footer_text": "updates, details, info, more, custom",
+        "buttons": [
+          { "type": "QUICK_REPLY", "text": "Yes, please" },
+          { "type": "QUICK_REPLY", "text": "Not right now" }
+        ],
+        "variables": ["name"],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:30:00.000Z"
+      },
+      {
         "id": "2950860201937776",
         "name": "new_client_welcome",
         "category": "MARKETING",
@@ -186,7 +266,65 @@
         "metaTemplateId": "2074071630135449"
       }
     ],
-    "a0000000-0000-0000-0000-000000000001": []
+    "a0000000-0000-0000-0000-000000000001": [
+      {
+        "id": "2950860201937776",
+        "name": "new_client_welcome",
+        "category": "MARKETING",
+        "language": "en",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "{{1}}",
+        "body_text": "\"Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!\"",
+        "footer_text": "",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "\"Thank you!\""
+          }
+        ],
+        "variables": [
+          "var_1",
+          "var_2",
+          "var_3"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:27:10.265Z"
+      },
+      {
+        "id": "2074071630135449",
+        "name": "lead_offer_voucher",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "NONE",
+        "header_content": null,
+        "body_text": "Hello {{1}}, here is your special 20% discount coupon {{2}}! Valid today.",
+        "footer_text": "offer, voucher, discount",
+        "buttons": [],
+        "variables": [
+          "var_1",
+          "var_2"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:27:10.265Z"
+      },
+      {
+        "id": "1744607210078710",
+        "name": "hello_world",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "Hello World",
+        "body_text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.",
+        "footer_text": "WhatsApp Business Platform sample message",
+        "buttons": [],
+        "variables": [],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:27:10.265Z"
+      }
+    ]
   },
   "deletedTemplates": [
     "flash_sale_promo_2026",

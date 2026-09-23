@@ -9,7 +9,91 @@ const TEMPLATES_STORE_FILE = path.resolve(__dirname, 'templatesStore.json');
 const META_GRAPH_VERSION = 'v20.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${META_GRAPH_VERSION}`;
 
+export const DHI_PRESET_TEMPLATES = [
+  {
+    id: 'tpl_ai_discovery',
+    name: 'ai_it_discovery',
+    displayName: 'AI & IT Discovery',
+    badge: 'Recommended',
+    category: 'MARKETING',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: 'DhiGrowth IT Services',
+    body_text: 'Hello {{name}}! 👋 Welcome to DhiGrowth IT Services.\n\nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n\nTap below to connect with our team! 🚀',
+    footer_text: 'hi, hello, discovery, app, ai, crm, start',
+    buttons: [
+      { type: 'QUICK_REPLY', text: "Yes, I'm interested" },
+      { type: 'QUICK_REPLY', text: 'Tell me more' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tpl_free_call',
+    name: 'free_15_min_call',
+    displayName: 'Free 15-Min Call',
+    badge: 'Popular',
+    category: 'MARKETING',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: 'Special Tech Invitation',
+    body_text: "Hi {{name}}! 🚀 We're offering complimentary 15-minute technology consultation sessions this week for ambitious founders.\n\nWould you like us to schedule a quick call with our lead tech architect?",
+    footer_text: 'call, meeting, consultation, free, appointment, schedule',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, Schedule Call' },
+      { type: 'QUICK_REPLY', text: 'Share Times' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tpl_crm_demo',
+    name: 'whatsapp_crm_demo',
+    displayName: 'WhatsApp CRM Demo',
+    badge: 'High Conversion',
+    category: 'UTILITY',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: 'WhatsApp Automation',
+    body_text: 'Hello {{name}}! Want to see a live 2-minute demo of 24/7 AI lead capture, broadcast marketing, and automated team inboxes on WhatsApp?',
+    footer_text: 'crm, demo, automation, bot, live, features',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, Send Demo' },
+      { type: 'QUICK_REPLY', text: 'Chat with Agent' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tpl_custom_template',
+    name: 'custom_template',
+    displayName: 'Custom Template',
+    badge: 'Freeform',
+    category: 'MARKETING',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: 'DhiGrowth IT Services',
+    body_text: 'Hi {{name}}! We would love to share our latest updates with you. Would you like more details?',
+    footer_text: 'updates, details, info, more, custom',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, please' },
+      { type: 'QUICK_REPLY', text: 'Not right now' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
+];
+
 export const STARTER_TEMPLATES = [
+  ...DHI_PRESET_TEMPLATES,
   {
     id: 'tpl_hello_world',
     name: 'hello_world',
@@ -22,95 +106,6 @@ export const STARTER_TEMPLATES = [
     footer_text: 'Tap an option to respond:',
     buttons: [],
     variables: [],
-    syncedWithMeta: true,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'tpl_hi',
-    name: 'hi',
-    category: 'MARKETING',
-    language: 'en',
-    status: 'APPROVED',
-    header_type: 'TEXT',
-    header_content: 'DhiGrowth IT Services',
-    body_text: `Hello sri! 👋 Welcome to DhiGrowth IT Services.\n \nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n \nTap below to connect with our team! 🚀\nTap an option to respond:`,
-    footer_text: 'Tap an option to respond:',
-    buttons: [
-      { type: 'QUICK_REPLY', text: "Yes, I'm interested" },
-      { type: 'QUICK_REPLY', text: 'Tell me more' }
-    ],
-    variables: [],
-    syncedWithMeta: true,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'tpl_welcome_greeting',
-    name: 'welcome_greeting_v2',
-    category: 'UTILITY',
-    language: 'en_US',
-    status: 'APPROVED',
-    header_type: 'IMAGE',
-    header_content: 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800&auto=format&fit=crop&q=80',
-    body_text: 'Hello {{1}}! 👋 Welcome to DhiGrowth AI Suite. Your dedicated workspace concierge is ready to assist your team with omnichannel CRM, WhatsApp automation, and custom AI agents. Reply MENU at any time to explore services.',
-    footer_text: 'DhiGrowth Business Partner • Official Meta Tech Provider',
-    buttons: [
-      { type: 'QUICK_REPLY', text: 'Book Demo' },
-      { type: 'QUICK_REPLY', text: 'View Pricing' },
-    ],
-    variables: ['name'],
-    syncedWithMeta: true,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'tpl_summer_offer',
-    name: 'flash_sale_promo_2026',
-    category: 'MARKETING',
-    language: 'en_US',
-    status: 'APPROVED',
-    header_type: 'IMAGE',
-    header_content: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop&q=80',
-    body_text: 'Hi {{1}}! 🎉 Exclusive offer for {{2}} members: Get an instant {{3}} discount on our scaling plans this week only! Upgrade now to unlock unlimited WhatsApp Cloud API automation and priority AI support.',
-    footer_text: 'Reply STOP to opt out of promotional messages',
-    buttons: [
-      { type: 'URL', text: 'Claim Offer', url: 'https://dhigrowth.com/pricing' },
-      { type: 'QUICK_REPLY', text: 'Talk to Sales' },
-    ],
-    variables: ['name', 'membership_tier', 'discount_percent'],
-    syncedWithMeta: true,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'tpl_order_dispatch',
-    name: 'order_status_update_v1',
-    category: 'UTILITY',
-    language: 'en_US',
-    status: 'APPROVED',
-    header_type: 'TEXT',
-    header_content: 'Order Shipped 📦',
-    body_text: 'Great news {{1}}! Your order #{{2}} has been packed and handed over to our delivery partner. Estimated delivery is {{3}}. Track your real-time status using the link below.',
-    footer_text: 'Need help? Reply HELP to chat with an agent',
-    buttons: [
-      { type: 'URL', text: 'Track Order', url: 'https://dhigrowth.com/track/{{1}}' },
-    ],
-    variables: ['customer_name', 'order_id', 'delivery_date'],
-    syncedWithMeta: true,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'tpl_event_reminder',
-    name: 'vip_webinar_reminder_2026',
-    category: 'MARKETING',
-    language: 'en_US',
-    status: 'APPROVED',
-    header_type: 'IMAGE',
-    header_content: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
-    body_text: 'Hey {{1}}, your live masterclass on {{2}} starts in {{3}} minutes! 🚀 Join top founders discovering how to automate customer support and 10x WhatsApp sales conversion.',
-    footer_text: 'Hosted on Zoom • Live Q&A included',
-    buttons: [
-      { type: 'URL', text: 'Join Live Room', url: 'https://dhigrowth.com/live-room' },
-      { type: 'QUICK_REPLY', text: 'Reschedule' },
-    ],
-    variables: ['first_name', 'topic', 'starts_in'],
     syncedWithMeta: true,
     updatedAt: new Date().toISOString(),
   },
@@ -163,6 +158,28 @@ export function getWorkspaceTemplates(workspaceId = 'b0000000-0000-0000-0000-000
     templatesStore.workspaces[workspaceId] = workspaceId === 'b0000000-0000-0000-0000-000000000001' ? [...starters] : [];
     saveTemplatesToDisk();
   }
+
+  // Ensure DHI_PRESET_TEMPLATES exist in the workspace list (unless user explicitly deleted them)
+  const deleted = templatesStore.deletedTemplates || [];
+  const currentList = templatesStore.workspaces[workspaceId];
+  let changed = false;
+
+  // Walk in reverse so they are unshifted in order [0, 1, 2, 3] at the beginning
+  for (let i = DHI_PRESET_TEMPLATES.length - 1; i >= 0; i--) {
+    const preset = DHI_PRESET_TEMPLATES[i];
+    if (!deleted.includes(preset.name) && !deleted.includes(String(preset.id))) {
+      const exists = currentList.some((t) => t.name === preset.name || String(t.id) === String(preset.id));
+      if (!exists) {
+        currentList.unshift({ ...preset });
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    saveTemplatesToDisk();
+  }
+
   return templatesStore.workspaces[workspaceId];
 }
 
