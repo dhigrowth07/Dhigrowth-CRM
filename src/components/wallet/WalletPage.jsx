@@ -238,7 +238,10 @@ export const WalletPage = () => {
       const scriptLoaded = await loadRazorpayScript();
 
       if (scriptLoaded && window.Razorpay) {
-        const keyId = orderData?.keyId || 'rzp_test_TcdoZxzN0dIYoP';
+        const validTestKey = 'rzp_test_TcdoZxzN0dIYoP';
+        const keyId = (orderData?.keyId && !orderData.keyId.includes('sandbox') && !orderData.keyId.includes('placeholder'))
+          ? orderData.keyId
+          : validTestKey;
         const options = {
           key: keyId,
           amount: (orderData?.amountPaise || (amountInr * 100)),

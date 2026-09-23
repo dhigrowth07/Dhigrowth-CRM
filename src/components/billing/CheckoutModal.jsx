@@ -186,7 +186,10 @@ export const CheckoutModal = () => {
       }
 
       // 3. Launch official Razorpay standard Checkout popup (Real Test Mode)
-      const keyId = orderData?.keyId || 'rzp_test_TcdoZxzN0dIYoP';
+      const validTestKey = 'rzp_test_TcdoZxzN0dIYoP';
+      const keyId = (orderData?.keyId && !orderData.keyId.includes('sandbox') && !orderData.keyId.includes('placeholder'))
+        ? orderData.keyId
+        : validTestKey;
       const actualAmount = orderData?.amount || payableAmount;
 
       const options = {

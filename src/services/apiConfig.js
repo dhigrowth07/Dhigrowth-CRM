@@ -10,6 +10,7 @@ const isLocalhost =
   );
 
 export const BACKEND_URL = (
-  import.meta.env.VITE_BACKEND_URL ||
-  (isLocalhost ? 'http://localhost:4000' : 'https://api-wappilot.dhigrowth.com')
+  isLocalhost
+    ? 'http://localhost:4000'
+    : (import.meta.env.VITE_BACKEND_URL || 'https://api-wappilot.dhigrowth.com')
 ).replace(/\/+$/, '');
