@@ -42,6 +42,7 @@ export const MobileDrawer = () => {
     subscription,
     openCheckout,
     setIsUpgradeModalOpen,
+    hasNavPermission,
   } = useApp();
 
   if (!isMobileMenuOpen) return null;
@@ -119,6 +120,15 @@ export const MobileDrawer = () => {
     },
   ];
 
+  const visibleMenuSections = menuSections.map((section) => {
+    if (section.title === 'SUPER ADMIN') return section;
+    const visibleItems = section.items.filter((item) => hasNavPermission(item.id));
+    return {
+      ...section,
+      items: visibleItems,
+    };
+  }).filter((section) => section.items.length > 0);
+
   const handleSelect = (id) => {
     setActiveTab(id);
     setIsMobileMenuOpen(false);
@@ -169,7 +179,7 @@ export const MobileDrawer = () => {
 
         {/* Scrollable Navigation List */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5">
-          {menuSections.map((section) => (
+          {visibleMenuSections.map((section) => (
             <div key={section.title} className="space-y-1">
               <div className="px-2 text-[10px] font-mono font-bold tracking-wider text-[#98A2B3] uppercase">
                 {section.title}

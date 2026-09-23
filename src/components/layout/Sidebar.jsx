@@ -42,6 +42,7 @@ export const Sidebar = () => {
     logout,
     totalUnreadCount,
     subscription,
+    hasNavPermission,
   } = useApp();
 
   const isPaidActive = subscription?.status === 'active';
@@ -174,6 +175,15 @@ export const Sidebar = () => {
     },
   ];
 
+  const visibleNavSections = NAV_SECTIONS.map((section) => {
+    if (section.title === 'SUPER ADMIN') return section;
+    const visibleItems = section.items.filter((item) => hasNavPermission(item.id));
+    return {
+      ...section,
+      items: visibleItems,
+    };
+  }).filter((section) => section.items.length > 0);
+
   return (
     <aside
       className={`bg-white border-r border-[#EAECF0] hidden md:flex flex-col justify-between h-screen shrink-0 sticky top-0 font-sans transition-all duration-300 ease-in-out z-20 ${
@@ -272,7 +282,7 @@ export const Sidebar = () => {
 
         {/* Navigation Sections */}
         <div className={`space-y-4 mt-1 pb-4 ${isSidebarCollapsed ? 'px-2' : 'px-3'}`}>
-          {NAV_SECTIONS.map((section) => (
+          {visibleNavSections.map((section) => (
             <div key={section.title} className="space-y-1">
               {!isSidebarCollapsed && (
                 <div className="px-3 text-[10px] font-bold text-[#98A2B3] uppercase tracking-wider font-mono">

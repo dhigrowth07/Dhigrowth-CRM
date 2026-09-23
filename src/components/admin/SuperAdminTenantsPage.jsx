@@ -18,8 +18,33 @@ import {
   Eye,
   EyeOff,
   Search,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  CheckSquare,
+  Square,
+  LayoutGrid,
+  Mail,
+  UserCheck,
+  BarChart3,
+  Folder,
+  Bot,
+  Wrench,
+  Target,
+  GitFork,
+  Megaphone,
+  GitBranch,
+  Percent,
+  LayoutTemplate,
+  ShoppingBag,
+  Puzzle,
+  Code,
+  Grid,
+  Settings,
+  Wallet,
+  Crown,
 } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
+import { useApp, NAVIGATION_MODULES, ALL_PERMISSION_KEYS } from '../../context/AppContext';
 
 export const SuperAdminTenantsPage = () => {
   const {
@@ -27,6 +52,7 @@ export const SuperAdminTenantsPage = () => {
     createTenantUser,
     deleteTenantUser,
     toggleTenantPermission,
+    batchUpdateTenantPermissions,
     currentUser,
     showToast,
   } = useApp();
@@ -36,6 +62,28 @@ export const SuperAdminTenantsPage = () => {
   const [copiedSlug, setCopiedSlug] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [activeTabFilter, setActiveTabFilter] = useState('all'); // 'all', 'active', 'admin'
+  const [expandedPermissions, setExpandedPermissions] = useState({});
+
+  const toggleExpandPermissions = (tenantId) => {
+    setExpandedPermissions((prev) => ({
+      ...prev,
+      [tenantId]: !prev[tenantId],
+    }));
+  };
+
+  const getInitialPermissions = () => {
+    const init = {};
+    (ALL_PERMISSION_KEYS || []).forEach((k) => {
+      init[k] = true;
+    });
+    init.send_due_all = true;
+    init.team_inbox = true;
+    init.ai_studio = true;
+    init.meta_api = true;
+    init.crm_leads = true;
+    init.campaigns = true;
+    return init;
+  };
 
   // New Tenant Form State
   const [formData, setFormData] = useState({
@@ -46,15 +94,108 @@ export const SuperAdminTenantsPage = () => {
     companyName: '',
     plan: 'Pro Plan',
     credits: 500,
-    permissions: {
-      send_due_all: true,
-      team_inbox: true,
-      ai_studio: true,
-      meta_api: true,
-      crm_leads: true,
-      campaigns: true,
-    },
+    permissions: getInitialPermissions(),
   });
+
+  const getModuleIcon = (id) => {
+    const map = {
+      dashboard: LayoutGrid,
+      inbox: Mail,
+      leads: UserCheck,
+      insights: BarChart3,
+      files: Folder,
+      'ai-assistants': Bot,
+      tools: Wrench,
+      'lead-studio': Target,
+      segmentation: GitFork,
+      campaigns: Megaphone,
+      'drip-campaigns': GitBranch,
+      automations: Percent,
+      templates: LayoutTemplate,
+      'channel-whatsapp': Zap,
+      'channel-instagram': Radio,
+      'channel-messenger': Mail,
+      'channel-line': Radio,
+      channels: Layers,
+      'meta-api': Key,
+      shopify: ShoppingBag,
+      zoho: Puzzle,
+      api: Code,
+      apps: Grid,
+      team: Users,
+      manage: Settings,
+      wallet: Wallet,
+      plans: Crown,
+      send_due_all: Zap,
+    };
+    return map[id] || Layers;
+  };
+
+  const isTenantFeatureEnabled = (tenant, featureId) => {
+    if (tenant.username === 'admin' || tenant.isSuperAdmin) return true;
+    const perms = tenant.permissions || {};
+    if (featureId === 'inbox') {
+      return perms['inbox'] !== false && perms['team_inbox'] !== false && perms['teamInbox'] !== false;
+    }
+    if (featureId === 'leads') {
+      return perms['leads'] !== false && perms['crm_leads'] !== false;
+    }
+    if (featureId === 'ai-assistants') {
+      return perms['ai-assistants'] !== false && perms['ai_studio'] !== false && perms['aiStudio'] !== false;
+    }
+    if (featureId === 'meta-api') {
+      return perms['meta-api'] !== false && perms['meta_api'] !== false && perms['metaKeys'] !== false;
+    }
+    if (featureId === 'send_due_all') {
+      return perms['send_due_all'] !== false && perms['sendDueToAll'] !== false;
+    }
+    return perms[featureId] !== false;
+  };
+
+  const countActivePermissions = (tenant) => {
+    if (tenant.username === 'admin' || tenant.isSuperAdmin) return ALL_PERMISSION_KEYS.length;
+    return (ALL_PERMISSION_KEYS || []).filter((k) => isTenantFeatureEnabled(tenant, k)).length;
+  };
+
+  const handleToggleAllFeatures = (tenantId, shouldEnable) => {
+    const patch = {};
+    (ALL_PERMISSION_KEYS || []).forEach((k) => {
+      patch[k] = shouldEnable;
+    });
+    patch.team_inbox = shouldEnable;
+    patch.teamInbox = shouldEnable;
+    patch.crm_leads = shouldEnable;
+    patch.ai_studio = shouldEnable;
+    patch.aiStudio = shouldEnable;
+    patch.meta_api = shouldEnable;
+    patch.metaKeys = shouldEnable;
+    patch.sendDueToAll = shouldEnable;
+    patch.send_due_all = shouldEnable;
+
+    batchUpdateTenantPermissions(tenantId, patch);
+  };
+
+  const handleToggleCategory = (tenantId, categoryItems, shouldEnable) => {
+    const patch = {};
+    categoryItems.forEach((it) => {
+      patch[it.id] = shouldEnable;
+      if (it.id === 'inbox') {
+        patch.team_inbox = shouldEnable;
+        patch.teamInbox = shouldEnable;
+      }
+      if (it.id === 'leads') patch.crm_leads = shouldEnable;
+      if (it.id === 'ai-assistants') {
+        patch.ai_studio = shouldEnable;
+        patch.aiStudio = shouldEnable;
+      }
+      if (it.id === 'meta-api') {
+        patch.meta_api = shouldEnable;
+        patch.metaKeys = shouldEnable;
+      }
+      if (it.id === 'send_due_all') patch.sendDueToAll = shouldEnable;
+    });
+    batchUpdateTenantPermissions(tenantId, patch);
+  };
 
   const handleCopyLink = (slug) => {
     const url = `${window.location.origin}/?tenant=${slug}`;
@@ -104,14 +245,7 @@ export const SuperAdminTenantsPage = () => {
         companyName: '',
         plan: 'Pro Plan',
         credits: 500,
-        permissions: {
-          send_due_all: true,
-          team_inbox: true,
-          ai_studio: true,
-          meta_api: true,
-          crm_leads: true,
-          campaigns: true,
-        },
+        permissions: getInitialPermissions(),
       });
     }
   };
@@ -457,48 +591,159 @@ export const SuperAdminTenantsPage = () => {
                   </div>
                 </div>
 
-                {/* Feature Permissions Quick Toggles */}
+                {/* Feature Permissions Manager */}
                 <div className="mt-4 pt-4 border-t border-[#F2F4F7]">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-[#667085] uppercase tracking-wider">
-                      Granted Feature Permissions
-                    </span>
-                    <span className="text-[11px] text-[#98A2B3]">Click any badge to toggle access</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-[#344054] uppercase tracking-wider flex items-center gap-1.5">
+                        <SlidersHorizontal className="w-3.5 h-3.5 text-[#0284C7]" />
+                        Sidebar & Feature Access
+                      </span>
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-sky-50 text-[#0284C7] border border-sky-200">
+                        {countActivePermissions(tenant)} / {ALL_PERMISSION_KEYS.length} Active
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {tenant.username !== 'admin' && !tenant.isSuperAdmin && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAllFeatures(tenant.id, true)}
+                            className="text-[11px] font-bold text-[#0284C7] hover:text-[#0369A1] hover:underline cursor-pointer"
+                          >
+                            Enable All
+                          </button>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAllFeatures(tenant.id, false)}
+                            className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
+                          >
+                            Disable All
+                          </button>
+                        </>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandPermissions(tenant.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#F9FAFB] hover:bg-[#F2F4F7] text-[#475467] border border-[#D0D5DD] transition-all cursor-pointer ml-1"
+                      >
+                        <span>{expandedPermissions[tenant.id] ? 'Compact View' : 'Configure All Modules'}</span>
+                        {expandedPermissions[tenant.id] ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    {[
-                      { key: 'send_due_all', label: 'Send Due to All', icon: Zap },
-                      { key: 'team_inbox', label: 'Team Inbox', icon: Users },
-                      { key: 'ai_studio', label: 'AI Studio', icon: Sparkles },
-                      { key: 'meta_api', label: 'Meta WhatsApp API', icon: Key },
-                      { key: 'crm_leads', label: 'CRM Leads', icon: Layers },
-                      { key: 'campaigns', label: 'Broadcast Campaigns', icon: Radio },
-                    ].map((perm) => {
-                      const isAllowed = tenant.permissions?.[perm.key] !== false;
-                      const Icon = perm.icon;
-                      return (
-                        <button
-                          key={perm.key}
-                          onClick={() => toggleTenantPermission(tenant.id, perm.key)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                            isAllowed
-                              ? 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]'
-                              : 'bg-[#F2F4F7] text-[#98A2B3] border-[#EAECF0] line-through'
-                          }`}
-                          title={`Toggle ${perm.label} for ${tenant.name}`}
-                        >
-                          <Icon className="w-3 h-3" />
-                          <span>{perm.label}</span>
-                          {isAllowed ? (
-                            <CheckCircle2 className="w-3 h-3 text-[#10B981]" />
-                          ) : (
-                            <AlertCircle className="w-3 h-3 text-[#98A2B3]" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {/* Compact Preview of All Modules */}
+                  {!expandedPermissions[tenant.id] ? (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {(ALL_PERMISSION_KEYS || []).map((key) => {
+                        const isAllowed = isTenantFeatureEnabled(tenant, key);
+                        const Icon = getModuleIcon(key);
+                        let label = key;
+                        for (const cat of NAVIGATION_MODULES) {
+                          const it = cat.items.find((x) => x.id === key);
+                          if (it) {
+                            label = it.label;
+                            break;
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            disabled={tenant.username === 'admin' || tenant.isSuperAdmin}
+                            onClick={() => toggleTenantPermission(tenant.id, key)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                              isAllowed
+                                ? 'bg-[#F0F9FF] text-[#0284C7] border-[#BAE6FD] hover:bg-[#E0F2FE]'
+                                : 'bg-[#F2F4F7] text-[#98A2B3] border-[#EAECF0] line-through opacity-70'
+                            }`}
+                            title={`Click to toggle ${label} for ${tenant.name} (${isAllowed ? 'Enabled' : 'Disabled'})`}
+                          >
+                            <Icon className="w-3 h-3 shrink-0" />
+                            <span>{label}</span>
+                            {isAllowed ? (
+                              <Check className="w-3 h-3 text-[#0284C7]" />
+                            ) : (
+                              <AlertCircle className="w-3 h-3 text-[#98A2B3]" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* Detailed Categorized Breakdown matching screenshots */
+                    <div className="space-y-3 bg-[#F8F9FC] p-3.5 rounded-xl border border-[#EAECF0]">
+                      {NAVIGATION_MODULES.map((cat) => {
+                        const allCatEnabled = cat.items.every((it) => isTenantFeatureEnabled(tenant, it.id));
+
+                        return (
+                          <div key={cat.category} className="bg-white p-3 rounded-xl border border-[#EAECF0] shadow-2xs">
+                            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-[#F2F4F7]">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold font-mono text-[#344054] uppercase tracking-wider">
+                                  {cat.title || cat.category}
+                                </span>
+                                <span className="text-[11px] text-[#0284C7] font-semibold bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">
+                                  {cat.items.filter((it) => isTenantFeatureEnabled(tenant, it.id)).length}/{cat.items.length} enabled
+                                </span>
+                              </div>
+
+                              {tenant.username !== 'admin' && !tenant.isSuperAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleCategory(tenant.id, cat.items, !allCatEnabled)}
+                                  className="text-xs font-bold text-[#0284C7] hover:underline cursor-pointer"
+                                >
+                                  {allCatEnabled ? 'Disable Section' : 'Enable Section'}
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                              {cat.items.map((it) => {
+                                const isAllowed = isTenantFeatureEnabled(tenant, it.id);
+                                const Icon = getModuleIcon(it.id);
+
+                                return (
+                                  <button
+                                    key={it.id}
+                                    type="button"
+                                    disabled={tenant.username === 'admin' || tenant.isSuperAdmin}
+                                    onClick={() => toggleTenantPermission(tenant.id, it.id)}
+                                    className={`flex items-center justify-between p-2.5 rounded-lg text-xs font-semibold border transition-all text-left cursor-pointer ${
+                                      isAllowed
+                                        ? 'bg-[#F0F9FF] text-[#0284C7] border-[#BAE6FD] hover:bg-[#E0F2FE]'
+                                        : 'bg-[#F9FAFB] text-[#98A2B3] border-[#EAECF0] line-through'
+                                    }`}
+                                    title={`Toggle ${it.label} for ${tenant.name}`}
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                                      <span className="truncate">{it.label}</span>
+                                    </div>
+                                    {isAllowed ? (
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0284C7] shrink-0 ml-1" />
+                                    ) : (
+                                      <AlertCircle className="w-3.5 h-3.5 text-[#98A2B3] shrink-0 ml-1" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -630,37 +875,119 @@ export const SuperAdminTenantsPage = () => {
                 </div>
               </div>
 
-              {/* Granular Feature Permissions Checklist */}
+              {/* Granular Feature & Navigation Permissions Checklist */}
               <div className="pt-2">
-                <label className="block text-xs font-bold text-[#344054] mb-2">
-                  Feature Permissions
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    { key: 'send_due_all', label: 'Send Due to All' },
-                    { key: 'team_inbox', label: 'Team Inbox' },
-                    { key: 'ai_studio', label: 'AI Auto-Reply' },
-                    { key: 'meta_api', label: 'Meta WhatsApp API' },
-                    { key: 'crm_leads', label: 'CRM Leads' },
-                    { key: 'campaigns', label: 'Broadcasts' },
-                  ].map((perm) => (
-                    <label
-                      key={perm.key}
-                      className="flex items-center gap-2 p-2 rounded-lg bg-[#F9FAFB] border border-[#EAECF0] cursor-pointer text-xs hover:bg-[#F2F4F7] transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.permissions[perm.key]}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            permissions: { ...formData.permissions, [perm.key]: e.target.checked },
-                          })
-                        }
-                        className="rounded border-[#D0D5DD] text-[#10B981] focus:ring-[#10B981]"
-                      />
-                      <span className="text-[#344054] font-semibold">{perm.label}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <label className="block text-xs font-bold text-[#344054]">
+                      Sidebar Navigation & Feature Permissions
                     </label>
+                    <span className="text-[11px] text-[#667085]">
+                      Select which sidebar options and features are enabled for this tenant
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = {};
+                        (ALL_PERMISSION_KEYS || []).forEach((k) => (updated[k] = true));
+                        updated.send_due_all = true;
+                        updated.team_inbox = true;
+                        updated.teamInbox = true;
+                        updated.crm_leads = true;
+                        updated.ai_studio = true;
+                        updated.aiStudio = true;
+                        updated.meta_api = true;
+                        updated.metaKeys = true;
+                        updated.sendDueToAll = true;
+                        setFormData({ ...formData, permissions: updated });
+                      }}
+                      className="text-xs font-bold text-[#0284C7] hover:underline cursor-pointer"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = {};
+                        (ALL_PERMISSION_KEYS || []).forEach((k) => (updated[k] = false));
+                        updated.send_due_all = false;
+                        updated.team_inbox = false;
+                        updated.teamInbox = false;
+                        updated.crm_leads = false;
+                        updated.ai_studio = false;
+                        updated.aiStudio = false;
+                        updated.meta_api = false;
+                        updated.metaKeys = false;
+                        updated.sendDueToAll = false;
+                        setFormData({ ...formData, permissions: updated });
+                      }}
+                      className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                    >
+                      Deselect All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-60 overflow-y-auto space-y-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#EAECF0]">
+                  {NAVIGATION_MODULES.map((cat) => (
+                    <div key={cat.category} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[10px] font-bold font-mono text-[#667085] uppercase tracking-wider">
+                        <span>{cat.title || cat.category}</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {cat.items.map((it) => {
+                          const isChecked = formData.permissions[it.id] !== false;
+                          const Icon = getModuleIcon(it.id);
+
+                          return (
+                            <label
+                              key={it.id}
+                              className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer text-xs transition-colors ${
+                                isChecked
+                                  ? 'bg-white border-[#BAE6FD] text-[#0284C7] font-semibold shadow-2xs'
+                                  : 'bg-gray-50/70 border-[#EAECF0] text-gray-400'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const nextChecked = e.target.checked;
+                                  const updated = {
+                                    ...formData.permissions,
+                                    [it.id]: nextChecked,
+                                  };
+                                  if (it.id === 'inbox') {
+                                    updated.team_inbox = nextChecked;
+                                    updated.teamInbox = nextChecked;
+                                  } else if (it.id === 'leads') {
+                                    updated.crm_leads = nextChecked;
+                                  } else if (it.id === 'ai-assistants') {
+                                    updated.ai_studio = nextChecked;
+                                    updated.aiStudio = nextChecked;
+                                  } else if (it.id === 'meta-api') {
+                                    updated.meta_api = nextChecked;
+                                    updated.metaKeys = nextChecked;
+                                  } else if (it.id === 'send_due_all') {
+                                    updated.sendDueToAll = nextChecked;
+                                  }
+                                  setFormData({
+                                    ...formData,
+                                    permissions: updated,
+                                  });
+                                }}
+                                className="rounded border-[#D0D5DD] text-[#0284C7] focus:ring-[#0284C7]"
+                              />
+                              <Icon className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">{it.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

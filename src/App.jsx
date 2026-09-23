@@ -51,6 +51,8 @@ import { TeamMembersPage } from './components/settings/TeamMembersPage';
 const AppContent = () => {
   const {
     activeTab,
+    setActiveTab,
+    hasNavPermission,
     isAuthenticated,
     currentUser,
     clientViewMode,
@@ -93,6 +95,26 @@ const AppContent = () => {
   const isPaidActive = subscription?.status === 'active';
 
   const renderActiveView = () => {
+    if (!isSuperAdmin && !hasNavPermission(activeTab)) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center text-2xl font-bold mb-3 shadow-xs">
+            🔒
+          </div>
+          <h2 className="text-xl font-bold text-[#101828]">Feature Access Restricted</h2>
+          <p className="text-sm text-[#667085] max-w-md mt-1 mb-4">
+            Access to this module has been disabled for your organization workspace by the Super Administrator.
+          </p>
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className="px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return <DashboardOverview />;

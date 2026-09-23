@@ -82,6 +82,81 @@ export const SEED_TENANTS = [
   },
 ];
 
+export const NAVIGATION_MODULES = [
+  {
+    category: 'WORKSPACE',
+    title: 'Workspace',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', default: true },
+      { id: 'inbox', label: 'Inbox', default: true },
+      { id: 'leads', label: 'Leads', default: true },
+      { id: 'insights', label: 'Insights', default: true },
+      { id: 'files', label: 'Files', default: true },
+    ],
+  },
+  {
+    category: 'AI',
+    title: 'AI Engine & Concierge',
+    items: [
+      { id: 'ai-assistants', label: 'AI Assistants', default: true },
+      { id: 'tools', label: 'Tools', default: true },
+      { id: 'lead-studio', label: 'Lead Studio', default: true },
+      { id: 'segmentation', label: 'Segmentation', default: true },
+    ],
+  },
+  {
+    category: 'ENGAGEMENT',
+    title: 'Engagement & Campaigns',
+    items: [
+      { id: 'campaigns', label: 'Campaigns', default: true },
+      { id: 'drip-campaigns', label: 'Drip Campaigns', default: true },
+      { id: 'automations', label: 'Automations', default: true },
+      { id: 'templates', label: 'Templates', default: true },
+    ],
+  },
+  {
+    category: 'CHANNELS',
+    title: 'Communication Channels',
+    items: [
+      { id: 'channel-whatsapp', label: 'WhatsApp', default: true },
+      { id: 'channel-instagram', label: 'Instagram', default: true },
+      { id: 'channel-messenger', label: 'Messenger', default: true },
+      { id: 'channel-line', label: 'LINE', default: true },
+      { id: 'channels', label: 'All Channels', default: true },
+    ],
+  },
+  {
+    category: 'INTEGRATIONS',
+    title: 'Integrations & APIs',
+    items: [
+      { id: 'meta-api', label: 'Meta Cloud API', default: true },
+      { id: 'shopify', label: 'Shopify', default: true },
+      { id: 'zoho', label: 'Zoho', default: true },
+      { id: 'api', label: 'API', default: true },
+      { id: 'apps', label: 'Apps', default: true },
+    ],
+  },
+  {
+    category: 'ACCOUNT',
+    title: 'Account & Settings',
+    items: [
+      { id: 'team', label: 'Team Members', default: true },
+      { id: 'manage', label: 'Manage Settings', default: true },
+      { id: 'wallet', label: 'Wallet', default: true },
+      { id: 'plans', label: 'Plans & Pricing', default: true },
+    ],
+  },
+  {
+    category: 'SPECIAL',
+    title: 'Special Privileges',
+    items: [
+      { id: 'send_due_all', label: 'Send Due to All Contacts', default: true },
+    ],
+  },
+];
+
+export const ALL_PERMISSION_KEYS = NAVIGATION_MODULES.flatMap((cat) => cat.items.map((it) => it.id));
+
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
@@ -171,6 +246,67 @@ export const AppProvider = ({ children }) => {
       (t) => !t.isSuperAdmin && t.username?.toLowerCase() !== 'admin' && t.role !== 'Super Administrator'
     );
   }, [tenants]);
+
+  // Current logged in tenant record
+  const currentTenant = useMemo(() => {
+    if (!currentUser) return null;
+    return (tenants || []).find(
+      (t) =>
+        t.id === currentUser.id ||
+        t.workspaceId === currentUser.workspaceId ||
+        t.username?.toLowerCase() === currentUser.username?.toLowerCase()
+    );
+  }, [currentUser, tenants]);
+
+  // Permission check helper for sidebar options and tabs
+  const hasNavPermission = (navId, targetUserOrTenant = null) => {
+    // Master Super Admin always has full access to all features
+    if (isSuperAdmin) return true;
+
+    // Super Admin directory itself is reserved for Super Admin
+    if (navId === 'super-admin' || navId === 'tenants' || navId === 'tenant-management') {
+      return isSuperAdmin;
+    }
+
+    const activeTarget = targetUserOrTenant || currentTenant || currentUser;
+    if (!activeTarget) return true;
+
+    // If target is super admin, always true
+    if (
+      activeTarget.isSuperAdmin ||
+      activeTarget.username?.toLowerCase() === 'admin' ||
+      activeTarget.role === 'Super Administrator'
+    ) {
+      return true;
+    }
+
+    const perms = activeTarget.permissions || {};
+
+    // Backward compatibility aliases
+    if (navId === 'inbox') {
+      if (perms['inbox'] === false || perms['team_inbox'] === false || perms['teamInbox'] === false) return false;
+      return true;
+    }
+    if (navId === 'leads') {
+      if (perms['leads'] === false || perms['crm_leads'] === false) return false;
+      return true;
+    }
+    if (navId === 'ai-assistants') {
+      if (perms['ai-assistants'] === false || perms['ai_studio'] === false || perms['aiStudio'] === false) return false;
+      return true;
+    }
+    if (navId === 'meta-api') {
+      if (perms['meta-api'] === false || perms['meta_api'] === false || perms['metaKeys'] === false) return false;
+      return true;
+    }
+    if (navId === 'send_due_all') {
+      if (perms['send_due_all'] === false || perms['sendDueToAll'] === false) return false;
+      return true;
+    }
+
+    // Direct key check
+    return perms[navId] !== false;
+  };
 
   // Super Admin Client Profile Selector: 'all' (Global Feed) or a specific tenant's workspaceId
   const [selectedClientWorkspace, setSelectedClientWorkspace] = useState(() => {
@@ -1350,41 +1486,138 @@ export const AppProvider = ({ children }) => {
     );
     const tenantUser = targetTenant?.username?.toLowerCase() || cleanId;
 
-    setUserPermissions((prev) => {
-      const userPerms = prev[tenantUser] || { sendDueToAll: true, teamInbox: true, metaKeys: true };
-      const nextVal = value !== undefined ? value : !userPerms[permissionKey];
-      const updated = {
-        ...prev,
-        [tenantUser]: {
-          ...userPerms,
-          [permissionKey]: nextVal,
-        },
-      };
-      try {
-        localStorage.setItem('dhigrowth_user_permissions', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
+    let nextVal;
+    let targetUpdatedTenant = null;
 
     setTenants((prev) => {
       const updated = prev.map((t) => {
         if (t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId) {
           const currentP = t.permissions || {};
-          const nextVal = value !== undefined ? value : !currentP[permissionKey];
-          return {
+          const currentVal = currentP[permissionKey] !== false;
+          nextVal = value !== undefined ? value : !currentVal;
+          const updatedPerms = { ...currentP, [permissionKey]: nextVal };
+
+          // Alias syncing for backwards compatibility
+          if (permissionKey === 'inbox') {
+            updatedPerms.team_inbox = nextVal;
+            updatedPerms.teamInbox = nextVal;
+          } else if (permissionKey === 'leads') {
+            updatedPerms.crm_leads = nextVal;
+          } else if (permissionKey === 'ai-assistants') {
+            updatedPerms.ai_studio = nextVal;
+            updatedPerms.aiStudio = nextVal;
+          } else if (permissionKey === 'meta-api') {
+            updatedPerms.meta_api = nextVal;
+            updatedPerms.metaKeys = nextVal;
+          } else if (permissionKey === 'send_due_all') {
+            updatedPerms.sendDueToAll = nextVal;
+          }
+
+          targetUpdatedTenant = {
             ...t,
-            permissions: { ...currentP, [permissionKey]: nextVal },
+            permissions: updatedPerms,
           };
+          return targetUpdatedTenant;
         }
         return t;
       });
+
       try {
         localStorage.setItem('dhigrowth_tenants', JSON.stringify(updated));
       } catch {}
+
       return updated;
     });
 
+    // Also update currentUser session if it matches the edited tenant
+    if (currentUser?.id === identifier || currentUser?.username?.toLowerCase() === tenantUser) {
+      setCurrentUser((prev) => {
+        if (!prev) return prev;
+        const currentP = prev.permissions || {};
+        const updatedPerms = { ...currentP, [permissionKey]: nextVal };
+        const updatedUser = { ...prev, permissions: updatedPerms };
+        try {
+          localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
+        } catch {}
+        return updatedUser;
+      });
+    }
+
+    // Sync to backend in background
+    if (targetUpdatedTenant) {
+      try {
+        fetch(`${BACKEND_URL}/api/tenants`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(targetUpdatedTenant),
+        }).catch(() => {
+          fetch('http://localhost:4000/api/tenants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(targetUpdatedTenant),
+          }).catch(() => {});
+        });
+      } catch {}
+    }
+
     showToast(`Updated "${permissionKey}" for ${targetTenant?.name || tenantUser}`, 'success');
+  };
+
+  // Batch update all permissions for a tenant
+  const batchUpdateTenantPermissions = (identifier, newPermissions) => {
+    const cleanId = String(identifier || '').toLowerCase();
+    const targetTenant = tenants.find(
+      (t) => t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId
+    );
+    const tenantUser = targetTenant?.username?.toLowerCase() || cleanId;
+
+    let targetUpdatedTenant = null;
+
+    setTenants((prev) => {
+      const updated = prev.map((t) => {
+        if (t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId) {
+          const mergedPerms = { ...(t.permissions || {}), ...newPermissions };
+          targetUpdatedTenant = { ...t, permissions: mergedPerms };
+          return targetUpdatedTenant;
+        }
+        return t;
+      });
+
+      try {
+        localStorage.setItem('dhigrowth_tenants', JSON.stringify(updated));
+      } catch {}
+
+      return updated;
+    });
+
+    if (currentUser?.id === identifier || currentUser?.username?.toLowerCase() === tenantUser) {
+      setCurrentUser((prev) => {
+        if (!prev) return prev;
+        const updatedUser = { ...prev, permissions: { ...(prev.permissions || {}), ...newPermissions } };
+        try {
+          localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
+        } catch {}
+        return updatedUser;
+      });
+    }
+
+    if (targetUpdatedTenant) {
+      try {
+        fetch(`${BACKEND_URL}/api/tenants`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(targetUpdatedTenant),
+        }).catch(() => {
+          fetch('http://localhost:4000/api/tenants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(targetUpdatedTenant),
+          }).catch(() => {});
+        });
+      } catch {}
+    }
+
+    showToast(`Updated all permissions for ${targetTenant?.name || tenantUser}`, 'success');
   };
 
   // Multi-Tenant User Permissions State (Admin can manage permissions for other users)
@@ -2715,10 +2948,15 @@ export const AppProvider = ({ children }) => {
         clientTenants,
         getChatCountForWorkspace,
         tenants,
+        currentTenant,
         createTenantUser,
         deleteTenantUser,
         updateTenantUser,
         toggleTenantPermission,
+        batchUpdateTenantPermissions,
+        hasNavPermission,
+        NAVIGATION_MODULES,
+        ALL_PERMISSION_KEYS,
         currentWorkspaceId,
         urlTenantSlug,
         // SaaS Subscription & Checkout
