@@ -43,8 +43,11 @@ export const Sidebar = () => {
     totalUnreadCount,
     subscription,
     hasNavPermission,
+    impersonatedTenant,
+    isSuperAdmin,
   } = useApp();
 
+  const effectiveUser = impersonatedTenant || currentUser;
   const isPaidActive = subscription?.status === 'active';
   const GATED_FEATURE_IDS = [
     'ai-assistants',
@@ -176,13 +179,16 @@ export const Sidebar = () => {
   ];
 
   const visibleNavSections = NAV_SECTIONS.map((section) => {
-    if (section.title === 'SUPER ADMIN') return section;
+    if (section.title === 'SUPER ADMIN') {
+      if (impersonatedTenant || !isSuperAdmin) return null;
+      return section;
+    }
     const visibleItems = section.items.filter((item) => hasNavPermission(item.id));
     return {
       ...section,
       items: visibleItems,
     };
-  }).filter((section) => section.items.length > 0);
+  }).filter(Boolean).filter((section) => section.items.length > 0);
 
   return (
     <aside
@@ -253,22 +259,24 @@ export const Sidebar = () => {
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 ring-1 ring-[#EAECF0] uppercase shadow-2xs">
-                {(currentUser?.name || currentUser?.username || 'W').charAt(0)}
+                {(effectiveUser?.name || effectiveUser?.username || 'W').charAt(0)}
               </div>
               {!isSidebarCollapsed && (
                 <div className="min-w-0 text-left">
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-bold text-[#101828] truncate">
-                      {currentUser?.name || currentUser?.username || 'Dhigrowth'}
+                      {effectiveUser?.name || effectiveUser?.username || 'Dhigrowth'}
                     </span>
-                    {(currentUser?.isSuperAdmin || currentUser?.username?.toLowerCase() === 'admin') ? (
+                    {impersonatedTenant ? (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold font-mono">VIEWING AS</span>
+                    ) : (currentUser?.isSuperAdmin || currentUser?.username?.toLowerCase() === 'admin') ? (
                       <span className="text-xs" title="Super Administrator">👑</span>
                     ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 font-bold font-mono">ADMIN</span>
                     ) : null}
                   </div>
                   <div className="text-[10px] font-medium text-[#98A2B3] uppercase tracking-wider font-mono truncate max-w-[120px]">
-                    {currentUser?.organization || (currentUser?.name ? `${currentUser.name} Workspace` : 'WORKSPACE')}
+                    {effectiveUser?.organization || (effectiveUser?.name ? `${effectiveUser.name} Workspace` : 'WORKSPACE')}
                   </div>
                 </div>
               )}
@@ -279,6 +287,23 @@ export const Sidebar = () => {
             )}
           </div>
         </div>
+
+        {/* Empty Navigation State (When Super Admin has disabled all modules for this user) */}
+        {visibleNavSections.length === 0 && (
+          <div className={`my-6 text-center ${isSidebarCollapsed ? 'px-2' : 'px-4'}`}>
+            <div className="w-9 h-9 mx-auto rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center text-sm font-bold mb-2 shadow-2xs">
+              🔒
+            </div>
+            {!isSidebarCollapsed && (
+              <>
+                <div className="text-xs font-bold text-[#101828]">All Modules Disabled</div>
+                <p className="text-[11px] text-[#667085] mt-1 leading-relaxed">
+                  Feature access has been disabled in Super Admin settings.
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Navigation Sections */}
         <div className={`space-y-4 mt-1 pb-4 ${isSidebarCollapsed ? 'px-2' : 'px-3'}`}>

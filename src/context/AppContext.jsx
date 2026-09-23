@@ -298,53 +298,100 @@ export const AppProvider = ({ children }) => {
     );
   }, [currentUser, tenants]);
 
+  // Impersonation State: Super Admin viewing the app as a specific tenant to verify permissions
+  const [impersonatedTenant, setImpersonatedTenant] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const s = localStorage.getItem('dhigrowth_impersonated_tenant');
+        return s ? JSON.parse(s) : null;
+      }
+    } catch {}
+    return null;
+  });
+
+  const viewAsTenant = (tenant) => {
+    if (!tenant) return;
+    const latestTenant = (tenants || []).find(
+      (t) => t.id === tenant.id || t.username?.toLowerCase() === tenant.username?.toLowerCase()
+    ) || tenant;
+    setImpersonatedTenant(latestTenant);
+    try {
+      localStorage.setItem('dhigrowth_impersonated_tenant', JSON.stringify(latestTenant));
+    } catch {}
+    showToast(`Viewing workspace as ${latestTenant.name || latestTenant.username}`, 'info');
+  };
+
+  const exitViewAs = () => {
+    setImpersonatedTenant(null);
+    try {
+      localStorage.removeItem('dhigrowth_impersonated_tenant');
+    } catch {}
+    showToast('Returned to Super Administrator mode', 'success');
+  };
+
   // Permission check helper for sidebar options and tabs
   const hasNavPermission = (navId, targetUserOrTenant = null) => {
-    // Master Super Admin always has full access to all features
+    // Determine the active target whose permissions are being evaluated:
+    // 1. Explicit target passed as parameter
+    // 2. Currently impersonated tenant (Super Admin viewing as tenant)
+    // 3. Regular non-superadmin session (currentTenant or currentUser)
+    const activeTarget =
+      targetUserOrTenant ||
+      impersonatedTenant ||
+      (!isSuperAdmin ? (currentTenant || currentUser) : null);
+
+    if (activeTarget) {
+      // Platform Super Admin target always has full access
+      if (
+        activeTarget.isSuperAdmin ||
+        activeTarget.username?.toLowerCase() === 'admin' ||
+        activeTarget.role === 'Super Administrator'
+      ) {
+        return true;
+      }
+
+      // Super Admin tenant directory itself is strictly reserved for Super Admin
+      if (navId === 'super-admin' || navId === 'tenants' || navId === 'tenant-management') {
+        return false;
+      }
+
+      const perms = activeTarget.permissions || {};
+
+      // Backward compatibility aliases
+      if (navId === 'inbox') {
+        if (perms['inbox'] === false || perms['team_inbox'] === false || perms['teamInbox'] === false) return false;
+        return true;
+      }
+      if (navId === 'leads') {
+        if (perms['leads'] === false || perms['crm_leads'] === false) return false;
+        return true;
+      }
+      if (navId === 'ai-assistants') {
+        if (perms['ai-assistants'] === false || perms['ai_studio'] === false || perms['aiStudio'] === false) return false;
+        return true;
+      }
+      if (navId === 'meta-api') {
+        if (perms['meta-api'] === false || perms['meta_api'] === false || perms['metaKeys'] === false) return false;
+        return true;
+      }
+      if (navId === 'send_due_all') {
+        if (perms['send_due_all'] === false || perms['sendDueToAll'] === false) return false;
+        return true;
+      }
+
+      // Direct key check
+      return perms[navId] !== false;
+    }
+
+    // Default Super Admin session (not impersonating any tenant) has full access
     if (isSuperAdmin) return true;
 
-    // Super Admin directory itself is reserved for Super Admin
+    // Super Admin directory reserved for Super Admin
     if (navId === 'super-admin' || navId === 'tenants' || navId === 'tenant-management') {
-      return isSuperAdmin;
+      return false;
     }
 
-    const activeTarget = targetUserOrTenant || currentTenant || currentUser;
-    if (!activeTarget) return true;
-
-    // If target is super admin, always true
-    if (
-      activeTarget.isSuperAdmin ||
-      activeTarget.username?.toLowerCase() === 'admin' ||
-      activeTarget.role === 'Super Administrator'
-    ) {
-      return true;
-    }
-
-    const perms = activeTarget.permissions || {};
-
-    // Backward compatibility aliases
-    if (navId === 'inbox') {
-      if (perms['inbox'] === false || perms['team_inbox'] === false || perms['teamInbox'] === false) return false;
-      return true;
-    }
-    if (navId === 'leads') {
-      if (perms['leads'] === false || perms['crm_leads'] === false) return false;
-      return true;
-    }
-    if (navId === 'ai-assistants') {
-      if (perms['ai-assistants'] === false || perms['ai_studio'] === false || perms['aiStudio'] === false) return false;
-      return true;
-    }
-    if (navId === 'meta-api') {
-      if (perms['meta-api'] === false || perms['meta_api'] === false || perms['metaKeys'] === false) return false;
-      return true;
-    }
-    if (navId === 'send_due_all') {
-      if (perms['send_due_all'] === false || perms['sendDueToAll'] === false) return false;
-      return true;
-    }
-
-    // Direct key check
+    const perms = (currentTenant || currentUser)?.permissions || {};
     return perms[navId] !== false;
   };
 
@@ -1101,7 +1148,22 @@ export const AppProvider = ({ children }) => {
 
     let session;
     if (isValidTenant && matchedTenant) {
+      let savedPerms = null;
+      try {
+        const s =
+          localStorage.getItem(`dhigrowth_tenant_perms_${matchedTenant.username?.toLowerCase()}`) ||
+          localStorage.getItem(`dhigrowth_tenant_perms_${matchedTenant.id}`);
+        if (s) savedPerms = JSON.parse(s);
+      } catch {}
+
+      const effectivePerms = {
+        ...(matchedTenant.permissions || {}),
+        ...(savedPerms || {}),
+      };
+
       session = {
+        id: matchedTenant.id,
+        workspaceId: matchedTenant.workspaceId || matchedTenant.id,
         username: matchedTenant.username,
         name: matchedTenant.name,
         email: matchedTenant.email,
@@ -1110,13 +1172,14 @@ export const AppProvider = ({ children }) => {
         isAdmin: matchedTenant.isAdmin || false,
         isSuperAdmin: Boolean(matchedTenant.isSuperAdmin),
         organization: matchedTenant.companyName || `${matchedTenant.name}'s Workspace`,
-        workspaceId: matchedTenant.workspaceId,
         slug: matchedTenant.slug || matchedTenant.username,
+        permissions: effectivePerms,
         token: `tenant_${matchedTenant.username}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
         loginAt: new Date().toISOString(),
       };
     } else if (isValidCustom && savedCreds) {
       session = {
+        id: savedCreds.id || `custom_${cleanUser}`,
         username: savedCreds.username || cleanUser,
         name: savedCreds.name || savedCreds.username || 'User',
         email: savedCreds.email || `${cleanUser}@dhigrowth.com`,
@@ -1127,22 +1190,40 @@ export const AppProvider = ({ children }) => {
         organization: savedCreds.organization || 'WAPPPILOT',
         workspaceId: savedCreds.workspaceId || DEFAULT_WORKSPACE_ID,
         slug: savedCreds.slug || cleanUser,
+        permissions: savedCreds.permissions || {},
         token: `custom_${cleanUser}_${Date.now()}`,
         loginAt: new Date().toISOString(),
       };
     } else if (isSri || cleanUser === 'sri') {
+      const sriTenant =
+        (tenants || []).find((t) => t.username?.toLowerCase() === 'sri') || SEED_TENANTS[1];
+      let savedPerms = null;
+      try {
+        const s =
+          localStorage.getItem('dhigrowth_tenant_perms_sri') ||
+          localStorage.getItem('dhigrowth_tenant_perms_b0000000-0000-0000-0000-000000000001');
+        if (s) savedPerms = JSON.parse(s);
+      } catch {}
+
+      const effectivePerms = {
+        ...(sriTenant?.permissions || {}),
+        ...(savedPerms || {}),
+      };
+
       session = {
+        id: sriTenant?.id || 'b0000000-0000-0000-0000-000000000001',
+        workspaceId: sriTenant?.workspaceId || sriTenant?.id || 'b0000000-0000-0000-0000-000000000001',
         username: 'sri',
-        name: 'Sri',
-        email: 'sri@dhigrowth.com',
+        name: sriTenant?.name || 'Sri',
+        email: sriTenant?.email || 'sri@dhigrowth.com',
         role: 'DhiGrowth Admin',
         isExternalClient: false,
         isSuperAdmin: false,
         isAdmin: false, // DhiGrowth admin only, NOT super admin
         isDhigrowthAdmin: true,
-        organization: 'Dhigrowth CRM',
-        workspaceId: DEFAULT_WORKSPACE_ID,
+        organization: sriTenant?.companyName || 'Dhigrowth CRM',
         slug: 'sri',
+        permissions: effectivePerms,
         token: `dhi_sri_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
         loginAt: new Date().toISOString(),
       };
@@ -1611,6 +1692,22 @@ export const AppProvider = ({ children }) => {
       });
     }
 
+    // 3b. Update impersonatedTenant if active
+    if (
+      impersonatedTenant &&
+      (impersonatedTenant.id === identifier ||
+        impersonatedTenant.username?.toLowerCase() === tenantUser)
+    ) {
+      setImpersonatedTenant((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, permissions: updatedPerms };
+        try {
+          localStorage.setItem('dhigrowth_impersonated_tenant', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    }
+
     // 4. Sync immediately to backend
     try {
       fetch(`${BACKEND_URL}/api/tenants`, {
@@ -1671,11 +1768,27 @@ export const AppProvider = ({ children }) => {
     if (currentUser?.id === identifier || currentUser?.username?.toLowerCase() === tenantUser) {
       setCurrentUser((prev) => {
         if (!prev) return prev;
-        const updatedUser = { ...prev, permissions: { ...(prev.permissions || {}), ...newPermissions } };
+        const updatedUser = { ...prev, permissions: mergedPerms };
         try {
           localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
         } catch {}
         return updatedUser;
+      });
+    }
+
+    // 3b. Update impersonatedTenant if active
+    if (
+      impersonatedTenant &&
+      (impersonatedTenant.id === identifier ||
+        impersonatedTenant.username?.toLowerCase() === tenantUser)
+    ) {
+      setImpersonatedTenant((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, permissions: mergedPerms };
+        try {
+          localStorage.setItem('dhigrowth_impersonated_tenant', JSON.stringify(next));
+        } catch {}
+        return next;
       });
     }
 
@@ -3019,6 +3132,9 @@ export const AppProvider = ({ children }) => {
         isAiConfigLoading,
         // Multi-Tenant Super Admin state & handlers
         isSuperAdmin,
+        impersonatedTenant,
+        viewAsTenant,
+        exitViewAs,
         selectedClientWorkspace,
         setSelectedClientWorkspace,
         selectClientWorkspace,

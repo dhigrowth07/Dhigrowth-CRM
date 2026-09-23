@@ -43,6 +43,7 @@ export const MobileDrawer = () => {
     openCheckout,
     setIsUpgradeModalOpen,
     hasNavPermission,
+    impersonatedTenant,
   } = useApp();
 
   if (!isMobileMenuOpen) return null;
@@ -121,13 +122,16 @@ export const MobileDrawer = () => {
   ];
 
   const visibleMenuSections = menuSections.map((section) => {
-    if (section.title === 'SUPER ADMIN') return section;
+    if (section.title === 'SUPER ADMIN') {
+      if (impersonatedTenant || !isSuperAdmin) return null;
+      return section;
+    }
     const visibleItems = section.items.filter((item) => hasNavPermission(item.id));
     return {
       ...section,
       items: visibleItems,
     };
-  }).filter((section) => section.items.length > 0);
+  }).filter(Boolean).filter((section) => section.items.length > 0);
 
   const handleSelect = (id) => {
     setActiveTab(id);

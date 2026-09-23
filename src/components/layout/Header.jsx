@@ -17,7 +17,10 @@ export const Header = () => {
     logout,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
+    impersonatedTenant,
   } = useApp();
+
+  const effectiveUser = impersonatedTenant || currentUser;
 
   const getTitle = () => {
     switch (activeTab) {
@@ -131,12 +134,14 @@ export const Header = () => {
             className="flex items-center gap-2 bg-white hover:bg-[#F9FAFB] border border-[#EAECF0] px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer shadow-2xs"
           >
             <div className="w-6 h-6 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-[10px] font-bold">
-              {(currentUser?.name?.[0] || currentUser?.username?.[0] || 'S').toUpperCase()}
+              {(effectiveUser?.name?.[0] || effectiveUser?.username?.[0] || 'S').toUpperCase()}
             </div>
             <span className="text-xs font-semibold text-[#344054]">
-              {currentUser?.name || currentUser?.username || 'Sri'}
+              {effectiveUser?.name || effectiveUser?.username || 'Sri'}
             </span>
-            {isSuperAdmin ? (
+            {impersonatedTenant ? (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold font-mono">VIEWING AS</span>
+            ) : isSuperAdmin ? (
               <span className="text-xs" title="Super Administrator">👑</span>
             ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 font-bold font-mono">ADMIN</span>
@@ -148,13 +153,13 @@ export const Header = () => {
             <div className="absolute right-0 mt-2 w-60 bg-white border border-[#EAECF0] rounded-2xl shadow-xl p-2 z-50 space-y-1 animate-in fade-in">
               <div className="px-3 py-2 border-b border-[#F2F4F7]">
                 <div className="text-xs font-bold text-[#101828]">
-                  {currentUser?.organization || (currentUser?.name ? `${currentUser.name}'s Workspace` : "Workspace")}
+                  {effectiveUser?.organization || (effectiveUser?.name ? `${effectiveUser.name}'s Workspace` : "Workspace")}
                 </div>
                 <div className="text-[10px] text-[#667085] font-mono">
-                  {currentUser?.email || 'support@dhigrowth.com'}
+                  {effectiveUser?.email || 'support@dhigrowth.com'}
                 </div>
                 <div className="mt-1 inline-block px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#15803D] text-[9px] font-bold font-mono">
-                  {currentUser?.role || 'Workspace Owner'}
+                  {effectiveUser?.role || 'Workspace Owner'}
                 </div>
               </div>
 
@@ -211,7 +216,7 @@ export const Header = () => {
           className="w-8 h-8 rounded-full bg-[#0284C7] hover:bg-[#0369A1] text-white flex items-center justify-center text-xs font-bold shadow-xs cursor-pointer transition-colors"
           title="Account Menu"
         >
-          {(currentUser?.name?.[0] || currentUser?.username?.[0] || 'S').toUpperCase()}
+          {(effectiveUser?.name?.[0] || effectiveUser?.username?.[0] || 'S').toUpperCase()}
         </button>
       </div>
     </header>

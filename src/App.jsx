@@ -59,6 +59,8 @@ const AppContent = () => {
     subscription,
     isOnboardingWizardOpen,
     setIsOnboardingWizardOpen,
+    impersonatedTenant,
+    exitViewAs,
   } = useApp();
 
   if (!isAuthenticated) {
@@ -83,7 +85,7 @@ const AppContent = () => {
   if (shouldShowClientPortal) {
     return (
       <div className="flex flex-col min-h-screen">
-        {isSuperAdmin && <AdminTopBar />}
+        {(isSuperAdmin || Boolean(impersonatedTenant)) && <AdminTopBar />}
         <ClientPortal />
         <Toast />
         <BroadcastDueModal />
@@ -95,7 +97,8 @@ const AppContent = () => {
   const isPaidActive = subscription?.status === 'active';
 
   const renderActiveView = () => {
-    if (!isSuperAdmin && !hasNavPermission(activeTab)) {
+    const isRestricted = (Boolean(impersonatedTenant) || !isSuperAdmin) && !hasNavPermission(activeTab);
+    if (isRestricted) {
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
           <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center text-2xl font-bold mb-3 shadow-xs">
@@ -105,12 +108,21 @@ const AppContent = () => {
           <p className="text-sm text-[#667085] max-w-md mt-1 mb-4">
             Access to this module has been disabled for your organization workspace by the Super Administrator.
           </p>
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className="px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
-          >
-            Return to Dashboard
-          </button>
+          {impersonatedTenant ? (
+            <button
+              onClick={exitViewAs}
+              className="px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+            >
+              Exit View As (Return to Super Admin)
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+            >
+              Return to Dashboard
+            </button>
+          )}
         </div>
       );
     }
@@ -367,7 +379,7 @@ const AppContent = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#F8F9FC] text-[#101828] font-sans antialiased">
-      {isSuperAdmin && <AdminTopBar />}
+      {(isSuperAdmin || Boolean(impersonatedTenant)) && <AdminTopBar />}
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Sidebar navigation */}

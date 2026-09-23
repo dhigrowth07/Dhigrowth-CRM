@@ -18,6 +18,7 @@ export const MobileBottomNav = () => {
     totalUnreadCount,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
+    hasNavPermission,
   } = useApp();
 
   const navItems = [
@@ -51,14 +52,19 @@ export const MobileBottomNav = () => {
     },
   ];
 
+  const visibleNavItems = navItems.filter((item) => item.isMenuToggle || hasNavPermission(item.id));
+
   return (
     <nav
       aria-label="Mobile Bottom Thumb Navigation"
       className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAECF0] md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] select-none"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="grid grid-cols-5 h-16 items-center px-1">
-        {navItems.map((item) => {
+      <div
+        className="grid h-16 items-center px-1"
+        style={{ gridTemplateColumns: `repeat(${Math.max(1, visibleNavItems.length)}, minmax(0, 1fr))` }}
+      >
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.isMenuToggle ? isMobileMenuOpen : activeTab === item.id;
 
