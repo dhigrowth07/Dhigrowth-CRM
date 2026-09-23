@@ -355,6 +355,11 @@ export const AppProvider = ({ children }) => {
         return false;
       }
 
+      // Essential core modules: Manage Settings, Wallet, Plans & Pricing are ALWAYS enabled for all users
+      if (navId === 'manage' || navId === 'wallet' || navId === 'plans') {
+        return true;
+      }
+
       const perms = activeTarget.permissions || {};
 
       // Backward compatibility aliases
@@ -394,6 +399,11 @@ export const AppProvider = ({ children }) => {
     // Super Admin directory reserved for Super Admin
     if (navId === 'super-admin' || navId === 'tenants' || navId === 'tenant-management') {
       return false;
+    }
+
+    // Essential core modules: Manage Settings, Wallet, Plans & Pricing are ALWAYS enabled for all users
+    if (navId === 'manage' || navId === 'wallet' || navId === 'plans') {
+      return true;
     }
 
     const perms = (currentTenant || currentUser)?.permissions || {};
@@ -1705,6 +1715,12 @@ export const AppProvider = ({ children }) => {
 
   // Toggle Tenant Permission
   const toggleTenantPermission = (identifier, permissionKey, value) => {
+    // Manage Settings, Wallet, and Plans & Pricing are essential core modules and always remain enabled
+    if (permissionKey === 'manage' || permissionKey === 'wallet' || permissionKey === 'plans') {
+      showToast('Manage Settings, Wallet, and Plans & Pricing are core modules and remain always enabled.', 'info');
+      return;
+    }
+
     const cleanId = String(identifier || '').toLowerCase();
     const targetTenant = (tenants || []).find(
       (t) => t.id === identifier || t.workspaceId === identifier || t.username?.toLowerCase() === cleanId
@@ -1714,7 +1730,7 @@ export const AppProvider = ({ children }) => {
     const currentVal = currentP[permissionKey] !== false;
     const nextVal = value !== undefined ? value : !currentVal;
 
-    const updatedPerms = { ...currentP, [permissionKey]: nextVal };
+    const updatedPerms = { ...currentP, [permissionKey]: nextVal, manage: true, wallet: true, plans: true };
 
     // Alias syncing for backwards compatibility
     if (permissionKey === 'inbox') {
@@ -1833,7 +1849,7 @@ export const AppProvider = ({ children }) => {
     );
     const tenantUser = targetTenant?.username?.toLowerCase() || cleanId;
     const currentP = targetTenant?.permissions || {};
-    const mergedPerms = { ...currentP, ...newPermissions };
+    const mergedPerms = { ...currentP, ...newPermissions, manage: true, wallet: true, plans: true };
 
     const targetUpdatedTenant = targetTenant
       ? { ...targetTenant, permissions: mergedPerms }

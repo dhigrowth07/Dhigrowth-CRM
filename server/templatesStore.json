@@ -2,86 +2,6 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
-        "id": "tpl_ai_discovery",
-        "name": "ai_it_discovery",
-        "displayName": "AI & IT Discovery",
-        "badge": "Recommended",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "DhiGrowth IT Services",
-        "body_text": "Hello {{name}}! 👋 Welcome to DhiGrowth IT Services.\n\nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n\nTap below to connect with our team! 🚀",
-        "footer_text": "hi, hello, discovery, app, ai, crm, start",
-        "buttons": [
-          { "type": "QUICK_REPLY", "text": "Yes, I'm interested" },
-          { "type": "QUICK_REPLY", "text": "Tell me more" }
-        ],
-        "variables": ["name"],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:30:00.000Z"
-      },
-      {
-        "id": "tpl_free_call",
-        "name": "free_15_min_call",
-        "displayName": "Free 15-Min Call",
-        "badge": "Popular",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "Special Tech Invitation",
-        "body_text": "Hi {{name}}! 🚀 We're offering complimentary 15-minute technology consultation sessions this week for ambitious founders.\n\nWould you like us to schedule a quick call with our lead tech architect?",
-        "footer_text": "call, meeting, consultation, free, appointment, schedule",
-        "buttons": [
-          { "type": "QUICK_REPLY", "text": "Yes, Schedule Call" },
-          { "type": "QUICK_REPLY", "text": "Share Times" }
-        ],
-        "variables": ["name"],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:30:00.000Z"
-      },
-      {
-        "id": "tpl_crm_demo",
-        "name": "whatsapp_crm_demo",
-        "displayName": "WhatsApp CRM Demo",
-        "badge": "High Conversion",
-        "category": "UTILITY",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "WhatsApp Automation",
-        "body_text": "Hello {{name}}! Want to see a live 2-minute demo of 24/7 AI lead capture, broadcast marketing, and automated team inboxes on WhatsApp?",
-        "footer_text": "crm, demo, automation, bot, live, features",
-        "buttons": [
-          { "type": "QUICK_REPLY", "text": "Yes, Send Demo" },
-          { "type": "QUICK_REPLY", "text": "Chat with Agent" }
-        ],
-        "variables": ["name"],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:30:00.000Z"
-      },
-      {
-        "id": "tpl_custom_template",
-        "name": "custom_template",
-        "displayName": "Custom Template",
-        "badge": "Freeform",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "DhiGrowth IT Services",
-        "body_text": "Hi {{name}}! We would love to share our latest updates with you. Would you like more details?",
-        "footer_text": "updates, details, info, more, custom",
-        "buttons": [
-          { "type": "QUICK_REPLY", "text": "Yes, please" },
-          { "type": "QUICK_REPLY", "text": "Not right now" }
-        ],
-        "variables": ["name"],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:30:00.000Z"
-      },
-      {
         "id": "2950860201937776",
         "name": "new_client_welcome",
         "category": "MARKETING",
@@ -103,7 +23,7 @@
           "var_3"
         ],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:11:59.947Z"
+        "updatedAt": "2026-09-23T12:05:19.531Z"
       },
       {
         "id": "2074071630135449",
@@ -121,7 +41,7 @@
           "var_2"
         ],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:11:59.948Z"
+        "updatedAt": "2026-09-23T12:05:19.531Z"
       },
       {
         "id": "1744607210078710",
@@ -136,7 +56,91 @@
         "buttons": [],
         "variables": [],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:11:59.948Z"
+        "updatedAt": "2026-09-23T12:05:19.531Z"
+      },
+      {
+        "id": "tpl_free_call",
+        "name": "free_15_min_call",
+        "displayName": "Free 15-Min Call",
+        "badge": "Popular",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "Special Tech Invitation",
+        "body_text": "Hi {{name}}! 🚀 We're offering complimentary 15-minute technology consultation sessions this week for ambitious founders.\n\nWould you like us to schedule a quick call with our lead tech architect?",
+        "footer_text": "call, meeting, consultation, free, appointment, schedule",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Yes, Schedule Call"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Share Times"
+          }
+        ],
+        "variables": [
+          "name"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:30:00.000Z"
+      },
+      {
+        "id": "tpl_crm_demo",
+        "name": "whatsapp_crm_demo",
+        "displayName": "WhatsApp CRM Demo",
+        "badge": "High Conversion",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "WhatsApp Automation",
+        "body_text": "Hello {{name}}! Want to see a live 2-minute demo of 24/7 AI lead capture, broadcast marketing, and automated team inboxes on WhatsApp?",
+        "footer_text": "crm, demo, automation, bot, live, features",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Yes, Send Demo"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Chat with Agent"
+          }
+        ],
+        "variables": [
+          "name"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:30:00.000Z"
+      },
+      {
+        "id": "tpl_custom_template",
+        "name": "custom_template",
+        "displayName": "Custom Template",
+        "badge": "Freeform",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "DhiGrowth IT Services",
+        "body_text": "Hi {{name}}! We would love to share our latest updates with you. Would you like more details?",
+        "footer_text": "updates, details, info, more, custom",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Yes, please"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Not right now"
+          }
+        ],
+        "variables": [
+          "name"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T10:30:00.000Z"
       },
       {
         "id": "tpl_hi_4105083089797368",
@@ -328,6 +332,8 @@
   },
   "deletedTemplates": [
     "flash_sale_promo_2026",
-    "tpl_summer_offer"
+    "tpl_summer_offer",
+    "ai_it_discovery",
+    "tpl_ai_discovery"
   ]
 }

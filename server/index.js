@@ -1305,6 +1305,9 @@ app.post('/api/tenants/permissions', (req, res) => {
       list[existingIndex].permissions = {
         ...(list[existingIndex].permissions || {}),
         ...permissions,
+        manage: true,
+        wallet: true,
+        plans: true,
       };
       saveTenants(list);
       return res.json({ success: true, tenant: list[existingIndex] });

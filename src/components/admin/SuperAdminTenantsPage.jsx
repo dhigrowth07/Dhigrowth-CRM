@@ -136,6 +136,10 @@ export const SuperAdminTenantsPage = () => {
 
   const isTenantFeatureEnabled = (tenant, featureId) => {
     if (tenant.username === 'admin' || tenant.isSuperAdmin) return true;
+    // Core essential modules: always enabled for every user
+    if (featureId === 'manage' || featureId === 'wallet' || featureId === 'plans') {
+      return true;
+    }
     const perms = tenant.permissions || {};
     if (featureId === 'inbox') {
       return perms['inbox'] !== false && perms['team_inbox'] !== false && perms['teamInbox'] !== false;
@@ -175,6 +179,11 @@ export const SuperAdminTenantsPage = () => {
     patch.sendDueToAll = shouldEnable;
     patch.send_due_all = shouldEnable;
 
+    // Core essential modules: Manage Settings, Wallet, Plans & Pricing are always enabled
+    patch.manage = true;
+    patch.wallet = true;
+    patch.plans = true;
+
     batchUpdateTenantPermissions(tenantId, patch);
   };
 
@@ -196,6 +205,11 @@ export const SuperAdminTenantsPage = () => {
         patch.metaKeys = shouldEnable;
       }
       if (it.id === 'send_due_all') patch.sendDueToAll = shouldEnable;
+
+      // Keep core essential modules always enabled
+      if (it.id === 'manage' || it.id === 'wallet' || it.id === 'plans') {
+        patch[it.id] = true;
+      }
     });
     batchUpdateTenantPermissions(tenantId, patch);
   };
