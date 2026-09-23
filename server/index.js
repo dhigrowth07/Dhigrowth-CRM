@@ -1515,13 +1515,16 @@ app.post('/api/meta/templates/create', async (req, res) => {
 app.delete('/api/meta/templates/:id', async (req, res) => {
   try {
     const templateId = req.params.id;
-    const { workspaceId, name } = req.body || {};
+    const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
+    const name = req.body?.name || req.query.name;
     const result = await deleteMetaTemplate({
-      workspaceId: workspaceId || 'b0000000-0000-0000-0000-000000000001',
+      workspaceId,
       name,
       templateId,
+      wabaId: req.body?.wabaId,
+      accessToken: req.body?.accessToken,
     });
-    res.json(result);
+    res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -1920,24 +1923,6 @@ app.get('/api/meta/templates/:id/status', async (req, res) => {
       accessToken: req.query.accessToken,
     });
     res.json(result);
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.delete('/api/meta/templates/:id', async (req, res) => {
-  try {
-    const templateId = req.params.id;
-    const workspaceId = req.body?.workspaceId || req.query.workspaceId || process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001';
-    const name = req.body?.name || req.query.name;
-    const result = await deleteMetaTemplate({
-      workspaceId,
-      templateId,
-      name,
-      wabaId: req.body?.wabaId,
-      accessToken: req.body?.accessToken,
-    });
-    res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

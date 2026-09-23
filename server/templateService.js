@@ -118,19 +118,24 @@ export const STARTER_TEMPLATES = [
 
 let templatesStore = {
   workspaces: {},
+  deletedTemplates: [],
 };
 
 export function initTemplateStore() {
   try {
     if (fs.existsSync(TEMPLATES_STORE_FILE)) {
       const data = JSON.parse(fs.readFileSync(TEMPLATES_STORE_FILE, 'utf-8'));
-      templatesStore = { workspaces: data.workspaces || {} };
-      console.log(`📋 [TemplateService] Loaded templates for ${Object.keys(templatesStore.workspaces).length} workspaces`);
+      templatesStore = {
+        workspaces: data.workspaces || {},
+        deletedTemplates: Array.isArray(data.deletedTemplates) ? data.deletedTemplates : [],
+      };
+      console.log(`📋 [TemplateService] Loaded templates for ${Object.keys(templatesStore.workspaces).length} workspaces (and ${templatesStore.deletedTemplates.length} deleted tracking items)`);
       return;
     }
 
     // Initialize default workspace with starter templates
     templatesStore.workspaces['b0000000-0000-0000-0000-000000000001'] = [...STARTER_TEMPLATES];
+    templatesStore.deletedTemplates = [];
     saveTemplatesToDisk();
     console.log('📋 [TemplateService] Seeded default Meta templates store');
   } catch (err) {
@@ -151,7 +156,11 @@ function saveTemplatesToDisk() {
  */
 export function getWorkspaceTemplates(workspaceId = 'b0000000-0000-0000-0000-000000000001') {
   if (!Array.isArray(templatesStore.workspaces[workspaceId])) {
-    templatesStore.workspaces[workspaceId] = workspaceId === 'b0000000-0000-0000-0000-000000000001' ? [...STARTER_TEMPLATES] : [];
+    const deleted = templatesStore.deletedTemplates || [];
+    const starters = STARTER_TEMPLATES.filter(
+      (t) => !deleted.includes(t.name) && !deleted.includes(String(t.id))
+    );
+    templatesStore.workspaces[workspaceId] = workspaceId === 'b0000000-0000-0000-0000-000000000001' ? [...starters] : [];
     saveTemplatesToDisk();
   }
   return templatesStore.workspaces[workspaceId];
@@ -249,11 +258,19 @@ export async function syncMetaTemplates({ workspaceId, wabaId, accessToken }) {
       };
     });
 
-    // Merge metaTemplates with existing ones, updating existing matching names
-    const merged = [...metaTemplates];
+    // Filter out permanently deleted templates
+    const deletedList = templatesStore.deletedTemplates || [];
+    const activeMeta = metaTemplates.filter(
+      (m) => !deletedList.includes(m.name) && !deletedList.includes(String(m.id))
+    );
+
+    // Merge activeMeta with existing ones, updating existing matching names
+    const merged = [...activeMeta];
     currentLocal.forEach((loc) => {
-      if (!merged.some((m) => m.name === loc.name)) {
-        merged.push(loc);
+      if (!deletedList.includes(loc.name) && !deletedList.includes(String(loc.id))) {
+        if (!merged.some((m) => m.name === loc.name)) {
+          merged.push(loc);
+        }
       }
     });
 
@@ -428,14 +445,37 @@ export async function createMetaTemplate({
  * Delete a template
  */
 export async function deleteMetaTemplate({ workspaceId, name, templateId, wabaId, accessToken }) {
-  if (!Array.isArray(templatesStore.workspaces[workspaceId])) {
-    templatesStore.workspaces[workspaceId] = [];
+  if (!templatesStore.deletedTemplates) {
+    templatesStore.deletedTemplates = [];
+  }
+  if (name && !templatesStore.deletedTemplates.includes(name)) {
+    templatesStore.deletedTemplates.push(name);
+  }
+  if (templateId && !templatesStore.deletedTemplates.includes(String(templateId))) {
+    templatesStore.deletedTemplates.push(String(templateId));
   }
 
-  const initialLen = templatesStore.workspaces[workspaceId].length;
-  templatesStore.workspaces[workspaceId] = templatesStore.workspaces[workspaceId].filter(
-    (t) => t.id !== templateId && t.name !== name
-  );
+  let totalRemoved = 0;
+  // Delete from requested workspace
+  if (workspaceId && Array.isArray(templatesStore.workspaces[workspaceId])) {
+    const before = templatesStore.workspaces[workspaceId].length;
+    templatesStore.workspaces[workspaceId] = templatesStore.workspaces[workspaceId].filter(
+      (t) => String(t.id) !== String(templateId) && (!name || t.name !== name)
+    );
+    totalRemoved += (before - templatesStore.workspaces[workspaceId].length);
+  }
+
+  // Also purge from ALL workspaces in store
+  for (const wsId in templatesStore.workspaces) {
+    if (wsId !== workspaceId && Array.isArray(templatesStore.workspaces[wsId])) {
+      const before = templatesStore.workspaces[wsId].length;
+      templatesStore.workspaces[wsId] = templatesStore.workspaces[wsId].filter(
+        (t) => String(t.id) !== String(templateId) && (!name || t.name !== name)
+      );
+      totalRemoved += (before - templatesStore.workspaces[wsId].length);
+    }
+  }
+
   saveTemplatesToDisk();
 
   // Try deleting on Meta Graph API
@@ -453,7 +493,7 @@ export async function deleteMetaTemplate({ workspaceId, name, templateId, wabaId
     }
   }
 
-  return { success: true, removedCount: initialLen - templatesStore.workspaces[workspaceId].length };
+  return { success: true, removedCount: totalRemoved };
 }
 
 /**

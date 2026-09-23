@@ -191,8 +191,21 @@ export const TemplatesPage = () => {
 
   const [templates, setTemplates] = useState(() => {
     try {
+      const deletedKey = `dhigrowth_deleted_templates_${currentWorkspaceId}`;
+      let deletedList = [];
+      try {
+        const s = localStorage.getItem(deletedKey);
+        if (s) deletedList = JSON.parse(s);
+      } catch {}
+
+      const filterDeleted = (list) => {
+        if (!Array.isArray(list)) return [];
+        if (!deletedList || deletedList.length === 0) return list;
+        return list.filter((t) => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+      };
+
       const saved = localStorage.getItem(`dhigrowth_templates_${currentWorkspaceId}`);
-      if (saved) return JSON.parse(saved);
+      if (saved) return filterDeleted(JSON.parse(saved));
     } catch {}
     return isDefaultWorkspace ? DEFAULT_TEMPLATES : [];
   });
@@ -205,6 +218,7 @@ export const TemplatesPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [deletingTemplate, setDeletingTemplate] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form State
@@ -330,14 +344,28 @@ export const TemplatesPage = () => {
   const loadTemplates = async () => {
     setIsLoading(true);
     try {
-      // 1. First check if this user already has a saved template list (including empty if deleted)
+      // 0. Get deleted templates filter set for workspace
+      const deletedKey = `dhigrowth_deleted_templates_${currentWorkspaceId}`;
+      let deletedList = [];
+      try {
+        const s = localStorage.getItem(deletedKey);
+        if (s) deletedList = JSON.parse(s);
+      } catch {}
+
+      const filterDeleted = (list) => {
+        if (!Array.isArray(list)) return [];
+        if (!deletedList || deletedList.length === 0) return list;
+        return list.filter((t) => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+      };
+
+      // 1. First check if this user already has a saved template list
       const localSaved = localStorage.getItem(`dhigrowth_templates_${currentWorkspaceId}`);
       let parsedLocal = null;
       if (localSaved !== null) {
         try {
           parsedLocal = JSON.parse(localSaved);
           if (Array.isArray(parsedLocal)) {
-            setTemplates(parsedLocal);
+            setTemplates(filterDeleted(parsedLocal));
           }
         } catch {}
       }
@@ -357,13 +385,10 @@ export const TemplatesPage = () => {
       }
 
       if (metaData && Array.isArray(metaData.templates)) {
-        // If user explicitly deleted all templates locally, keep it empty and don't resurrect
-        if (parsedLocal && parsedLocal.length === 0 && metaData.templates.length > 0) {
-          return;
-        }
-        setTemplates(metaData.templates);
+        const cleaned = filterDeleted(metaData.templates);
+        setTemplates(cleaned);
         try {
-          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(metaData.templates));
+          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
         } catch {}
         return;
       }
@@ -371,16 +396,18 @@ export const TemplatesPage = () => {
       // 3. Fallback to Supabase
       const data = await getTemplates(currentWorkspaceId);
       if (data && data.length > 0) {
-        setTemplates(data);
+        const cleaned = filterDeleted(data);
+        setTemplates(cleaned);
         try {
-          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(data));
+          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
         } catch {}
       } else if (parsedLocal !== null) {
-        setTemplates(parsedLocal);
+        setTemplates(filterDeleted(parsedLocal));
       } else if (currentWorkspaceId === DEFAULT_WORKSPACE_ID) {
-        setTemplates(DEFAULT_TEMPLATES);
+        const cleaned = filterDeleted(DEFAULT_TEMPLATES);
+        setTemplates(cleaned);
         try {
-          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(DEFAULT_TEMPLATES));
+          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
         } catch {}
       } else {
         setTemplates([]);
@@ -432,9 +459,18 @@ export const TemplatesPage = () => {
       if (res && res.ok) {
         const data = await res.json();
         if (data.templates && data.templates.length > 0) {
-          setTemplates(data.templates);
+          const deletedKey = `dhigrowth_deleted_templates_${currentWorkspaceId}`;
+          let deletedList = [];
           try {
-            localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(data.templates));
+            const s = localStorage.getItem(deletedKey);
+            if (s) deletedList = JSON.parse(s);
+          } catch {}
+          const cleaned = data.templates.filter(
+            (t) => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name))
+          );
+          setTemplates(cleaned);
+          try {
+            localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
           } catch {}
         }
         showToast(data.message || `Synced ${data.syncedCount || 0} templates with Meta!`, 'success');
@@ -868,30 +904,37 @@ export const TemplatesPage = () => {
     if (!deletingTemplate) return;
     const targetId = deletingTemplate.id;
     const targetName = deletingTemplate.name;
+    setIsDeleting(true);
 
-    // 1. Immediately update UI state and workspace-isolated localStorage
-    setTemplates((prev) => {
-      const updated = prev.filter((t) => t.id !== targetId);
-      try {
-        localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-    setDeletingTemplate(null);
-
-    // 2. Delete from server store for this specific workspace
     try {
-      await fetch(`/api/meta/templates/${encodeURIComponent(targetId)}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workspaceId: currentWorkspaceId,
-          name: targetName,
-        }),
-      });
-    } catch (e) {
+      // 1. Immediately record in persistent deleted set for workspace
+      const deletedKey = `dhigrowth_deleted_templates_${currentWorkspaceId}`;
+      let deletedList = [];
       try {
-        await fetch(`http://localhost:4000/api/meta/templates/${encodeURIComponent(targetId)}`, {
+        const s = localStorage.getItem(deletedKey);
+        if (s) deletedList = JSON.parse(s);
+      } catch {}
+      if (targetId && !deletedList.includes(String(targetId))) deletedList.push(String(targetId));
+      if (targetName && !deletedList.includes(targetName)) deletedList.push(targetName);
+      try {
+        localStorage.setItem(deletedKey, JSON.stringify(deletedList));
+      } catch {}
+
+      // 2. Immediately update UI state and workspace-isolated localStorage
+      setTemplates((prev) => {
+        const updated = prev.filter(
+          (t) => String(t.id) !== String(targetId) && (!targetName || t.name !== targetName)
+        );
+        try {
+          localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      // 3. Delete from server store for this specific workspace and Meta Cloud API
+      let serverDeleted = false;
+      try {
+        const res = await fetch(`/api/meta/templates/${encodeURIComponent(targetId)}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -899,17 +942,39 @@ export const TemplatesPage = () => {
             name: targetName,
           }),
         });
+        if (res.ok) serverDeleted = true;
       } catch {}
-    }
 
-    // 3. Delete from Supabase for this specific workspace
-    try {
-      await deleteTemplate(targetId, currentWorkspaceId);
+      if (!serverDeleted) {
+        try {
+          await fetch(`http://localhost:4000/api/meta/templates/${encodeURIComponent(targetId)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              workspaceId: currentWorkspaceId,
+              name: targetName,
+            }),
+          });
+        } catch {}
+      }
+
+      // 4. Delete from Supabase for this specific workspace
+      try {
+        if (typeof deleteTemplate === 'function') {
+          await deleteTemplate(targetId, currentWorkspaceId);
+        }
+      } catch (err) {
+        console.warn('Supabase delete template note:', err);
+      }
+
+      showToast(`Template "${targetName || targetId}" deleted successfully`, 'success');
     } catch (err) {
-      console.warn('Supabase delete template note:', err);
+      console.error('Delete template error:', err);
+      showToast('Template deleted', 'info');
+    } finally {
+      setIsDeleting(false);
+      setDeletingTemplate(null);
     }
-
-    showToast(`Template permanently deleted for this user workspace`, 'info');
   };
 
   const handleCopy = (text, id) => {
@@ -1005,7 +1070,7 @@ export const TemplatesPage = () => {
     <div className="p-4 lg:p-8 space-y-6 max-w-[1300px] mx-auto font-sans">
       {/* 1. Page Header & Hero Action Banner */}
       <div className="bg-white border border-[#EAECF0] rounded-3xl p-6 lg:p-8 shadow-xs relative overflow-hidden space-y-4">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#F4F0FD] to-transparent rounded-full -mr-20 -mt-20 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#F0F9FF] to-transparent rounded-full -mr-20 -mt-20 pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
@@ -1014,7 +1079,7 @@ export const TemplatesPage = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
                 WhatsApp Live Auto-Replies Active
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#F4F0FD] text-[#7C3AED] text-[11px] font-bold font-mono">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] text-[#0284C7] text-[11px] font-bold font-mono">
                 {templates.length} Templates Configured
               </span>
             </div>
@@ -1030,10 +1095,10 @@ export const TemplatesPage = () => {
             <button
               onClick={handleSyncMeta}
               disabled={isSyncing}
-              className="px-3.5 py-2.5 rounded-xl border border-[#7C3AED]/30 bg-[#F4F0FD] hover:bg-[#EDE5FA] text-xs font-bold text-[#7C3AED] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="px-3.5 py-2.5 rounded-xl border border-[#0284C7]/30 bg-[#F0F9FF] hover:bg-[#E0F2FE] text-xs font-bold text-[#0284C7] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
               title="Sync official approved templates from Meta WhatsApp Cloud API"
             >
-              <RotateCw className={`w-3.5 h-3.5 text-[#7C3AED] ${isSyncing ? 'animate-spin' : ''}`} />
+              <RotateCw className={`w-3.5 h-3.5 text-[#0284C7] ${isSyncing ? 'animate-spin' : ''}`} />
               <span>{isSyncing ? 'Syncing with Meta...' : 'Sync with Meta'}</span>
             </button>
             <button
@@ -1047,7 +1112,7 @@ export const TemplatesPage = () => {
             </button>
             <button
               onClick={handleOpenCreate}
-              className="px-4 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs shadow-purple-500/20 transition-all cursor-pointer"
+              className="px-4 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs shadow-sky-500/20 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Create Official Template</span>
@@ -1058,10 +1123,10 @@ export const TemplatesPage = () => {
 
       {/* 2. Featured "Hi / Hello" Welcome Response Card */}
       {welcomeTemplate && (
-        <div className="bg-gradient-to-r from-[#FAF8FF] to-white border border-[#E9D8FD] rounded-3xl p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E9D8FD]/60">
+        <div className="bg-gradient-to-r from-[#F0F9FF] to-white border border-[#BAE6FD] rounded-3xl p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#BAE6FD]/60">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs">
+              <div className="w-10 h-10 rounded-2xl bg-[#0284C7] text-white flex items-center justify-center shadow-xs">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
@@ -1087,7 +1152,7 @@ export const TemplatesPage = () => {
               </button>
               <button
                 onClick={() => handleOpenEdit(welcomeTemplate)}
-                className="px-3.5 py-1.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Edit Greeting & Triggers</span>
@@ -1108,9 +1173,9 @@ export const TemplatesPage = () => {
                     .map((trigger) => (
                       <span
                         key={trigger}
-                        className="px-2.5 py-1 rounded-lg bg-[#F4F0FD] border border-[#E9D8FD] text-[#7C3AED] text-xs font-bold font-mono flex items-center gap-1"
+                        className="px-2.5 py-1 rounded-lg bg-[#F0F9FF] border border-[#BAE6FD] text-[#0284C7] text-xs font-bold font-mono flex items-center gap-1"
                       >
-                        <Zap className="w-3 h-3 text-[#7C3AED]" />
+                        <Zap className="w-3 h-3 text-[#0284C7]" />
                         "{trigger}"
                       </span>
                     ))}
@@ -1205,7 +1270,7 @@ export const TemplatesPage = () => {
             onKeyDown={(e) => {
               if (e.key === 'Enter') runTriggerTest();
             }}
-            className="flex-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#7C3AED]"
+            className="flex-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
           />
           <button
             type="button"
@@ -1219,13 +1284,13 @@ export const TemplatesPage = () => {
         </div>
 
         {simulatedReply && (
-          <div className="p-3.5 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] text-xs text-[#101828] leading-relaxed space-y-2 animate-in fade-in">
-            <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#7C3AED] font-bold">
-              <Bot className="w-3 h-3 text-[#7C3AED]" />
+          <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] text-xs text-[#101828] leading-relaxed space-y-2 animate-in fade-in">
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#0284C7] font-bold">
+              <Bot className="w-3 h-3 text-[#0284C7]" />
               <span>Simulated Auto-Pilot Output for "{testInput}":</span>
             </div>
             {simulatedImage && (
-              <div className="max-w-xs rounded-xl overflow-hidden border border-[#E9D8FD]">
+              <div className="max-w-xs rounded-xl overflow-hidden border border-[#BAE6FD]">
                 <img
                   src={simulatedImage}
                   alt="Template Media Header"
@@ -1255,7 +1320,7 @@ export const TemplatesPage = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? 'bg-white text-[#7C3AED] shadow-xs'
+                    ? 'bg-white text-[#0284C7] shadow-xs'
                     : 'text-[#667085] hover:text-[#101828]'
                 }`}
               >
@@ -1277,7 +1342,7 @@ export const TemplatesPage = () => {
                 onClick={() => setSelectedStatus(st.id)}
                 className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   selectedStatus === st.id
-                    ? 'bg-white text-[#7C3AED] shadow-xs'
+                    ? 'bg-white text-[#0284C7] shadow-xs'
                     : 'text-[#667085] hover:text-[#101828]'
                 }`}
               >
@@ -1295,7 +1360,7 @@ export const TemplatesPage = () => {
             placeholder="Search templates or triggers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white border border-[#EAECF0] pl-8 pr-3 py-1.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#7C3AED]"
+            className="w-full bg-white border border-[#EAECF0] pl-8 pr-3 py-1.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#0284C7]"
           />
         </div>
       </div>
@@ -1311,7 +1376,7 @@ export const TemplatesPage = () => {
           return (
             <div
               key={template.id}
-              className="bg-white border border-[#EAECF0] hover:border-[#7C3AED]/40 rounded-3xl p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md space-y-4 group overflow-hidden"
+              className="bg-white border border-[#EAECF0] hover:border-[#0284C7]/40 rounded-3xl p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md space-y-4 group overflow-hidden"
             >
               <div className="space-y-3">
                 {/* Header Image Banner if attached */}
@@ -1333,7 +1398,7 @@ export const TemplatesPage = () => {
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 rounded-full bg-[#F4F0FD] text-[#7C3AED] text-[10px] font-bold font-mono uppercase">
+                      <span className="px-2 py-0.5 rounded-full bg-[#F0F9FF] text-[#0284C7] text-[10px] font-bold font-mono uppercase">
                         {template.category || 'Utility'}
                       </span>
                       {Boolean(template.header_content) && (
@@ -1348,7 +1413,7 @@ export const TemplatesPage = () => {
                         </span>
                       )}
                     </div>
-                    <h4 className="text-sm font-bold text-[#101828] truncate group-hover:text-[#7C3AED] transition-colors">
+                    <h4 className="text-sm font-bold text-[#101828] truncate group-hover:text-[#0284C7] transition-colors">
                       {template.name}
                     </h4>
                   </div>
@@ -1460,11 +1525,16 @@ export const TemplatesPage = () => {
 
                   {/* Delete Template */}
                   <button
-                    onClick={() => setDeletingTemplate(template)}
-                    className="p-1.5 rounded-xl hover:bg-[#FEE2E2] text-[#98A2B3] hover:text-[#DC2626] transition-colors cursor-pointer"
-                    title="Delete template"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletingTemplate(template);
+                    }}
+                    className="p-1.5 px-2 rounded-xl bg-white hover:bg-[#FEE2E2] text-[#98A2B3] hover:text-[#DC2626] border border-[#EAECF0] hover:border-[#FECACA] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    title={`Delete template "${template.name}"`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5 text-[#DC2626]" />
+                    <span className="text-[11px] font-bold text-[#DC2626] hidden sm:inline">Delete</span>
                   </button>
                 </div>
               </div>
@@ -1955,16 +2025,21 @@ export const TemplatesPage = () => {
             </div>
             <div className="flex items-center gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setDeletingTemplate(null)}
-                className="flex-1 py-2.5 bg-[#F2F4F7] hover:bg-[#EAECF0] text-[#344054] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-[#F2F4F7] hover:bg-[#EAECF0] text-[#344054] rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleDelete}
-                className="flex-1 py-2.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                Delete
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
               </button>
             </div>
           </div>

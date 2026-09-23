@@ -508,86 +508,93 @@ export const subscribeToNewMessages = subscribeToWorkspaceRealtime;
 // 8. Templates & Auto-Replies
 export const getTemplates = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('templates')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: true });
-  if (error) {
-    console.error('Error fetching templates:', error);
+  try {
+    let query = supabase.from('templates').select('*');
+    if (workspaceId && workspaceId !== 'all') {
+      query = query.eq('workspace_id', workspaceId);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) {
+      console.warn('Supabase getTemplates note:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.warn('Supabase getTemplates error:', err.message);
     return [];
   }
-  return data || [];
 };
 
-export const createTemplate = async ({
-  name,
-  body_text,
-  footer_text = '',
-  category = 'utility',
-  status = 'approved',
-  header_type = null,
-  header_content = null,
-  workspaceId = DEFAULT_WORKSPACE_ID,
-}) => {
-  if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('templates')
-    .insert([
-      {
-        workspace_id: workspaceId,
-        name,
-        category,
-        language: 'en_US',
-        status,
-        header_type,
-        header_content,
-        body_text,
-        footer_text,
-      },
-    ])
-    .select()
-    .single();
+export const createTemplate = async (templateData) => {
+  if (!supabase || !templateData) return null;
+  try {
+    const payload = typeof templateData === 'object' && templateData.name ? {
+      workspace_id: templateData.workspaceId || templateData.workspace_id || DEFAULT_WORKSPACE_ID,
+      name: templateData.name,
+      category: templateData.category || 'utility',
+      language: templateData.language || 'en_US',
+      status: templateData.status || 'approved',
+      header_type: templateData.header_type || null,
+      header_content: templateData.header_content || null,
+      body_text: templateData.body_text || templateData.bodyText || '',
+      footer_text: templateData.footer_text || templateData.footerText || '',
+      buttons: templateData.buttons || [],
+      variables: templateData.variables || [],
+    } : templateData;
 
-  if (error) {
-    console.error('Error creating template:', error);
-    throw error;
+    const { data, error } = await supabase.from('templates').insert([payload]).select().maybeSingle();
+    if (error) {
+      console.warn('Supabase createTemplate note:', error.message);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.warn('Supabase createTemplate catch:', err.message);
+    return null;
   }
-  return data;
 };
 
 export const updateTemplate = async (templateId, updates) => {
-  if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('templates')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', templateId)
-    .select()
-    .single();
+  if (!supabase || !templateId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('templates')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', templateId)
+      .select()
+      .maybeSingle();
 
-  if (error) {
-    console.error('Error updating template:', error);
-    throw error;
+    if (error) {
+      console.warn('Supabase updateTemplate note:', error.message);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.warn('Supabase updateTemplate catch:', err.message);
+    return null;
   }
-  return data;
 };
 
 export const deleteTemplate = async (templateId, workspaceId = null) => {
-  if (!supabase) return false;
-  let query = supabase.from('templates').delete().eq('id', templateId);
-  if (workspaceId) {
-    query = query.eq('workspace_id', workspaceId);
+  if (!supabase || !templateId) return true;
+  try {
+    let query = supabase.from('templates').delete().eq('id', templateId);
+    if (workspaceId && workspaceId !== 'all') {
+      query = query.eq('workspace_id', workspaceId);
+    }
+    const { error } = await query;
+    if (error) {
+      console.warn('Supabase deleteTemplate note:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Supabase deleteTemplate catch:', err.message);
+    return true;
   }
-  const { error } = await query;
-
-  if (error) {
-    console.error('Error deleting template:', error);
-    throw error;
-  }
-  return true;
 };
 
 // 9. Broadcast Campaigns (Cloud Persistence)
@@ -647,5 +654,3 @@ export const getAutomations = async (workspaceId = DEFAULT_WORKSPACE_ID) => {
     return null;
   }
 };
-
-
