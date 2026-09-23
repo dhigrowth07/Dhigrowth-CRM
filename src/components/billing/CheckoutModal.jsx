@@ -187,18 +187,14 @@ export const CheckoutModal = () => {
 
       // 3. Launch official Razorpay standard Checkout popup (Real Test Mode)
       const keyId = orderData?.keyId || 'rzp_test_TcdoZxzN0dIYoP';
-      const orderId = orderData?.orderId && !orderData.orderId.includes('order_order_')
-        ? orderData.orderId
-        : undefined;
+      const actualAmount = orderData?.amount || payableAmount;
 
       const options = {
         key: keyId,
-        amount: payableAmount * 100, // in paise
+        amount: Math.round(actualAmount * 100), // in paise
         currency: 'INR',
         name: 'WAPPPILOT',
         description: `${activePlanId} Plan (${activeCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
-        image: '/wapppilot-logo.png',
-        order_id: orderId,
         prefill: {
           name: currentUser?.name || 'Sri',
           email: currentUser?.email || 'sri@dhigrowth.com',
@@ -209,7 +205,7 @@ export const CheckoutModal = () => {
         },
         handler: async function (response) {
           const paymentId = response.razorpay_payment_id || `pay_rzp_${Date.now()}`;
-          const rzpOrderId = response.razorpay_order_id || orderId || `order_${Date.now()}`;
+          const rzpOrderId = response.razorpay_order_id || `order_${Date.now()}`;
 
           // Verify and activate subscription on backend
           try {
