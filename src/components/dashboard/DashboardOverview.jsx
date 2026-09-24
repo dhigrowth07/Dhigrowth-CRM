@@ -386,38 +386,40 @@ export const DashboardOverview = () => {
         )}
       </div>
 
-      {/* 4. Plan Banner */}
-      <div className="sendiee-banner-purple p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover-lift">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs shrink-0">
-            <Zap className="w-5 h-5 fill-white" />
+      {/* 4. Plan Banner (Hidden for Super Admin alone) */}
+      {!isSuperAdmin && (
+        <div className="sendiee-banner-purple p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover-lift">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs shrink-0">
+              <Zap className="w-5 h-5 fill-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[#101828]">
+                {isPaidActive ? (
+                  <>Active <span className="text-[#7C3AED]">{activePlanName}</span> Plan</>
+                ) : (
+                  <>You've unlocked the <span className="text-[#7C3AED]">{activePlanName}</span> plan</>
+                )}
+              </h3>
+              <p className="text-xs text-[#475467]">
+                {isPaidActive ? (
+                  <>Your subscription is active — <strong>{calculatedDays} days until next renewal</strong>. All AI token models & Meta Cloud features unlocked.</>
+                ) : (
+                  <>Your free trial is active — <strong>{calculatedDays} days left</strong>. Upgrade anytime to keep these features.</>
+                )}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#101828]">
-              {isPaidActive ? (
-                <>Active <span className="text-[#7C3AED]">{activePlanName}</span> Plan</>
-              ) : (
-                <>You've unlocked the <span className="text-[#7C3AED]">{activePlanName}</span> plan</>
-              )}
-            </h3>
-            <p className="text-xs text-[#475467]">
-              {isPaidActive ? (
-                <>Your subscription is active — <strong>{calculatedDays} days until next renewal</strong>. All AI token models & Meta Cloud features unlocked.</>
-              ) : (
-                <>Your free trial is active — <strong>{calculatedDays} days left</strong>. Upgrade anytime to keep these features.</>
-              )}
-            </p>
-          </div>
-        </div>
 
-        <button
-          onClick={() => openCheckout ? openCheckout(activePlanName, isPaidActive ? (subscription?.billingCycle || 'monthly') : 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
-          className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto transition-all shadow-xs cursor-pointer hover:scale-[1.02]"
-        >
-          <span>{isPaidActive ? 'Manage Subscription' : 'Upgrade'}</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
+          <button
+            onClick={() => openCheckout ? openCheckout(activePlanName, isPaidActive ? (subscription?.billingCycle || 'monthly') : 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
+            className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto transition-all shadow-xs cursor-pointer hover:scale-[1.02]"
+          >
+            <span>{isPaidActive ? 'Manage Subscription' : 'Upgrade'}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* 5. Claim $5 Launch Credit Banner */}
       <div className="sendiee-banner-claim p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover-lift">
