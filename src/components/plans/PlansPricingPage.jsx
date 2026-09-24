@@ -20,9 +20,10 @@ export const PlansPricingPage = () => {
     showToast,
     setActiveTab,
     setSubscriptionStatus,
+    isSuperAdmin,
   } = useApp();
 
-  const isPaidActive = subscription?.status === 'active';
+  const isPaidActive = Boolean(isSuperAdmin) || subscription?.status === 'active';
 
   const [interval, setInterval] = useState('monthly'); // 'monthly' | 'quarterly' | 'half-yearly' | 'yearly'
 
@@ -176,7 +177,26 @@ export const PlansPricingPage = () => {
       </div>
 
       {/* Active / Inactive Status Alert */}
-      {!isPaidActive ? (
+      {isSuperAdmin ? (
+        <div className="max-w-2xl mx-auto p-4 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#0F172A] shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+              👑
+            </div>
+            <div>
+              <div className="font-bold text-[#0F172A] flex items-center gap-2">
+                <span>Super Administrator Account — Lifetime Free Tier</span>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                  NO SUBSCRIPTION REQUIRED
+                </span>
+              </div>
+              <div className="text-[11px] text-[#475467] mt-0.5">
+                Super Admins have permanent free access to all platform features. Paid subscriptions are only required for client users.
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : !isPaidActive ? (
         <div className="max-w-2xl mx-auto p-4 bg-[#FFF9EB] border border-[#FEEFC6] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#B54708] shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-[#FEF08A] text-[#D97706] flex items-center justify-center shrink-0">

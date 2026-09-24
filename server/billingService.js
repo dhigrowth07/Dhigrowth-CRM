@@ -145,11 +145,40 @@ function saveSubscriptionsToDisk() {
   }
 }
 
+export function isSuperAdminWorkspace(workspaceId) {
+  if (!workspaceId) return false;
+  const s = String(workspaceId).trim().toLowerCase();
+  return s === 'a0000000-0000-0000-0000-000000000001' || s === 'admin' || s === 'super_admin';
+}
+
 /**
  * Get active subscription details and usage limits for a workspace
  */
 export function getWorkspaceSubscription(workspaceId) {
   const wsId = workspaceId || 'b0000000-0000-0000-0000-000000000001';
+
+  // Super Admin always uses free lifetime tier and does not require any subscription
+  if (isSuperAdminWorkspace(wsId)) {
+    return {
+      workspaceId: wsId,
+      planId: 'Enterprise',
+      planName: 'Super Admin (Lifetime Free)',
+      billingCycle: 'lifetime',
+      status: 'active',
+      provider: 'platform_owner',
+      currentPeriodStart: new Date(2024, 0, 1).toISOString(),
+      currentPeriodEnd: new Date(2099, 11, 31).toISOString(),
+      cancelAtPeriodEnd: false,
+      trialDaysRemaining: 9999,
+      isSuperAdmin: true,
+      isSuperAdminFree: true,
+      paymentMethod: { provider: 'platform_owner', brand: 'Super Admin Pass' },
+      billingDetails: { companyName: 'WAPPPILOT Platform' },
+      planDetails: SAAS_PLANS['Enterprise'] || SAAS_PLANS['Growth'],
+      invoices: [],
+    };
+  }
+
   const sub = subscriptionStore.workspaces[wsId] || {
     workspaceId: wsId,
     planId: 'Growth',

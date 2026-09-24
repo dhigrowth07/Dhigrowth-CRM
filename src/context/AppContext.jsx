@@ -621,6 +621,27 @@ export const AppProvider = ({ children }) => {
     } catch {}
     return { status: 'active', planId: 'Business', planName: 'Business Plan' };
   });
+
+  // Super Admin always uses the platform completely free without requiring any subscription.
+  // User tenants only require an active paid subscription.
+  const effectiveSubscription = useMemo(() => {
+    if (isSuperAdmin && !impersonatedTenant) {
+      return {
+        workspaceId: currentWorkspaceId || 'a0000000-0000-0000-0000-000000000001',
+        planId: 'Enterprise',
+        planName: 'Super Admin (Lifetime Free)',
+        billingCycle: 'lifetime',
+        status: 'active',
+        provider: 'platform_owner',
+        trialDaysRemaining: 9999,
+        isSuperAdminFree: true,
+      };
+    }
+    return subscription;
+  }, [isSuperAdmin, impersonatedTenant, subscription, currentWorkspaceId]);
+
+  const isPaidActive = Boolean(isSuperAdmin && !impersonatedTenant) || effectiveSubscription?.status === 'active';
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
 
@@ -675,6 +696,10 @@ export const AppProvider = ({ children }) => {
   };
 
   const openCheckout = (planId = 'Growth', billingCycle = 'monthly', provider = 'razorpay') => {
+    if (isSuperAdmin && !impersonatedTenant) {
+      showToast('👑 Super Administrator has permanent free access and does not require a subscription.', 'info');
+      return;
+    }
     setCheckoutData({ planId, billingCycle, provider });
     setIsCheckoutModalOpen(true);
   };
@@ -3341,7 +3366,9 @@ export const AppProvider = ({ children }) => {
         closeCheckout,
         openCheckout,
         checkoutData,
-        subscription,
+        subscription: effectiveSubscription,
+        rawSubscription: subscription,
+        isPaidActive,
         refreshSubscription,
         setSubscriptionStatus,
         // Commercial SaaS Onboarding & Multi-Tenancy

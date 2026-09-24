@@ -64,6 +64,7 @@ export const DashboardOverview = () => {
     switchAdminProfile,
     userPermissions,
     updateUserPermission,
+    isSuperAdmin,
   } = useApp();
 
   const [activeChannelToConnect, setActiveChannelToConnect] = useState(null);
@@ -97,8 +98,8 @@ export const DashboardOverview = () => {
     setIsInviteModalOpen(false);
   };
 
-  const isPaidActive = subscription?.status === 'active';
-  const activePlanName = subscription?.planName || currentPlan || 'Business';
+  const isPaidActive = Boolean(isSuperAdmin) || subscription?.status === 'active';
+  const activePlanName = isSuperAdmin ? 'Super Admin (Lifetime Free)' : (subscription?.planName || currentPlan || 'Business');
 
   // Calculate dynamic days remaining, end dates, start dates and gauge percentage
   const { calculatedDays, periodEndDateStr, periodEndTimeStr, gaugePercent, billingCycleStr, startDateStr } = React.useMemo(() => {
@@ -167,7 +168,12 @@ export const DashboardOverview = () => {
               <h2 className="text-2xl font-bold text-[#101828]">
                 {activePlanName}
               </h2>
-              {isPaidActive ? (
+              {isSuperAdmin ? (
+                <span className="inline-flex items-center gap-1 bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] text-xs font-bold px-2.5 py-0.5 rounded-full">
+                  <CheckCircle2 className="w-3 h-3 text-[#16A34A]" />
+                  👑 Free Platform Owner Pass
+                </span>
+              ) : isPaidActive ? (
                 <span className="inline-flex items-center gap-1 bg-[#DCFCE7] border border-[#BBF7D0] text-[#16A34A] text-xs font-semibold px-2.5 py-0.5 rounded-full">
                   <CheckCircle2 className="w-3 h-3 text-[#16A34A]" />
                   Active plan
@@ -181,7 +187,9 @@ export const DashboardOverview = () => {
             </div>
 
             <p className="text-xs text-[#667085]">
-              {isPaidActive ? (
+              {isSuperAdmin ? (
+                <>👑 Permanent free access · <strong className="text-[#101828]">No subscription required for Super Admin</strong></>
+              ) : isPaidActive ? (
                 <>Active subscription · Renews <strong className="text-[#101828]">{periodEndDateStr} at {periodEndTimeStr}</strong></>
               ) : (
                 <>Free trial · Ends <strong className="text-[#101828]">{periodEndDateStr} at {periodEndTimeStr}</strong></>
@@ -197,13 +205,23 @@ export const DashboardOverview = () => {
               <span>View usage</span>
               <ArrowUpRight className="w-3.5 h-3.5 text-[#667085]" />
             </button>
-            <button
-              onClick={() => openCheckout ? openCheckout(activePlanName, isPaidActive ? (subscription?.billingCycle || 'monthly') : 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
-              className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-5 py-2 rounded-xl transition-all shadow-xs cursor-pointer hover:scale-[1.02] flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-              <span>{isPaidActive ? 'Manage plan' : 'Upgrade'}</span>
-            </button>
+            {isSuperAdmin ? (
+              <button
+                onClick={() => setActiveTab('admin-tenants')}
+                className="bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <span>Manage Tenants</span>
+                <ArrowRight className="w-3.5 h-3.5 text-white" />
+              </button>
+            ) : (
+              <button
+                onClick={() => openCheckout ? openCheckout(activePlanName, isPaidActive ? (subscription?.billingCycle || 'monthly') : 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
+                className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-5 py-2 rounded-xl transition-all shadow-xs cursor-pointer hover:scale-[1.02] flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <span>{isPaidActive ? 'Manage plan' : 'Upgrade'}</span>
+              </button>
+            )}
           </div>
         </div>
 

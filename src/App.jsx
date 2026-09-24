@@ -94,7 +94,8 @@ const AppContent = () => {
     );
   }
 
-  const isPaidActive = subscription?.status === 'active';
+  // Super Admin always has full free access; regular users require an active subscription
+  const isPaidActive = Boolean(isSuperAdmin) || subscription?.status === 'active';
 
   const renderActiveView = () => {
     const isRestricted = (Boolean(impersonatedTenant) || !isSuperAdmin) && !hasNavPermission(activeTab);

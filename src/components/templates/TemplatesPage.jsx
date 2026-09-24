@@ -271,7 +271,7 @@ We offer transparent milestones and dedicated technical support. Share your proj
 ];
 
 export const TemplatesPage = () => {
-  const { currentWorkspaceId, currentUser, showToast, subscription, openCheckout } = useApp();
+  const { currentWorkspaceId, currentUser, showToast, subscription, openCheckout, isSuperAdmin } = useApp();
 
   const isDefaultWorkspace = currentWorkspaceId === DEFAULT_WORKSPACE_ID;
 
@@ -590,7 +590,7 @@ export const TemplatesPage = () => {
   };
 
   const handleOpenCreate = () => {
-    if (subscription && subscription.status !== 'active') {
+    if (!isSuperAdmin && subscription && subscription.status !== 'active') {
       showToast('🔒 Active subscription required to create official Meta templates. Please upgrade your plan.', 'error');
       if (typeof openCheckout === 'function') {
         openCheckout('Growth', 'monthly', 'razorpay');

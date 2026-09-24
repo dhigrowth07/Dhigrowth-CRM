@@ -44,6 +44,7 @@ export const WalletPage = () => {
     refreshSubscription,
     openCheckout,
     currentWorkspaceId,
+    isSuperAdmin,
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState('payment-history'); // 'payment-history' | 'subscription-history'
@@ -119,9 +120,9 @@ export const WalletPage = () => {
   }, [activeProfileKey, currentWorkspaceId, profileDisplayName]);
 
   // Derived subscription info
-  const activePlanName = subscription?.planName || currentPlan;
-  const isPaidActive = subscription?.status === 'active';
-  const subInterval = subscription?.interval ? (subscription.interval === 'yearly' ? 'Yearly' : 'Monthly') : 'Monthly';
+  const isPaidActive = Boolean(isSuperAdmin) || subscription?.status === 'active';
+  const activePlanName = isSuperAdmin ? 'Super Admin (Lifetime Free)' : (subscription?.planName || currentPlan);
+  const subInterval = isSuperAdmin ? 'Lifetime Free' : (subscription?.interval ? (subscription.interval === 'yearly' ? 'Yearly' : 'Monthly') : 'Monthly');
 
   const calculatedDaysRemaining = React.useMemo(() => {
     if (subscription?.currentPeriodEnd) {
@@ -371,7 +372,12 @@ export const WalletPage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-lg font-bold text-[#101828]">Subscription</h2>
-            {isPaidActive ? (
+            {isSuperAdmin ? (
+              <span className="bg-[#ECFDF3] border border-[#ABEFC6] text-[#027A48] text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>
+                👑 Super Admin · Free Lifetime Access (No Subscription Required)
+              </span>
+            ) : isPaidActive ? (
               <span className="bg-[#ECFDF3] border border-[#ABEFC6] text-[#027A48] text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></span>
                 Active · Renews in {calculatedDaysRemaining} days
@@ -390,12 +396,21 @@ export const WalletPage = () => {
             >
               View Usage
             </button>
-            <button
-              onClick={() => openCheckout ? openCheckout(activePlanName, 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
-              className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-5 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
-            >
-              {isPaidActive ? 'Manage Plan' : 'Upgrade'}
-            </button>
+            {isSuperAdmin ? (
+              <button
+                onClick={() => setActiveTab('plans')}
+                className="bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                View Plans
+              </button>
+            ) : (
+              <button
+                onClick={() => openCheckout ? openCheckout(activePlanName, 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
+                className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-5 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                {isPaidActive ? 'Manage Plan' : 'Upgrade'}
+              </button>
+            )}
           </div>
         </div>
 

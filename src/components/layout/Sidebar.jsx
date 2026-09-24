@@ -48,7 +48,7 @@ export const Sidebar = () => {
   } = useApp();
 
   const effectiveUser = impersonatedTenant || currentUser;
-  const isPaidActive = subscription?.status === 'active';
+  const isPaidActive = Boolean(isSuperAdmin) || subscription?.status === 'active';
   const GATED_FEATURE_IDS = [
     'ai-assistants',
     'tools',
@@ -319,7 +319,7 @@ export const Sidebar = () => {
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
-                  const isGated = !isPaidActive && GATED_FEATURE_IDS.includes(item.id);
+                  const isGated = !isSuperAdmin && !isPaidActive && GATED_FEATURE_IDS.includes(item.id);
                   return (
                     <button
                       key={item.id}
