@@ -160,11 +160,61 @@ export const ALL_PERMISSION_KEYS = NAVIGATION_MODULES.flatMap((cat) => cat.items
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  // Navigation & Theme State
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Navigation & Theme State (Persisted across browser refresh)
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash.replace(/^#\/?/, '').trim();
+        if (hash && !hash.startsWith('payment-') && !hash.startsWith('access_token')) {
+          return hash;
+        }
+        const params = new URLSearchParams(window.location.search);
+        const queryTab = params.get('tab') || params.get('page');
+        if (queryTab) {
+          return queryTab;
+        }
+        const savedTab = localStorage.getItem('dhigrowth_active_tab');
+        if (savedTab && typeof savedTab === 'string') {
+          return savedTab;
+        }
+      }
+    } catch {}
+    return 'dashboard';
+  });
+
   if (typeof window !== 'undefined') {
     window.__setActiveTab = setActiveTab;
   }
+
+  // Synchronize active tab with URL hash and localStorage so refresh stays on the same page
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && activeTab) {
+        localStorage.setItem('dhigrowth_active_tab', activeTab);
+        const currentHash = window.location.hash.replace(/^#\/?/, '').trim();
+        if (currentHash !== activeTab && !currentHash.startsWith('payment-') && !currentHash.startsWith('access_token')) {
+          window.history.replaceState(null, '', `#${activeTab}`);
+        }
+      }
+    } catch {}
+  }, [activeTab]);
+
+  // Support browser Back and Forward navigation buttons via hashchange
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleHashChange = () => {
+      try {
+        const newHash = window.location.hash.replace(/^#\/?/, '').trim();
+        if (newHash && !newHash.startsWith('payment-') && !newHash.startsWith('access_token')) {
+          setActiveTab((prev) => (prev !== newHash ? newHash : prev));
+        }
+      } catch {}
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   const [theme, setTheme] = useState('light');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -1520,9 +1570,14 @@ export const AppProvider = ({ children }) => {
     setCurrentUser(null);
     setChats([]);
     setActiveChatId(null);
+    setActiveTab('dashboard');
     try {
       localStorage.removeItem('dhigrowth_auth_session');
       sessionStorage.removeItem('dhigrowth_auth_session');
+      localStorage.removeItem('dhigrowth_active_tab');
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
       if (slug) {
         localStorage.removeItem(`dhigrowth_auth_session_${slug}`);
         sessionStorage.removeItem(`dhigrowth_auth_session_${slug}`);
