@@ -414,60 +414,62 @@ export const WalletPage = () => {
           </div>
         </div>
 
-        {/* 4-Item Metric Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-          {/* Plan */}
-          <div
-            onClick={() => openCheckout ? openCheckout(activePlanName, 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
-            className="flex items-center gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
-              <Briefcase className="w-5 h-5 text-[#475467]" />
+        {/* 4-Item Metric Row (Hidden for Super Admin alone) */}
+        {!isSuperAdmin && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+            {/* Plan */}
+            <div
+              onClick={() => openCheckout ? openCheckout(activePlanName, 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
+              className="flex items-center gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
+                <Briefcase className="w-5 h-5 text-[#475467]" />
+              </div>
+              <div>
+                <div className="text-[11px] font-medium text-[#667085]">Plan</div>
+                <div className="text-sm font-bold text-[#16A34A]">{activePlanName}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-[11px] font-medium text-[#667085]">Plan</div>
-              <div className="text-sm font-bold text-[#16A34A]">{activePlanName}</div>
-            </div>
-          </div>
 
-          {/* Billing */}
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
-              <Calendar className="w-5 h-5 text-[#475467]" />
+            {/* Billing */}
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
+                <Calendar className="w-5 h-5 text-[#475467]" />
+              </div>
+              <div>
+                <div className="text-[11px] font-medium text-[#667085]">Billing</div>
+                <div className="text-sm font-bold text-[#101828]">{subInterval}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-[11px] font-medium text-[#667085]">Billing</div>
-              <div className="text-sm font-bold text-[#101828]">{subInterval}</div>
-            </div>
-          </div>
 
-          {/* Days Remaining */}
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
-              <Clock className="w-5 h-5 text-[#475467]" />
+            {/* Days Remaining */}
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
+                <Clock className="w-5 h-5 text-[#475467]" />
+              </div>
+              <div>
+                <div className="text-[11px] font-medium text-[#667085]">Days Remaining</div>
+                <div className="text-sm font-bold text-[#101828]">{calculatedDaysRemaining}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-[11px] font-medium text-[#667085]">Days Remaining</div>
-              <div className="text-sm font-bold text-[#101828]">{calculatedDaysRemaining}</div>
-            </div>
-          </div>
 
-          {/* Auto-Pay */}
-          <div
-            onClick={() => showToast('Card auto-charge active for continuous service', 'info')}
-            className="flex items-center gap-3.5 cursor-pointer hover:opacity-80"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
-              <Zap className="w-5 h-5 text-[#475467]" />
-            </div>
-            <div>
-              <div className="text-[11px] font-medium text-[#667085]">Auto-Renew</div>
-              <div className={`text-sm font-semibold ${isPaidActive ? 'text-[#16A34A]' : 'text-[#667085]'}`}>
-                {isPaidActive ? 'Active' : 'Off'}
+            {/* Auto-Pay */}
+            <div
+              onClick={() => showToast('Card auto-charge active for continuous service', 'info')}
+              className="flex items-center gap-3.5 cursor-pointer hover:opacity-80"
+            >
+              <div className="w-11 h-11 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[#475467] shrink-0">
+                <Zap className="w-5 h-5 text-[#475467]" />
+              </div>
+              <div>
+                <div className="text-[11px] font-medium text-[#667085]">Auto-Renew</div>
+                <div className={`text-sm font-semibold ${isPaidActive ? 'text-[#16A34A]' : 'text-[#667085]'}`}>
+                  {isPaidActive ? 'Active' : 'Off'}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Transparent SaaS 3-Pillar Billing Breakdown */}

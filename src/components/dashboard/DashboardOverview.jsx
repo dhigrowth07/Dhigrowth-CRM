@@ -225,161 +225,165 @@ export const DashboardOverview = () => {
           </div>
         </div>
 
-        {/* 4-Item Metric Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
-          {/* Item 1: Circular Days Left Gauge */}
-          <div
-            onClick={() => openCheckout ? openCheckout(activePlanName, isPaidActive ? (subscription?.billingCycle || 'monthly') : 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
-            className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center justify-center cursor-pointer hover:border-[#D0D5DD] transition-colors"
-            title="Click to manage subscription"
-          >
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-[#E9D8FD]"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className={isPaidActive ? "text-[#16A34A]" : "text-[#7C3AED]"}
-                  strokeDasharray={`${gaugePercent}, 100`}
-                  strokeLinecap="round"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <div className="absolute text-center flex flex-col items-center justify-center">
-                <span className="text-xl font-extrabold text-[#101828] leading-none">{calculatedDays}</span>
-                <span className="text-[8px] font-bold text-[#667085] tracking-tight uppercase mt-0.5">DAYS LEFT</span>
+        {/* 4-Item Metric Row (Hidden for Super Admin alone) */}
+        {!isSuperAdmin && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+            {/* Item 1: Circular Days Left Gauge */}
+            <div
+              onClick={() => openCheckout ? openCheckout(activePlanName, isPaidActive ? (subscription?.billingCycle || 'monthly') : 'monthly', 'razorpay') : setIsUpgradeModalOpen(true)}
+              className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center justify-center cursor-pointer hover:border-[#D0D5DD] transition-colors"
+              title="Click to manage subscription"
+            >
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-[#E9D8FD]"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className={isPaidActive ? "text-[#16A34A]" : "text-[#7C3AED]"}
+                    strokeDasharray={`${gaugePercent}, 100`}
+                    strokeLinecap="round"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div className="absolute text-center flex flex-col items-center justify-center">
+                  <span className="text-xl font-extrabold text-[#101828] leading-none">{calculatedDays}</span>
+                  <span className="text-[8px] font-bold text-[#667085] tracking-tight uppercase mt-0.5">DAYS LEFT</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Item 2: Trial Ends / Renewal Date */}
+            <div
+              onClick={() => setActiveTab('wallet')}
+              className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center gap-3.5 cursor-pointer hover:border-[#D0D5DD] transition-colors"
+              title="View billing & invoices"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-center text-[#7C3AED] shrink-0 shadow-2xs">
+                <Calendar className="w-5 h-5 text-[#7C3AED]" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider font-mono">
+                  {isPaidActive ? 'RENEWS ON' : 'TRIAL ENDS'}
+                </div>
+                <div className="text-sm font-bold text-[#101828] mt-0.5">
+                  {periodEndDateStr}
+                </div>
+                <div className="text-[11px] text-[#667085]">
+                  {periodEndTimeStr} · local time
+                </div>
+              </div>
+            </div>
+
+            {/* Item 3: Billing */}
+            <div
+              onClick={() => setActiveTab('wallet')}
+              className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center gap-3.5 cursor-pointer hover:border-[#D0D5DD] transition-colors"
+              title="View payment history"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-center text-[#7C3AED] shrink-0 shadow-2xs">
+                <Calendar className="w-5 h-5 text-[#7C3AED]" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider font-mono">
+                  BILLING
+                </div>
+                <div className="text-sm font-bold text-[#101828] mt-0.5">
+                  {billingCycleStr}
+                </div>
+                <div className="text-[11px] text-[#667085]">
+                  Started {startDateStr}
+                </div>
+              </div>
+            </div>
+
+            {/* Item 4: Auto-Pay */}
+            <div
+              onClick={() => {
+                if (isPaidActive) {
+                  showToast('Automatic payment active via ' + (subscription?.provider === 'stripe' ? 'Stripe' : 'Razorpay'), 'info');
+                } else {
+                  openCheckout ? openCheckout(activePlanName, 'monthly', 'razorpay') : setIsUpgradeModalOpen(true);
+                }
+              }}
+              className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center gap-3.5 cursor-pointer hover:border-[#D0D5DD] transition-colors group"
+              title={isPaidActive ? "Auto-renewal is active" : "Click to upgrade and enable auto-pay"}
+            >
+              <div className="w-10 h-10 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-center text-[#7C3AED] shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                <Zap className="w-5 h-5 text-[#7C3AED]" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider font-mono">
+                  AUTO-PAY
+                </div>
+                <div className={`text-sm font-bold mt-0.5 ${isPaidActive ? 'text-[#16A34A]' : 'text-[#101828]'}`}>
+                  {isPaidActive ? 'Active' : 'Off'}
+                </div>
+                <div className="text-[11px] text-[#667085]">
+                  {isPaidActive ? `Billed via ${subscription?.provider === 'stripe' ? 'Stripe' : 'Razorpay'}` : 'Enable when you upgrade'}
+                </div>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Item 2: Trial Ends / Renewal Date */}
-          <div
-            onClick={() => setActiveTab('wallet')}
-            className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center gap-3.5 cursor-pointer hover:border-[#D0D5DD] transition-colors"
-            title="View billing & invoices"
-          >
-            <div className="w-10 h-10 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-center text-[#7C3AED] shrink-0 shadow-2xs">
-              <Calendar className="w-5 h-5 text-[#7C3AED]" />
-            </div>
-            <div>
-              <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider font-mono">
-                {isPaidActive ? 'RENEWS ON' : 'TRIAL ENDS'}
+        {/* Feature Paywall Gating Notice & Quick Toggle (Hidden for Super Admin alone) */}
+        {!isSuperAdmin && (
+          <div className="pt-2 border-t border-[#F2F4F7]">
+            {!isPaidActive ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-[#FFF9EB] border border-[#FEEFC6] rounded-2xl text-xs text-[#B54708]">
+                <div className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-[#D97706] shrink-0" />
+                  <span>
+                    <strong>Features Paywalled:</strong> Mass Broadcasts, Sequences, Automations, AI Studio, Function Tools, Lead Studio, and Segmentation are locked. Subscribe to unlock all features.
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <button
+                    onClick={() => openCheckout('Growth', 'monthly', 'razorpay')}
+                    className="px-3 py-1.5 bg-[#D97706] hover:bg-[#B45309] text-white font-bold rounded-xl shadow-2xs text-[11px] cursor-pointer"
+                  >
+                    Subscribe Now
+                  </button>
+                  {typeof setSubscriptionStatus === 'function' && (
+                    <button
+                      onClick={() => setSubscriptionStatus('active')}
+                      className="px-2 py-1 bg-white hover:bg-[#FEF08A] text-[#78350F] border border-[#FDE047] font-bold rounded-xl text-[10px] cursor-pointer"
+                      title="Developer toggle: simulate active subscription"
+                    >
+                      ⚡ Test Unlock
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="text-sm font-bold text-[#101828] mt-0.5">
-                {periodEndDateStr}
-              </div>
-              <div className="text-[11px] text-[#667085]">
-                {periodEndTimeStr} · local time
-              </div>
-            </div>
-          </div>
-
-          {/* Item 3: Billing */}
-          <div
-            onClick={() => setActiveTab('wallet')}
-            className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center gap-3.5 cursor-pointer hover:border-[#D0D5DD] transition-colors"
-            title="View payment history"
-          >
-            <div className="w-10 h-10 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-center text-[#7C3AED] shrink-0 shadow-2xs">
-              <Calendar className="w-5 h-5 text-[#7C3AED]" />
-            </div>
-            <div>
-              <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider font-mono">
-                BILLING
-              </div>
-              <div className="text-sm font-bold text-[#101828] mt-0.5">
-                {billingCycleStr}
-              </div>
-              <div className="text-[11px] text-[#667085]">
-                Started {startDateStr}
-              </div>
-            </div>
-          </div>
-
-          {/* Item 4: Auto-Pay */}
-          <div
-            onClick={() => {
-              if (isPaidActive) {
-                showToast('Automatic payment active via ' + (subscription?.provider === 'stripe' ? 'Stripe' : 'Razorpay'), 'info');
-              } else {
-                openCheckout ? openCheckout(activePlanName, 'monthly', 'razorpay') : setIsUpgradeModalOpen(true);
-              }
-            }}
-            className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAECF0] flex items-center gap-3.5 cursor-pointer hover:border-[#D0D5DD] transition-colors group"
-            title={isPaidActive ? "Auto-renewal is active" : "Click to upgrade and enable auto-pay"}
-          >
-            <div className="w-10 h-10 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-center text-[#7C3AED] shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <Zap className="w-5 h-5 text-[#7C3AED]" />
-            </div>
-            <div>
-              <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider font-mono">
-                AUTO-PAY
-              </div>
-              <div className={`text-sm font-bold mt-0.5 ${isPaidActive ? 'text-[#16A34A]' : 'text-[#101828]'}`}>
-                {isPaidActive ? 'Active' : 'Off'}
-              </div>
-              <div className="text-[11px] text-[#667085]">
-                {isPaidActive ? `Billed via ${subscription?.provider === 'stripe' ? 'Stripe' : 'Razorpay'}` : 'Enable when you upgrade'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Feature Paywall Gating Notice & Quick Toggle */}
-        <div className="pt-2 border-t border-[#F2F4F7]">
-          {!isPaidActive ? (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-[#FFF9EB] border border-[#FEEFC6] rounded-2xl text-xs text-[#B54708]">
-              <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#D97706] shrink-0" />
-                <span>
-                  <strong>Features Paywalled:</strong> Mass Broadcasts, Sequences, Automations, AI Studio, Function Tools, Lead Studio, and Segmentation are locked. Subscribe to unlock all features.
-                </span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                <button
-                  onClick={() => openCheckout('Growth', 'monthly', 'razorpay')}
-                  className="px-3 py-1.5 bg-[#D97706] hover:bg-[#B45309] text-white font-bold rounded-xl shadow-2xs text-[11px] cursor-pointer"
-                >
-                  Subscribe Now
-                </button>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-[#F0FDF4] border border-[#DCFCE7] rounded-2xl text-xs text-[#166534]">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#16A34A] shrink-0" />
+                  <span>
+                    <strong>All SaaS Features Unlocked:</strong> Active <span className="font-bold uppercase font-mono">{activePlanName}</span> subscription is live. All broadcasting, automations, and AI tools active.
+                  </span>
+                </div>
                 {typeof setSubscriptionStatus === 'function' && (
                   <button
-                    onClick={() => setSubscriptionStatus('active')}
-                    className="px-2 py-1 bg-white hover:bg-[#FEF08A] text-[#78350F] border border-[#FDE047] font-bold rounded-xl text-[10px] cursor-pointer"
-                    title="Developer toggle: simulate active subscription"
+                    onClick={() => setSubscriptionStatus('trialing')}
+                    className="px-2 py-1 bg-white hover:bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA] font-bold rounded-xl text-[10px] cursor-pointer shrink-0 self-end sm:self-auto"
+                    title="Developer toggle: simulate unsubscribed state to test paywall"
                   >
-                    ⚡ Test Unlock
+                    🔒 Test Lock
                   </button>
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-[#F0FDF4] border border-[#DCFCE7] rounded-2xl text-xs text-[#166534]">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#16A34A] shrink-0" />
-                <span>
-                  <strong>All SaaS Features Unlocked:</strong> Active <span className="font-bold uppercase font-mono">{activePlanName}</span> subscription is live. All broadcasting, automations, and AI tools active.
-                </span>
-              </div>
-              {typeof setSubscriptionStatus === 'function' && (
-                <button
-                  onClick={() => setSubscriptionStatus('trialing')}
-                  className="px-2 py-1 bg-white hover:bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA] font-bold rounded-xl text-[10px] cursor-pointer shrink-0 self-end sm:self-auto"
-                  title="Developer toggle: simulate unsubscribed state to test paywall"
-                >
-                  🔒 Test Lock
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 4. Plan Banner */}
