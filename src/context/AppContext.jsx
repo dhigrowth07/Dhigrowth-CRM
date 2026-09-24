@@ -1437,13 +1437,11 @@ export const AppProvider = ({ children }) => {
         }
       } catch {}
 
-      // 2. Query remote endpoints in background
-      const endpoints = [
+      // 2. Query backend in background
+      const endpoints = Array.from(new Set([
         `${BACKEND_URL}/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
-        `https://api-wappilot.dhigrowth.com/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
-        `https://dhigrowth-crm.onrender.com/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
         `http://localhost:4000/api/billing/subscription?workspaceId=${encodeURIComponent(activeWs)}`,
-      ];
+      ]));
 
       for (const url of endpoints) {
         try {
@@ -1514,12 +1512,10 @@ export const AppProvider = ({ children }) => {
     }
 
     // 2. Sync to Backend in Background
-    const endpoints = [
+    const endpoints = Array.from(new Set([
       `${BACKEND_URL}/api/billing/set-status`,
-      'https://api-wappilot.dhigrowth.com/api/billing/set-status',
-      'https://dhigrowth-crm.onrender.com/api/billing/set-status',
       'http://localhost:4000/api/billing/set-status',
-    ];
+    ]));
 
     for (const url of endpoints) {
       try {
