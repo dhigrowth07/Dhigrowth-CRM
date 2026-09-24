@@ -4,7 +4,6 @@ import {
   Calendar,
   Clock,
   Zap,
-  Gift,
   ArrowRight,
   MessageSquare,
   DollarSign,
@@ -421,51 +420,6 @@ export const DashboardOverview = () => {
         </div>
       )}
 
-      {/* 5. Claim $5 Launch Credit Banner */}
-      <div className="sendiee-banner-claim p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover-lift">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs shrink-0">
-            <Gift className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#101828]">
-              Claim your <span className="text-[#7C3AED]">$5 launch credit</span>
-            </h3>
-            <p className="text-xs text-[#475467]">
-              On us, to get you started. Add your phone to claim it to your wallet.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Phone Input Box */}
-          <div className="flex items-center bg-[#FAF8F5] border border-[#E9E4DF] rounded-xl px-3 py-1.5 text-xs text-[#101828] focus-within:border-[#7C3AED] shadow-2xs">
-            <div className="flex items-center gap-1 text-xs font-semibold text-[#344054] pr-2 border-r border-[#E5E0D8]">
-              <span>{countryCode}</span>
-              <ChevronDown className="w-3 h-3 text-[#98A2B3]" />
-            </div>
-            <input
-              type="text"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="bg-transparent pl-3 pr-1 py-0.5 text-xs font-medium text-[#101828] focus:outline-none w-28 lg:w-32"
-              placeholder="Phone number"
-            />
-          </div>
-
-          <button
-            onClick={claimBonus}
-            disabled={hasClaimedBonus}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-xs cursor-pointer ${
-              hasClaimedBonus
-                ? 'bg-[#16A34A] cursor-default'
-                : 'bg-[#7C3AED] hover:bg-[#6D28D9] hover:scale-[1.02]'
-            }`}
-          >
-            {hasClaimedBonus ? 'Claimed ($5.00 ✓)' : 'Claim $5'}
-          </button>
-        </div>
-      </div>
 
       {/* 6. Three Metric Cards Row with Hover Elevation */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
