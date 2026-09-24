@@ -26,24 +26,6 @@
         "updatedAt": "2026-09-23T12:05:19.531Z"
       },
       {
-        "id": "2074071630135449",
-        "name": "lead_offer_voucher",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "NONE",
-        "header_content": null,
-        "body_text": "Hello {{1}}, here is your special 20% discount coupon {{2}}! Valid today.",
-        "footer_text": "offer, voucher, discount",
-        "buttons": [],
-        "variables": [
-          "var_1",
-          "var_2"
-        ],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T12:05:19.531Z"
-      },
-      {
         "id": "1744607210078710",
         "name": "hello_world",
         "category": "UTILITY",
@@ -57,62 +39,6 @@
         "variables": [],
         "syncedWithMeta": true,
         "updatedAt": "2026-09-23T12:05:19.531Z"
-      },
-      {
-        "id": "tpl_free_call",
-        "name": "free_15_min_call",
-        "displayName": "Free 15-Min Call",
-        "badge": "Popular",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "Special Tech Invitation",
-        "body_text": "Hi {{name}}! 🚀 We're offering complimentary 15-minute technology consultation sessions this week for ambitious founders.\n\nWould you like us to schedule a quick call with our lead tech architect?",
-        "footer_text": "call, meeting, consultation, free, appointment, schedule",
-        "buttons": [
-          {
-            "type": "QUICK_REPLY",
-            "text": "Yes, Schedule Call"
-          },
-          {
-            "type": "QUICK_REPLY",
-            "text": "Share Times"
-          }
-        ],
-        "variables": [
-          "name"
-        ],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:30:00.000Z"
-      },
-      {
-        "id": "tpl_crm_demo",
-        "name": "whatsapp_crm_demo",
-        "displayName": "WhatsApp CRM Demo",
-        "badge": "High Conversion",
-        "category": "UTILITY",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "WhatsApp Automation",
-        "body_text": "Hello {{name}}! Want to see a live 2-minute demo of 24/7 AI lead capture, broadcast marketing, and automated team inboxes on WhatsApp?",
-        "footer_text": "crm, demo, automation, bot, live, features",
-        "buttons": [
-          {
-            "type": "QUICK_REPLY",
-            "text": "Yes, Send Demo"
-          },
-          {
-            "type": "QUICK_REPLY",
-            "text": "Chat with Agent"
-          }
-        ],
-        "variables": [
-          "name"
-        ],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:30:00.000Z"
       },
       {
         "id": "tpl_custom_template",
@@ -166,60 +92,6 @@
         "syncedWithMeta": true,
         "createdAt": "2026-09-17T06:16:03.989Z",
         "updatedAt": "2026-09-19T05:10:00.000Z"
-      },
-      {
-        "id": "tpl_order_dispatch",
-        "name": "order_status_update_v1",
-        "category": "UTILITY",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "Order Shipped 📦",
-        "body_text": "Great news {{1}}! Your order #{{2}} has been packed and handed over to our delivery partner. Estimated delivery is {{3}}. Track your real-time status using the link below.",
-        "footer_text": "Need help? Reply HELP to chat with an agent",
-        "buttons": [
-          {
-            "type": "URL",
-            "text": "Track Order",
-            "url": "https://dhigrowth.com/track/{{1}}"
-          }
-        ],
-        "variables": [
-          "customer_name",
-          "order_id",
-          "delivery_date"
-        ],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-16T12:38:43.091Z"
-      },
-      {
-        "id": "tpl_event_reminder",
-        "name": "vip_webinar_reminder_2026",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "IMAGE",
-        "header_content": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80",
-        "body_text": "Hey {{1}}, your live masterclass on {{2}} starts in {{3}} minutes! 🚀 Join top founders discovering how to automate customer support and 10x WhatsApp sales conversion.",
-        "footer_text": "Hosted on Zoom • Live Q&A included",
-        "buttons": [
-          {
-            "type": "URL",
-            "text": "Join Live Room",
-            "url": "https://dhigrowth.com/live-room"
-          },
-          {
-            "type": "QUICK_REPLY",
-            "text": "Reschedule"
-          }
-        ],
-        "variables": [
-          "first_name",
-          "topic",
-          "starts_in"
-        ],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-16T12:38:43.091Z"
       }
     ],
     "b1a0a9dd26af-9d29-b53e-7fd6-c592f69f2bc5": [
@@ -245,31 +117,7 @@
       }
     ],
     "80f6df12-ba78-472a-a4ec-1059b113f8ab": [],
-    "test-new-user-ws-1789975151188": [
-      {
-        "id": "2074071630135449",
-        "name": "lead_offer_voucher",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "PENDING",
-        "header_type": "NONE",
-        "header_content": null,
-        "body_text": "Hello {{1}}, updated special 25% discount coupon {{2}}! Valid today.",
-        "footer_text": "offer, voucher, discount",
-        "buttons": [],
-        "variables": [
-          "var_1",
-          "var_2"
-        ],
-        "syncedWithMeta": true,
-        "createdAt": "2026-09-21T07:19:11.252Z",
-        "updatedAt": "2026-09-21T07:19:19.083Z",
-        "reviewNote": "Meta API review queued (Invalid parameter)",
-        "submittedAt": "2026-09-21T07:19:18.701Z",
-        "rejectionReason": null,
-        "metaTemplateId": "2074071630135449"
-      }
-    ],
+    "test-new-user-ws-1789975151188": [],
     "a0000000-0000-0000-0000-000000000001": [
       {
         "id": "2950860201937776",
@@ -293,25 +141,7 @@
           "var_3"
         ],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:27:10.265Z"
-      },
-      {
-        "id": "2074071630135449",
-        "name": "lead_offer_voucher",
-        "category": "MARKETING",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "NONE",
-        "header_content": null,
-        "body_text": "Hello {{1}}, here is your special 20% discount coupon {{2}}! Valid today.",
-        "footer_text": "offer, voucher, discount",
-        "buttons": [],
-        "variables": [
-          "var_1",
-          "var_2"
-        ],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:27:10.265Z"
+        "updatedAt": "2026-09-24T04:50:33.340Z"
       },
       {
         "id": "1744607210078710",
@@ -326,7 +156,35 @@
         "buttons": [],
         "variables": [],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-23T10:27:10.265Z"
+        "updatedAt": "2026-09-24T04:50:33.340Z"
+      },
+      {
+        "id": "tpl_custom_template",
+        "name": "custom_template",
+        "displayName": "Custom Template",
+        "badge": "Freeform",
+        "category": "MARKETING",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "DhiGrowth IT Services",
+        "body_text": "Hi {{name}}! We would love to share our latest updates with you. Would you like more details?",
+        "footer_text": "updates, details, info, more, custom",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Yes, please"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Not right now"
+          }
+        ],
+        "variables": [
+          "name"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-23T12:24:24.012Z"
       }
     ]
   },
@@ -334,6 +192,16 @@
     "flash_sale_promo_2026",
     "tpl_summer_offer",
     "ai_it_discovery",
-    "tpl_ai_discovery"
+    "tpl_ai_discovery",
+    "vip_webinar_reminder_2026",
+    "tpl_event_reminder",
+    "order_status_update_v1",
+    "tpl_order_dispatch",
+    "whatsapp_crm_demo",
+    "tpl_crm_demo",
+    "free_15_min_call",
+    "tpl_free_call",
+    "lead_offer_voucher",
+    "2074071630135449"
   ]
 }

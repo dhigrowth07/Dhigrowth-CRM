@@ -20,62 +20,96 @@ import { useApp } from '../../context/AppContext';
 import { ContactAvatar } from '../common/ContactAvatar';
 import { BACKEND_URL } from '../../services/apiConfig';
 
-const TEMPLATE_PRESETS = [
+export const DEFAULT_WORKSPACE_PRESETS = [
   {
-    id: 'discovery',
-    name: 'AI & IT Discovery',
-    badge: 'Recommended',
-    header: 'DhiGrowth IT Services',
-    body: `Hello {{name}}! 👋 Welcome to DhiGrowth IT Services.
-
-Are you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?
-
-Tap below to connect with our team! 🚀`,
-    footer: 'Tap an option to respond:',
+    id: '2950860201937776',
+    rawName: 'new_client_welcome',
+    name: 'new_client_welcome',
+    displayName: 'new_client_welcome',
+    badge: 'Marketing',
+    category: 'MARKETING',
+    varsCount: '3 VARS',
+    header: '{{1}}',
+    body: `"Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!"`,
+    footer: '',
     buttons: [
-      { id: 'btn_yes_interested', title: "Yes, I'm interested" },
-      { id: 'btn_tell_more', title: 'Tell me more' },
+      { id: 'btn_thank_you', title: '"Thank you!"' },
     ],
   },
   {
-    id: 'consultation',
-    name: 'Free 15-Min Call',
-    badge: 'Popular',
-    header: 'Special Tech Invitation',
-    body: `Hi {{name}}! 🚀 We're offering complimentary 15-minute technology consultation sessions this week for ambitious founders.
-
-Would you like us to schedule a quick call with our lead tech architect?`,
-    footer: 'Select your choice below:',
-    buttons: [
-      { id: 'btn_yes_schedule', title: 'Yes, Schedule Call' },
-      { id: 'btn_available_times', title: 'Share Times' },
-    ],
+    id: '1744607210078710',
+    rawName: 'hello_world',
+    name: 'hello_world',
+    displayName: 'hello_world',
+    badge: 'Utility',
+    category: 'UTILITY',
+    header: 'Hello World',
+    body: 'Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.',
+    footer: 'WhatsApp Business Platform sample message',
+    buttons: [],
   },
   {
-    id: 'crm_demo',
-    name: 'WhatsApp CRM Demo',
-    badge: 'High Conversion',
-    header: 'WhatsApp Automation',
-    body: `Hello {{name}}! Want to see a live 2-minute demo of 24/7 AI lead capture, broadcast marketing, and automated team inboxes on WhatsApp?`,
-    footer: 'Tap below to see it live:',
-    buttons: [
-      { id: 'btn_yes_demo', title: 'Yes, Send Demo' },
-      { id: 'btn_chat_agent', title: 'Chat with Agent' },
-    ],
-  },
-  {
-    id: 'custom',
+    id: 'tpl_custom_template',
+    rawName: 'custom_template',
     name: 'Custom Template',
+    displayName: 'Custom Template',
     badge: 'Freeform',
+    category: 'MARKETING',
+    varsCount: '1 VARS',
     header: 'DhiGrowth IT Services',
-    body: `Hi {{name}}! We would love to share our latest updates with you. Would you like more details?`,
-    footer: 'Tap below to reply:',
+    body: 'Hi {{name}}! We would love to share our latest updates with you. Would you like more details?',
+    footer: 'updates, details, info, more, custom',
     buttons: [
       { id: 'btn_yes', title: 'Yes, please' },
       { id: 'btn_no', title: 'Not right now' },
     ],
   },
 ];
+
+export const formatTemplatePreset = (tpl) => {
+  const rawName = tpl.name || tpl.displayName || 'template';
+  const displayName = tpl.displayName || (
+    tpl.name === 'new_client_welcome' ? 'new_client_welcome' :
+    tpl.name === 'hello_world' ? 'hello_world' :
+    tpl.name === 'custom_template' ? 'Custom Template' :
+    tpl.name
+  );
+
+  let header = tpl.header_content || tpl.header || '';
+  if (tpl.header_type === 'TEXT' && tpl.header_content) {
+    header = tpl.header_content;
+  }
+  const body = tpl.body_text || tpl.body || '';
+  const footer = tpl.footer_text || tpl.footer || '';
+
+  let buttons = [];
+  if (Array.isArray(tpl.buttons)) {
+    buttons = tpl.buttons.map((b, idx) => ({
+      id: b.id || `btn_${idx + 1}`,
+      title: (b.text || b.title || '').replace(/^["']|["']$/g, '').trim(),
+    })).filter((b) => b.title);
+  }
+
+  const category = (tpl.category || 'MARKETING').toUpperCase();
+  const badge = tpl.badge || (category === 'UTILITY' ? 'Utility' : 'Marketing');
+  const varsCount = Array.isArray(tpl.variables) && tpl.variables.length > 0
+    ? `${tpl.variables.length} VARS`
+    : (body.match(/\{\{[^}]+\}\}/g)?.length ? `${new Set(body.match(/\{\{[^}]+\}\}/g)).size} VARS` : null);
+
+  return {
+    id: String(tpl.id || tpl.name),
+    rawName,
+    name: displayName,
+    badge,
+    category,
+    varsCount,
+    header,
+    body,
+    footer,
+    buttons,
+    status: tpl.status || 'APPROVED',
+  };
+};
 
 const DYNAMIC_TAGS = [
   { tag: '{{name}}', label: 'Full Name', sample: 'Sri' },
@@ -92,15 +126,114 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     showToast,
   } = useApp();
 
-  const [selectedPresetId, setSelectedPresetId] = useState('discovery');
-  const [headerText, setHeaderText] = useState(TEMPLATE_PRESETS[0].header);
-  const [bodyText, setBodyText] = useState(TEMPLATE_PRESETS[0].body);
-  const [footerText, setFooterText] = useState(TEMPLATE_PRESETS[0].footer);
-  const [button1Text, setButton1Text] = useState(TEMPLATE_PRESETS[0].buttons[0].title);
-  const [button2Text, setButton2Text] = useState(TEMPLATE_PRESETS[0].buttons[1].title);
+  const [presets, setPresets] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const deletedKey = `dhigrowth_deleted_templates_${currentWorkspaceId || 'default'}`;
+        let deletedList = [];
+        try {
+          const s = localStorage.getItem(deletedKey);
+          if (s) deletedList = JSON.parse(s);
+        } catch {}
+
+        const saved = localStorage.getItem(`dhigrowth_templates_${currentWorkspaceId || 'default'}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const active = parsed.filter(t => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+            if (active.length > 0) {
+              return active.map(formatTemplatePreset);
+            }
+          }
+        }
+      }
+    } catch {}
+    return DEFAULT_WORKSPACE_PRESETS;
+  });
+
+  const initialPreset = presets[0] || DEFAULT_WORKSPACE_PRESETS[0];
+  const [selectedPresetId, setSelectedPresetId] = useState(initialPreset.id);
+  const [headerText, setHeaderText] = useState(initialPreset.header || '');
+  const [bodyText, setBodyText] = useState(initialPreset.body || '');
+  const [footerText, setFooterText] = useState(initialPreset.footer || '');
+  const [button1Text, setButton1Text] = useState(initialPreset.buttons[0]?.title || '');
+  const [button2Text, setButton2Text] = useState(initialPreset.buttons[1]?.title || '');
   const [showPreview, setShowPreview] = useState(true);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastSummary, setBroadcastSummary] = useState(null);
+
+  // Sync templates dynamically from workspace store & API
+  useEffect(() => {
+    if (!isBroadcastTemplateModalOpen) return;
+
+    let isMounted = true;
+    const fetchLatestTemplates = async () => {
+      try {
+        const deletedKey = `dhigrowth_deleted_templates_${currentWorkspaceId || 'default'}`;
+        let deletedList = [];
+        try {
+          const s = localStorage.getItem(deletedKey);
+          if (s) deletedList = JSON.parse(s);
+        } catch {}
+
+        let list = null;
+        const saved = localStorage.getItem(`dhigrowth_templates_${currentWorkspaceId || 'default'}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              list = parsed;
+            }
+          } catch {}
+        }
+
+        try {
+          const res = await fetch(`${BACKEND_URL}/api/meta/templates?workspaceId=${encodeURIComponent(currentWorkspaceId || 'default')}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.templates && Array.isArray(data.templates) && data.templates.length > 0) {
+              list = data.templates;
+            }
+          }
+        } catch {}
+
+        if (!list) {
+          try {
+            const res = await fetch(`http://localhost:4000/api/meta/templates?workspaceId=${encodeURIComponent(currentWorkspaceId || 'default')}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data?.templates && Array.isArray(data.templates) && data.templates.length > 0) {
+                list = data.templates;
+              }
+            }
+          } catch {}
+        }
+
+        if (list && isMounted) {
+          const filtered = list.filter(t => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+          const formatted = filtered.map(formatTemplatePreset);
+          if (formatted.length > 0) {
+            setPresets(formatted);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not refresh templates:', err);
+      }
+    };
+
+    fetchLatestTemplates();
+    return () => { isMounted = false; };
+  }, [isBroadcastTemplateModalOpen, currentWorkspaceId]);
+
+  // Ensure current selection is valid when presets update
+  useEffect(() => {
+    if (presets && presets.length > 0) {
+      const current = presets.find((p) => p.id === selectedPresetId);
+      if (!current) {
+        handleSelectPreset(presets[0]);
+      }
+    }
+  }, [presets, selectedPresetId]);
 
   // Extract unique contacts from chats
   const [selectedContacts, setSelectedContacts] = useState(() => {
@@ -197,12 +330,20 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     setSelectedContacts([]);
   };
 
-  // Live preview text with resolved {{name}}
+  // Live preview text with resolved {{name}} and numbered variables
   const previewSampleName = selectedContacts[0]?.name || 'Sri';
-  const resolvedPreviewText = bodyText
+  const resolvedPreviewText = (bodyText || '')
     .replaceAll('{{name}}', previewSampleName)
     .replaceAll('{{first_name}}', previewSampleName.split(' ')[0] || previewSampleName)
-    .replaceAll('{{phone}}', selectedContacts[0]?.phone ? `+${selectedContacts[0].phone}` : '+919791471277');
+    .replaceAll('{{phone}}', selectedContacts[0]?.phone ? `+${selectedContacts[0].phone}` : '+919791471277')
+    .replaceAll('{{1}}', previewSampleName)
+    .replaceAll('{{2}}', 'Diwali & New Year')
+    .replaceAll('{{3}}', 'DhiGrowth IT Services');
+
+  const resolvedPreviewHeader = (headerText || '')
+    .replaceAll('{{name}}', previewSampleName)
+    .replaceAll('{{first_name}}', previewSampleName.split(' ')[0] || previewSampleName)
+    .replaceAll('{{1}}', previewSampleName);
 
   const handleBroadcast = async () => {
     if (!bodyText.trim()) {
@@ -218,11 +359,14 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     setIsBroadcasting(true);
     setBroadcastSummary(null);
 
-    const buttons = [
-      { id: 'btn_yes', title: button1Text.trim() || 'Yes' },
-    ];
+    const selectedPreset = presets.find((p) => p.id === selectedPresetId) || presets[0];
+
+    const buttons = [];
+    if (button1Text.trim()) {
+      buttons.push({ id: 'btn_1', title: button1Text.trim() });
+    }
     if (button2Text.trim()) {
-      buttons.push({ id: 'btn_more', title: button2Text.trim() });
+      buttons.push({ id: 'btn_2', title: button2Text.trim() });
     }
 
     const payload = {
@@ -230,6 +374,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
         name: c.name,
         phone: c.phone,
       })),
+      templateName: selectedPreset?.rawName || selectedPreset?.name || 'custom_template',
       headerText: headerText.trim() || undefined,
       bodyText: bodyText.trim(),
       footerText: footerText.trim() || undefined,
@@ -361,11 +506,16 @@ export const BroadcastTemplateModal = ({ onClose }) => {
         <div className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
           {/* Preset Selector */}
           <div>
-            <label className="block text-xs font-bold text-[#344054] mb-2 uppercase tracking-wide">
-              1. Choose Template Preset
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {TEMPLATE_PRESETS.map((preset) => {
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-bold text-[#344054] uppercase tracking-wide">
+                1. Choose Template Preset ({presets.length} Active Templates)
+              </label>
+              <span className="text-[11px] text-[#0284C7] font-semibold bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">
+                Synced from Meta Templates
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {presets.map((preset) => {
                 const isSelected = selectedPresetId === preset.id;
                 return (
                   <button
@@ -380,15 +530,27 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                   >
                     <div>
                       <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="text-xs font-bold text-[#101828] line-clamp-1">{preset.name}</span>
+                        <span className="text-xs font-bold text-[#101828] truncate">{preset.name}</span>
                         {isSelected && <Check className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
                       </div>
-                      <span className="text-[10px] text-[#0284C7] font-semibold bg-[#E0F2FE] px-1.5 py-0.5 rounded-sm">
-                        {preset.badge}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] text-[#0284C7] font-semibold bg-[#E0F2FE] px-1.5 py-0.5 rounded-sm uppercase tracking-wide">
+                          {preset.badge || preset.category}
+                        </span>
+                        {preset.varsCount && (
+                          <span className="text-[10px] text-[#475467] font-semibold bg-[#F2F4F7] px-1.5 py-0.5 rounded-sm">
+                            {preset.varsCount}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-sm border border-emerald-200">
+                          APPROVED
+                        </span>
+                      </div>
                     </div>
                     <div className="mt-2 text-[10px] text-[#475467] line-clamp-2">
-                      {preset.buttons[0]?.title} • {preset.buttons[1]?.title}
+                      {preset.buttons && preset.buttons.length > 0
+                        ? preset.buttons.map((b) => b.title).join(' • ')
+                        : (preset.footer || 'Standard Meta notification')}
                     </div>
                   </button>
                 );
@@ -527,7 +689,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                     {headerText && (
                       <div className="font-bold text-[13px] text-[#111B21] border-b border-gray-100 pb-1.5 flex items-center gap-1.5">
                         <Zap className="w-3.5 h-3.5 text-[#0284C7]" />
-                        <span>{headerText}</span>
+                        <span>{resolvedPreviewHeader || headerText}</span>
                       </div>
                     )}
                     <div className="text-[12px] text-[#111B21] whitespace-pre-wrap leading-relaxed">
