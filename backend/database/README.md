@@ -40,7 +40,7 @@ Organizations (Billing Entity, GSTIN, Legal Name)
 Requires Docker Desktop installed.
 
 ```bash
-cd database
+cd backend/database
 docker compose up -d
 ```
 

@@ -12,17 +12,17 @@ wappilot/
 │   └── package.json      # Frontend client dependencies
 │
 ├── backend/              # Node.js + Express API Gateway
-│   ├── index.js          # Server entry point
+│   ├── database/         # PostgreSQL / Supabase SQL schemas & migrations
+│   ├── index.js          # Monolithic server entry point (API + Frontend SPA)
 │   ├── *Service.js       # Business logic (Meta, AI, Invoices, Billing, etc.)
 │   ├── *Store.json       # JSON persistence stores
 │   ├── webhookHandler.js # Meta WhatsApp/Instagram Cloud API webhooks
 │   └── package.json      # Backend server dependencies
 │
-├── database/             # PostgreSQL / Supabase SQL schemas & migrations
 ├── scripts/              # Automation and screenshot scripts
 ├── package.json          # Root workspace configuration & scripts
-├── render.yaml           # Multi-service Render deployment configuration
-└── Dockerfile            # Multi-stage production container
+├── render.yaml           # Unified monolithic deployment configuration
+└── Dockerfile            # Unified production container
 ```
 
 ---

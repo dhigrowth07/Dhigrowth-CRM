@@ -101,7 +101,7 @@ export async function initAutomationsStore() {
         isCloudAutomationsTableAvailable = true;
         console.log('☁️ [AutomationsService] Connected to Supabase Cloud automations table');
       } else {
-        console.log('ℹ️ [AutomationsService] Supabase automations table not yet created. Using local JSON store. (Run database/migrations/01_automations_and_drips.sql to activate in cloud)');
+        console.log('ℹ️ [AutomationsService] Supabase automations table not yet created. Using local JSON store. (Run backend/database/migrations/01_automations_and_drips.sql to activate in cloud)');
       }
     } catch (err) {
       console.log('ℹ️ [AutomationsService] Supabase check notice:', err.message);

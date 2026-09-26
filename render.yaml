@@ -1,15 +1,14 @@
 services:
   # ==============================================================================
-  # 1. WAP PILOT Backend (Node.js / Express Web Service)
+  # WAP PILOT Monolith (Unified Express API + Frontend SPA + Backend Database)
   # ==============================================================================
   - type: web
-    name: wapppilot-backend
+    name: wapppilot-monolith
     runtime: node
     plan: free
     region: singapore
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: node index.js
+    buildCommand: npm install && npm run build
+    startCommand: node server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -43,31 +42,3 @@ services:
       - key: RAZORPAY_KEY_SECRET
         sync: false
 
-  # ==============================================================================
-  # 2. WAP PILOT Frontend (Vite React SPA Static Site)
-  # ==============================================================================
-  - type: static
-    name: wapppilot-frontend
-    plan: free
-    region: singapore
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    publishDir: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_BACKEND_URL
-        fromService:
-          type: web
-          name: wapppilot-backend
-          property: host
-      - key: VITE_SUPABASE_URL
-        sync: false
-      - key: VITE_SUPABASE_ANON_KEY
-        sync: false
-      - key: VITE_DEFAULT_WORKSPACE_ID
-        value: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
-      - key: VITE_RAZORPAY_KEY_ID
-        sync: false

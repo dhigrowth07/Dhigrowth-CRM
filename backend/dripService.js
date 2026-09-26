@@ -114,7 +114,7 @@ export async function initDripStore() {
         isCloudDripTableAvailable = true;
         console.log('☁️ [DripService] Connected to Supabase Cloud drip_campaigns table');
       } else {
-        console.log('ℹ️ [DripService] Supabase drip_campaigns table not yet created. Using local JSON store. (Run database/migrations/01_automations_and_drips.sql to activate in cloud)');
+        console.log('ℹ️ [DripService] Supabase drip_campaigns table not yet created. Using local JSON store. (Run backend/database/migrations/01_automations_and_drips.sql to activate in cloud)');
       }
     } catch (err) {
       console.log('ℹ️ [DripService] Supabase check notice:', err.message);
