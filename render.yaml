@@ -7,8 +7,9 @@ services:
     runtime: node
     plan: free
     region: singapore
+    rootDir: backend
     buildCommand: npm install
-    startCommand: node server/index.js
+    startCommand: node index.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -49,6 +50,7 @@ services:
     name: wapppilot-frontend
     plan: free
     region: singapore
+    rootDir: frontend
     buildCommand: npm install && npm run build
     publishDir: dist
     routes:

@@ -10,11 +10,17 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+frontend/dist
 *.local
 .env
+frontend/.env
+backend/.env
 server/invoices.json
 server/aiConfig.json
 server/metaConfig.json
+backend/invoices.json
+backend/aiConfig.json
+backend/metaConfig.json
 
 # Editor directories and files
 .vscode/*
@@ -30,3 +36,7 @@ server/metaConfig.json
 # Uploaded user media
 public/uploads/*
 !public/uploads/.gitkeep
+frontend/public/uploads/*
+!frontend/public/uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep

@@ -1,0 +1,61 @@
+[
+  {
+    "id": "promo_dhi_1790412452310",
+    "code": "DHI",
+    "discountPercentage": 100,
+    "expiryDate": "2026-12-31",
+    "maxUses": null,
+    "usedCount": 0,
+    "usedBy": [],
+    "isActive": true,
+    "description": "Special 100% discount on DhiGrowth plans",
+    "createdAt": "2026-09-26T08:47:32.310Z"
+  },
+  {
+    "id": "promo_sri_1790405251915",
+    "code": "SRI",
+    "discountPercentage": 90,
+    "expiryDate": "2026-12-31",
+    "maxUses": null,
+    "usedCount": 0,
+    "usedBy": [],
+    "isActive": true,
+    "description": "Special promo",
+    "createdAt": "2026-09-26T06:47:31.915Z"
+  },
+  {
+    "id": "promo_growth30",
+    "code": "GROWTH30",
+    "discountPercentage": 30,
+    "expiryDate": "2026-11-30",
+    "maxUses": 50,
+    "usedCount": 0,
+    "usedBy": [],
+    "isActive": true,
+    "description": "Exclusive 30% discount for expanding creator & e-commerce teams",
+    "createdAt": "2026-09-16T06:17:19.812Z"
+  },
+  {
+    "id": "promo_flash80",
+    "code": "FLASH80",
+    "discountPercentage": 80,
+    "expiryDate": "2026-08-15",
+    "maxUses": 10,
+    "usedCount": 10,
+    "usedBy": [
+      {
+        "id": "red_003",
+        "username": "early_founder",
+        "tenantName": "Early Founder Labs",
+        "workspaceId": "b0000000-0000-0000-0000-000000000003",
+        "planId": "Business",
+        "discountPercentage": 80,
+        "amountSaved": "₹4,479",
+        "redeemedAt": "2026-08-14T10:00:00.000Z"
+      }
+    ],
+    "isActive": true,
+    "description": "Independence Day flash discount: 80% off (Limited seats)",
+    "createdAt": "2026-08-01T00:00:00.000Z"
+  }
+]
