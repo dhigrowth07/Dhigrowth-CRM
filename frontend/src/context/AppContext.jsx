@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import bcrypt from 'bcryptjs';
 import {
   isSupabaseConfigured,
+  supabase,
   getWalletData,
   getContacts,
   getConversations,
@@ -2876,10 +2877,10 @@ export const AppProvider = ({ children }) => {
 
   // Send Message in Inbox
   const sendMessage = (text, sender = 'agent', explicitChatId = null) => {
-    if (!text.trim()) return;
+    if (!text || !text.trim()) return null;
 
     const targetChatId = explicitChatId || activeChatId;
-    if (!targetChatId) return;
+    if (!targetChatId) return null;
 
     const now = Date.now();
     const newMsg = {
@@ -2888,6 +2889,7 @@ export const AppProvider = ({ children }) => {
       text,
       time: new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       timestamp: now,
+      status: sender === 'agent' ? 'sent' : 'delivered',
     };
 
     persistChatUpdate(targetChatId, (prev) => {
@@ -2910,13 +2912,13 @@ export const AppProvider = ({ children }) => {
     }));
 
     // Persist message to Supabase so it lives in the cloud database
-    if (supabase) {
+    if (isSupabaseConfigured && supabase) {
       (async () => {
         try {
           const chatObj = (chats || []).find((c) => c.id === targetChatId);
           let convId = chatObj?.conversationId;
           const ws = chatObj?.workspaceId || currentWorkspaceId;
-          const chType = chatObj?.channel || 'instagram';
+          const chType = chatObj?.channel || 'whatsapp';
 
           if (!convId) {
             const { data: convCheck } = await supabase
@@ -3130,6 +3132,23 @@ export const AppProvider = ({ children }) => {
         }));
       })();
     }
+
+    return newMsg;
+  };
+
+  const updateMessageStatus = (chatId, messageId, status, error = null) => {
+    if (!chatId || !messageId) return;
+    persistChatUpdate(chatId, (prev) => {
+      return prev.map((c) => {
+        if (c.id !== chatId) return c;
+        return {
+          ...c,
+          messages: (c.messages || []).map((m) =>
+            m.id === messageId ? { ...m, status, ...(error ? { error } : {}) } : m
+          ),
+        };
+      });
+    });
   };
 
   const setAiForChat = (chatId, isAiEnabled) => {
@@ -3467,6 +3486,7 @@ export const AppProvider = ({ children }) => {
         showDesktopNotification,
         requestNotificationPermission,
         sendMessage,
+        updateMessageStatus,
         toggleAiForChat,
         setAiForChat,
         addInternalNote,

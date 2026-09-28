@@ -62,6 +62,7 @@ export const TeamInbox = () => {
     openChat,
     requestNotificationPermission,
     sendMessage,
+    updateMessageStatus,
     toggleAiForChat,
     setAiForChat,
     addInternalNote,
@@ -813,16 +814,21 @@ export const TeamInbox = () => {
     }, 6000);
 
     // 1. Immediately append to chat in UI as Human Support Agent
-    sendMessage(text, 'agent');
+    let sentMsg = null;
+    try {
+      sentMsg = sendMessage(text, 'agent');
+    } catch (uiErr) {
+      console.warn('UI append note:', uiErr);
+    }
 
     // 2. Dispatch to live Meta WhatsApp Cloud API via server endpoint
     try {
-      const recipient = activeChat.phone || '919791471277';
-      const cleanChannel = (activeChat.channel || 'whatsapp').toLowerCase();
+      const recipient = activeChat?.phone || '919791471277';
+      const cleanChannel = (activeChat?.channel || 'whatsapp').toLowerCase();
       const payload = {
         recipientPhone: recipient,
         text: text,
-        conversationId: activeChat.conversationId || activeChat.id,
+        conversationId: activeChat?.conversationId || activeChat?.id,
         channelType: cleanChannel,
         phoneNumberId: metaConfig?.phoneNumberId || '',
         accessToken: metaConfig?.accessToken || '',
@@ -848,30 +854,46 @@ export const TeamInbox = () => {
         console.warn('Primary send attempt error:', netErr.message);
       }
 
-      if (!res || !res.ok) {
+      let data = {};
+      if (res && res.ok) {
+        try {
+          data = await res.json();
+        } catch {}
+      }
+
+      // If remote Render failed or didn't deliver to WhatsApp, fallback to local backend if reachable
+      if (!res || !res.ok || (data && !data.deliveredToWhatsApp)) {
         try {
           const controllerLocal = new AbortController();
           const timeoutLocal = setTimeout(() => controllerLocal.abort(), 6000);
-          res = await fetch('http://localhost:4000/api/send-manual-message', {
+          const localRes = await fetch('http://localhost:4000/api/send-manual-message', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             signal: controllerLocal.signal,
           });
           clearTimeout(timeoutLocal);
-        } catch {}
-      }
-
-      let data = {};
-      if (res) {
-        try {
-          data = await res.json();
-        } catch {}
+          if (localRes && localRes.ok) {
+            const localData = await localRes.json();
+            if (localData && (localData.deliveredToWhatsApp || localData.success)) {
+              res = localRes;
+              data = localData;
+            }
+          }
+        } catch (localErr) {
+          console.warn('Local fallback attempt error:', localErr.message);
+        }
       }
 
       if (data.deliveredToWhatsApp) {
+        if (sentMsg?.id && activeChat?.id && typeof updateMessageStatus === 'function') {
+          updateMessageStatus(activeChat.id, sentMsg.id, 'delivered');
+        }
         showToast(`🚀 Delivered to ${recipient} on WhatsApp!`, 'success');
       } else if (data.errorDetails) {
+        if (sentMsg?.id && activeChat?.id && typeof updateMessageStatus === 'function') {
+          updateMessageStatus(activeChat.id, sentMsg.id, 'failed', data.errorDetails.details || data.errorDetails.message);
+        }
         if (data.errorDetails.code === 190) {
           showToast(`⚠️ Meta Token Expired: Please update access token in Profile Settings.`, 'error');
         } else if (data.errorDetails.code === 131047) {
@@ -882,14 +904,26 @@ export const TeamInbox = () => {
           showToast(`⚠️ Meta API (${data.errorDetails.code || 'Error'}): ${data.errorDetails.details || data.errorDetails.message}`, 'error');
         }
       } else if (data.error) {
+        if (sentMsg?.id && activeChat?.id && typeof updateMessageStatus === 'function') {
+          updateMessageStatus(activeChat.id, sentMsg.id, 'failed', data.error);
+        }
         showToast(`⚠️ WhatsApp dispatch error: ${data.error}`, 'error');
       } else if (!res || !res.ok) {
+        if (sentMsg?.id && activeChat?.id && typeof updateMessageStatus === 'function') {
+          updateMessageStatus(activeChat.id, sentMsg.id, 'failed', 'Backend connection failed');
+        }
         showToast(`⚠️ Backend connection failed. Ensure server is online.`, 'error');
       } else {
+        if (sentMsg?.id && activeChat?.id && typeof updateMessageStatus === 'function') {
+          updateMessageStatus(activeChat.id, sentMsg.id, 'delivered');
+        }
         showToast(`Saved to conversation timeline`, 'info');
       }
     } catch (err) {
       console.warn('Manual send note:', err);
+      if (sentMsg?.id && activeChat?.id && typeof updateMessageStatus === 'function') {
+        updateMessageStatus(activeChat.id, sentMsg.id, 'failed', err.message);
+      }
       showToast(`⚠️ Send failed: ${err.message}`, 'error');
     } finally {
       clearTimeout(safetyTimer);
@@ -898,7 +932,11 @@ export const TeamInbox = () => {
   };
 
   const handleSendCatalogueToChat = (text) => {
-    sendMessage(text, 'agent');
+    try {
+      sendMessage(text, 'agent');
+    } catch (e) {
+      console.warn('UI append note:', e);
+    }
     try {
       const recipient = activeChat?.phone || '919791471277';
       fetch(`${BACKEND_URL}/api/send-manual-message`, {
