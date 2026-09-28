@@ -806,6 +806,11 @@ export const TeamInbox = () => {
     setInputMessage('');
     setIsSendingLive(true);
 
+    // Safety timeout: auto-unlock the send button after 6 seconds even on network stall
+    const safetyTimer = setTimeout(() => {
+      setIsSendingLive(false);
+    }, 6000);
+
     // 1. Immediately append to chat in UI as Human Support Agent
     sendMessage(text, 'agent');
 
@@ -825,10 +830,12 @@ export const TeamInbox = () => {
         username: currentUser?.username,
       };
 
+      console.log('📤 [TeamInbox] Dispatching manual message:', payload);
+
       let res;
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         res = await fetch(`${BACKEND_URL}/api/send-manual-message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -843,7 +850,7 @@ export const TeamInbox = () => {
       if (!res || !res.ok) {
         try {
           const controllerLocal = new AbortController();
-          const timeoutLocal = setTimeout(() => controllerLocal.abort(), 8000);
+          const timeoutLocal = setTimeout(() => controllerLocal.abort(), 6000);
           res = await fetch('http://localhost:4000/api/send-manual-message', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -854,26 +861,37 @@ export const TeamInbox = () => {
         } catch {}
       }
 
-      const data = res ? await res.json() : {};
+      let data = {};
+      if (res) {
+        try {
+          data = await res.json();
+        } catch {}
+      }
+
       if (data.deliveredToWhatsApp) {
         showToast(`🚀 Delivered to ${recipient} on WhatsApp!`, 'success');
       } else if (data.errorDetails) {
         if (data.errorDetails.code === 190) {
-          showToast(`⚠️ Meta Token Expired: Your 24-hour temporary access token has expired on Meta. Please generate a renewed or Permanent System User Token in Profile Settings.`, 'error');
+          showToast(`⚠️ Meta Token Expired: Please update access token in Profile Settings.`, 'error');
         } else if (data.errorDetails.code === 131047) {
-          showToast(`⚠️ 24-Hour Window Closed: Customer hasn't replied in 24 hours. Please send an Approved Template (e.g. hello_world) to re-engage.`, 'error');
+          showToast(`⚠️ 24-Hour Window Closed: Customer hasn't replied in 24h. Send an Approved Template.`, 'error');
         } else if (data.errorDetails.code === 131030) {
-          showToast(`⚠️ Meta Sandbox Recipient: ${recipient} is not in your Meta Allowed Recipients list. Add it in Meta Developers -> WhatsApp -> API Setup.`, 'error');
+          showToast(`⚠️ Sandbox Recipient: ${recipient} is not in Meta Allowed Recipients list.`, 'error');
         } else {
           showToast(`⚠️ Meta API (${data.errorDetails.code || 'Error'}): ${data.errorDetails.details || data.errorDetails.message}`, 'error');
         }
+      } else if (data.error) {
+        showToast(`⚠️ WhatsApp dispatch error: ${data.error}`, 'error');
+      } else if (!res || !res.ok) {
+        showToast(`⚠️ Backend connection failed. Ensure server is online.`, 'error');
       } else {
-        showToast(`Sent manually as Support Agent`, 'success');
+        showToast(`Saved to conversation timeline`, 'info');
       }
     } catch (err) {
       console.warn('Manual send note:', err);
-      showToast(`Sent manually as Support Agent`, 'success');
+      showToast(`⚠️ Send failed: ${err.message}`, 'error');
     } finally {
+      clearTimeout(safetyTimer);
       setIsSendingLive(false);
     }
   };
@@ -2045,7 +2063,9 @@ export const TeamInbox = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleSend();
+                  if (!isSendingLive && inputMessage.trim()) {
+                    handleSend();
+                  }
                 }
               }}
               className="w-full bg-transparent text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none resize-none min-h-[44px] max-h-28 leading-relaxed"
