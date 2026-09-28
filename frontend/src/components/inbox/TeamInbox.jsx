@@ -812,13 +812,14 @@ export const TeamInbox = () => {
     // 2. Dispatch to live Meta WhatsApp Cloud API via server endpoint
     try {
       const recipient = activeChat.phone || '919791471277';
+      const cleanChannel = (activeChat.channel || 'whatsapp').toLowerCase();
       const payload = {
         recipientPhone: recipient,
         text: text,
         conversationId: activeChat.conversationId || activeChat.id,
-        channelType: activeChat.channel || 'whatsapp',
-        phoneNumberId: metaConfig?.phoneNumberId,
-        accessToken: metaConfig?.accessToken,
+        channelType: cleanChannel,
+        phoneNumberId: metaConfig?.phoneNumberId || '',
+        accessToken: metaConfig?.accessToken || '',
         workspaceId: currentWorkspaceId,
         userId: currentUser?.username || currentUser?.slug,
         username: currentUser?.username,
@@ -826,20 +827,30 @@ export const TeamInbox = () => {
 
       let res;
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         res = await fetch(`${BACKEND_URL}/api/send-manual-message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
+          signal: controller.signal,
         });
-      } catch {}
+        clearTimeout(timeoutId);
+      } catch (netErr) {
+        console.warn('Primary send attempt error:', netErr.message);
+      }
 
       if (!res || !res.ok) {
         try {
+          const controllerLocal = new AbortController();
+          const timeoutLocal = setTimeout(() => controllerLocal.abort(), 8000);
           res = await fetch('http://localhost:4000/api/send-manual-message', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
+            signal: controllerLocal.signal,
           });
+          clearTimeout(timeoutLocal);
         } catch {}
       }
 
@@ -878,9 +889,9 @@ export const TeamInbox = () => {
           recipientPhone: recipient,
           text: text,
           conversationId: activeChat?.conversationId || activeChat?.id,
-          channelType: activeChat?.channel || 'whatsapp',
-          phoneNumberId: metaConfig?.phoneNumberId,
-          accessToken: metaConfig?.accessToken,
+          channelType: (activeChat?.channel || 'whatsapp').toLowerCase(),
+          phoneNumberId: metaConfig?.phoneNumberId || '',
+          accessToken: metaConfig?.accessToken || '',
           workspaceId: currentWorkspaceId,
         }),
       }).catch(() => {});
