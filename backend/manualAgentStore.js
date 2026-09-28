@@ -10,11 +10,15 @@ let manualStore = {};
 
 function normalizeKey(str) {
   if (!str) return '';
-  const digitsOnly = String(str).replace(/[^0-9]/g, '');
+  const clean = String(str).trim();
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean)) {
+    return 'conv_' + clean.toLowerCase();
+  }
+  const digitsOnly = clean.replace(/[^0-9]/g, '');
   if (digitsOnly.length >= 10) {
     return 'phone_' + digitsOnly.slice(-10);
   }
-  return String(str).replace(/[^0-9a-zA-Z_-]/g, '').toLowerCase();
+  return clean.replace(/[^0-9a-zA-Z_-]/g, '').toLowerCase();
 }
 
 export function loadManualStore() {

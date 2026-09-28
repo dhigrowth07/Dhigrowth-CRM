@@ -3133,18 +3133,15 @@ export const AppProvider = ({ children }) => {
   };
 
   const setAiForChat = (chatId, isAiEnabled) => {
-    let targetConvId = null;
-    let targetContactName = '';
-    let targetPhone = '';
-    let targetWs = currentWorkspaceId;
+    const targetChat = chats.find((c) => c.id === chatId);
+    const targetConvId = targetChat?.conversationId || targetChat?.id || chatId;
+    const targetContactName = targetChat?.contactName || '';
+    const targetPhone = targetChat?.phone || '';
+    const targetWs = targetChat?.workspaceId || currentWorkspaceId;
 
     persistChatUpdate(chatId, (prev) => {
       return prev.map((c) => {
         if (c.id === chatId) {
-          targetConvId = c.conversationId || c.id;
-          targetContactName = c.contactName;
-          targetPhone = c.phone;
-          targetWs = c.workspaceId || targetWs;
           return { ...c, aiHandled: Boolean(isAiEnabled) };
         }
         return c;

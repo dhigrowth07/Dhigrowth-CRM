@@ -376,11 +376,17 @@ async function processIncomingChatMessage({
     }
 
     // 3.9 Check if conversation or contact phone is in Human / Manual Agent mode
-    const isManualByStore = isManualMode({ phone: senderIdentifier, conversationId });
-    const isManualByConvStatus = existingConv && (existingConv.status === 'human_agent' || existingConv.status === 'manual' || existingConv.status === 'agent');
+    let isManual = false;
+    if (existingConv && (existingConv.status === 'human_agent' || existingConv.status === 'manual' || existingConv.status === 'agent')) {
+      isManual = true;
+    } else if (existingConv && (existingConv.status === 'bot_active' || existingConv.status === 'ai')) {
+      isManual = false;
+    } else {
+      isManual = isManualMode({ phone: senderIdentifier, conversationId });
+    }
 
-    if (isManualByStore || isManualByConvStatus) {
-      console.log(`👤 [WebhookHandler] Conversation ${conversationId} / Contact ${senderIdentifier} is assigned to Manual Agent (store=${isManualByStore}, status=${existingConv?.status}). AI auto-reply is COMPLETELY DISABLED.`);
+    if (isManual) {
+      console.log(`👤 [WebhookHandler] Conversation ${conversationId} / Contact ${senderIdentifier} is assigned to Manual Agent (status=${existingConv?.status}). AI auto-reply is COMPLETELY DISABLED.`);
       return;
     }
 
