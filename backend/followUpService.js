@@ -136,42 +136,55 @@ export function scheduleFollowUps({
  * 2. Manual agent mode is not active
  * 3. 24-hour window has not elapsed
  */
-async function executeFollowUpStep(cleanPhone, step, scheduledForInboundTimestamp) {
-  const record = followUpStates.get(cleanPhone);
+async function executeFollowUpStep(cleanPhone, step, scheduledForInboundTimestamp, isForceTest = false) {
+  const supabase = getSupabase();
+  let record = followUpStates.get(cleanPhone);
+  if (!record && isForceTest) {
+    record = {
+      cleanPhone,
+      recipientPhone: cleanPhone,
+      customerName: 'Sri',
+      phoneNumberId: process.env.META_WHATSAPP_PHONE_NUMBER_ID || '1272943605907701',
+      accessToken: process.env.META_WHATSAPP_ACCESS_TOKEN,
+      workspaceId: 'b0000000-0000-0000-0000-000000000001',
+      channelId: 'd0000000-0000-0000-0000-000000000001',
+      conversationId: '02ac37bb-e41a-4858-923a-281ac8ae341c',
+    };
+  }
   if (!record) return;
 
-  // Condition 1: Check if a newer inbound message arrived after this schedule
-  if (record.lastInboundAt > scheduledForInboundTimestamp) {
-    console.log(`⏩ [FollowUpService] Step ${step} skipped for +${cleanPhone}: Customer is already actively chatting.`);
-    return;
-  }
+  if (!isForceTest) {
+    // Condition 1: Check if a newer inbound message arrived after this schedule
+    if (record.lastInboundAt > scheduledForInboundTimestamp) {
+      console.log(`⏩ [FollowUpService] Step ${step} skipped for +${cleanPhone}: Customer is already actively chatting.`);
+      return;
+    }
 
-  // Condition 2: Check if manual agent is active for this contact/conversation
-  if (isManualMode({ phone: cleanPhone, conversationId: record.conversationId })) {
-    console.log(`👤 [FollowUpService] Step ${step} skipped for +${cleanPhone}: Manual Agent mode is active.`);
-    return;
-  }
+    // Condition 2: Check if manual agent is active for this contact/conversation
+    if (isManualMode({ phone: cleanPhone, conversationId: record.conversationId })) {
+      console.log(`👤 [FollowUpService] Step ${step} skipped for +${cleanPhone}: Manual Agent mode is active.`);
+      return;
+    }
 
-  const supabase = getSupabase();
+    // Condition 3: Double check Supabase messages table for any newer inbound message in this conversation
+    if (supabase && record.conversationId) {
+      try {
+        const scheduledIso = new Date(scheduledForInboundTimestamp).toISOString();
+        const { data: newerInbounds } = await supabase
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', record.conversationId)
+          .eq('direction', 'inbound')
+          .gt('created_at', scheduledIso)
+          .limit(1);
 
-  // Condition 3: Double check Supabase messages table for any newer inbound message in this conversation
-  if (supabase && record.conversationId) {
-    try {
-      const scheduledIso = new Date(scheduledForInboundTimestamp).toISOString();
-      const { data: newerInbounds } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('conversation_id', record.conversationId)
-        .eq('direction', 'inbound')
-        .gt('created_at', scheduledIso)
-        .limit(1);
-
-      if (newerInbounds && newerInbounds.length > 0) {
-        console.log(`⏩ [FollowUpService] Step ${step} skipped for +${cleanPhone}: Customer replied in Supabase.`);
-        return;
+        if (newerInbounds && newerInbounds.length > 0) {
+          console.log(`⏩ [FollowUpService] Step ${step} skipped for +${cleanPhone}: Customer replied in Supabase.`);
+          return;
+        }
+      } catch (dbErr) {
+        console.warn('[FollowUpService] Error checking Supabase inbound messages:', dbErr.message);
       }
-    } catch (dbErr) {
-      console.warn('[FollowUpService] Error checking Supabase inbound messages:', dbErr.message);
     }
   }
 
@@ -293,6 +306,6 @@ export async function triggerTestFollowUp(phone, step = 1) {
     channelId: 'd0000000-0000-0000-0000-000000000001',
   };
 
-  await executeFollowUpStep(cleanPhone, step, Date.now() + 1000);
+  await executeFollowUpStep(cleanPhone, step, Date.now() + 1000, true);
   return { success: true, message: `Step ${step} follow-up triggered for +${cleanPhone}` };
 }

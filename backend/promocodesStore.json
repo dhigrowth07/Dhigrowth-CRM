@@ -1,5 +1,17 @@
 [
   {
+    "id": "promo_maddy_1790587953682",
+    "code": "MADDY",
+    "discountPercentage": 30,
+    "expiryDate": "2026-12-31",
+    "maxUses": null,
+    "usedCount": 0,
+    "usedBy": [],
+    "isActive": true,
+    "description": "Special 30% discount on DhiGrowth plans",
+    "createdAt": "2026-09-28T09:32:33.682Z"
+  },
+  {
     "id": "promo_dhi_1790412452310",
     "code": "DHI",
     "discountPercentage": 100,
