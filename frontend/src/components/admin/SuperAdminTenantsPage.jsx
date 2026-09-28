@@ -452,6 +452,9 @@ export const SuperAdminTenantsPage = () => {
     });
     init.send_due_all = true;
     init.team_inbox = true;
+    init['instagram-inbox'] = true;
+    init.instagram_inbox = true;
+    init.instagramInbox = true;
     init.ai_studio = true;
     init.meta_api = true;
     init.crm_leads = true;
@@ -471,10 +474,21 @@ export const SuperAdminTenantsPage = () => {
     permissions: getInitialPermissions(),
   });
 
+  function InstagramIcon(props) {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+      </svg>
+    );
+  }
+
   const getModuleIcon = (id) => {
     const map = {
       dashboard: LayoutGrid,
       inbox: Mail,
+      'instagram-inbox': InstagramIcon,
       leads: UserCheck,
       insights: BarChart3,
       files: Folder,
@@ -487,7 +501,7 @@ export const SuperAdminTenantsPage = () => {
       automations: Percent,
       templates: LayoutTemplate,
       'channel-whatsapp': Zap,
-      'channel-instagram': Radio,
+      'channel-instagram': InstagramIcon,
       'channel-messenger': Mail,
       'channel-line': Radio,
       channels: Layers,
@@ -514,6 +528,9 @@ export const SuperAdminTenantsPage = () => {
     const perms = tenant.permissions || {};
     if (featureId === 'inbox') {
       return perms['inbox'] !== false && perms['team_inbox'] !== false && perms['teamInbox'] !== false;
+    }
+    if (featureId === 'instagram-inbox') {
+      return perms['instagram-inbox'] !== false && perms['instagram_inbox'] !== false && perms['instagramInbox'] !== false;
     }
     if (featureId === 'leads') {
       return perms['leads'] !== false && perms['crm_leads'] !== false;
@@ -542,6 +559,9 @@ export const SuperAdminTenantsPage = () => {
     });
     patch.team_inbox = shouldEnable;
     patch.teamInbox = shouldEnable;
+    patch['instagram-inbox'] = shouldEnable;
+    patch.instagram_inbox = shouldEnable;
+    patch.instagramInbox = shouldEnable;
     patch.crm_leads = shouldEnable;
     patch.ai_studio = shouldEnable;
     patch.aiStudio = shouldEnable;
@@ -565,6 +585,11 @@ export const SuperAdminTenantsPage = () => {
       if (it.id === 'inbox') {
         patch.team_inbox = shouldEnable;
         patch.teamInbox = shouldEnable;
+      }
+      if (it.id === 'instagram-inbox') {
+        patch['instagram-inbox'] = shouldEnable;
+        patch.instagram_inbox = shouldEnable;
+        patch.instagramInbox = shouldEnable;
       }
       if (it.id === 'leads') patch.crm_leads = shouldEnable;
       if (it.id === 'ai-assistants') {
@@ -1717,6 +1742,9 @@ export const SuperAdminTenantsPage = () => {
                         updated.send_due_all = true;
                         updated.team_inbox = true;
                         updated.teamInbox = true;
+                        updated['instagram-inbox'] = true;
+                        updated.instagram_inbox = true;
+                        updated.instagramInbox = true;
                         updated.crm_leads = true;
                         updated.ai_studio = true;
                         updated.aiStudio = true;
@@ -1738,6 +1766,9 @@ export const SuperAdminTenantsPage = () => {
                         updated.send_due_all = false;
                         updated.team_inbox = false;
                         updated.teamInbox = false;
+                        updated['instagram-inbox'] = false;
+                        updated.instagram_inbox = false;
+                        updated.instagramInbox = false;
                         updated.crm_leads = false;
                         updated.ai_studio = false;
                         updated.aiStudio = false;
@@ -1785,6 +1816,10 @@ export const SuperAdminTenantsPage = () => {
                                   if (it.id === 'inbox') {
                                     updated.team_inbox = nextChecked;
                                     updated.teamInbox = nextChecked;
+                                  } else if (it.id === 'instagram-inbox') {
+                                    updated['instagram-inbox'] = nextChecked;
+                                    updated.instagram_inbox = nextChecked;
+                                    updated.instagramInbox = nextChecked;
                                   } else if (it.id === 'leads') {
                                     updated.crm_leads = nextChecked;
                                   } else if (it.id === 'ai-assistants') {

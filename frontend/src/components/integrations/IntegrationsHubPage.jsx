@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   PhoneCall,
   ShoppingBag,
@@ -6,14 +6,26 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { GoogleSheetsIntegrationModal } from './GoogleSheetsIntegrationModal';
 
 export const IntegrationsHubPage = () => {
   const { showToast, setActiveTab } = useApp();
+  const [isGoogleSheetsOpen, setIsGoogleSheetsOpen] = useState(false);
 
   const APPS = [
+    {
+      id: 'google_sheets',
+      name: 'Google Sheets',
+      badge: 'GS',
+      badgeBg: 'bg-[#0F9D58] text-white',
+      desc: 'Capture customer requirements (Service, Name, Phone & Purpose) via WhatsApp bot and stream them into your Google Sheet.',
+      actionText: 'Configure Sheets',
+      onClick: () => setIsGoogleSheetsOpen(true),
+    },
     {
       id: 'millis',
       name: 'Millis.ai',
@@ -96,6 +108,12 @@ export const IntegrationsHubPage = () => {
           </div>
         ))}
       </div>
+
+      {/* Google Sheets Configuration & Lead Viewer Modal */}
+      <GoogleSheetsIntegrationModal
+        isOpen={isGoogleSheetsOpen}
+        onClose={() => setIsGoogleSheetsOpen(false)}
+      />
     </div>
   );
 };

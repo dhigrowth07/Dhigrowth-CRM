@@ -1,8 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
-import { sendWhatsAppMessage, sendWhatsAppInteractiveButtons, sendInstagramMessage, sendMessengerMessage } from './metaService.js';
+import { sendWhatsAppMessage, sendWhatsAppInteractiveButtons, sendWhatsAppTypingIndicator, sendInstagramMessage, sendMessengerMessage } from './metaService.js';
 import { generateAIResponse } from './aiService.js';
 import { getTenantByPhoneNumberId } from './tenantMetaManager.js';
 import { isManualMode } from './manualAgentStore.js';
+import { sendLeadToGoogleSheets } from './googleSheetsService.js';
+import {
+  getQualificationSession,
+  updateQualificationSession,
+  clearQualificationSession,
+} from './leadQualificationStore.js';
+import { scheduleFollowUps } from './followUpService.js';
 
 import dotenv from 'dotenv';
 import path from 'path';
@@ -377,243 +384,48 @@ async function processIncomingChatMessage({
       return;
     }
 
-    // 4. Inbound Greeting Auto-Trigger: If client says 'hi', 'hello', etc., dispatch interactive buttons greeting!
-    const cleanMsg = (messageText || '').toLowerCase().trim();
-    const isGreeting = ['hi', 'hello', 'hey', 'start', 'menu', 'hlo', 'hai', 'hola'].includes(cleanMsg) || cleanMsg === 'hi!' || cleanMsg === 'hello!';
-
-    if (channelType === 'whatsapp' && isGreeting && phoneNumberId && accessToken) {
-      console.log(`🚀 [WebhookHandler] Inbound greeting "${messageText}" received from ${customerName}. Dispatching interactive greeting / approved template...`);
-      let dispatchedWamid = null;
-      const welcomeContent = "Hello sri! 👋 Welcome to DhiGrowth IT Services.\n\nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n\nTap below to connect with our team! 🚀\n\n[Buttons: Yes, I'm interested | Tell me more]";
-      const cleanPhone = (recipientPhone || senderIdentifier).replace(/[^0-9]/g, '');
-
-      try {
-        // Priority 1: Interactive Button Message (Session message - 0 cost, instant delivery, not rate-limited by marketing frequency caps)
-        const interactiveRes = await sendWhatsAppInteractiveButtons({
-          phoneNumberId,
-          accessToken,
-          recipientPhone: cleanPhone,
-          headerText: 'DhiGrowth IT Services',
-          bodyText: "Hello Sri! 👋 Welcome to DhiGrowth IT Services.\n\nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n\nTap below to connect with our team! 🚀",
-          footerText: 'Tap an option to respond:',
-          buttons: [
-            { id: 'btn_yes', title: "Yes, I'm interested" },
-            { id: 'btn_more', title: 'Tell me more' },
-          ],
-        });
-
-        if (interactiveRes?.messages?.[0]?.id) {
-          dispatchedWamid = interactiveRes.messages[0].id;
-          console.log(`✅ [WebhookHandler] Interactive greeting delivered to ${cleanPhone} (Meta WAMID: ${dispatchedWamid})`);
-        }
-      } catch (iErr) {
-        console.warn('[WebhookHandler] Interactive button note:', iErr.message);
-      }
-
-      // Priority 2: Fallback to approved template "hi" if interactive button fails
-      if (!dispatchedWamid) {
-        try {
-          const tplRes = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              recipient_type: 'individual',
-              to: cleanPhone,
-              type: 'template',
-              template: {
-                name: 'hi',
-                language: { code: 'en' },
-              },
-            }),
-          });
-
-          const tplData = await tplRes.json();
-          if (tplRes.ok && tplData.messages?.[0]?.id) {
-            dispatchedWamid = tplData.messages[0].id;
-            console.log(`✅ [WebhookHandler] Fallback "hi" template delivered to ${cleanPhone} (Meta WAMID: ${dispatchedWamid})`);
-          } else {
-            console.warn('[WebhookHandler] Meta template note:', tplData?.error?.message);
-          }
-        } catch (tErr) {
-          console.warn('[WebhookHandler] Error sending fallback template on hi:', tErr.message);
-        }
-      }
-
-      if (dispatchedWamid) {
-        await supabase.from('messages').insert([
-          {
-            workspace_id: effectiveWorkspaceId,
-            conversation_id: conversationId,
-            channel_id: channelId,
-            direction: 'outbound',
-            ai_generated: true,
-            type: 'text',
-            content: welcomeContent,
-            status: 'sent',
-            external_message_id: dispatchedWamid,
-          },
-        ]);
-
-        await supabase
-          .from('conversations')
-          .update({
-            last_message_text: welcomeContent,
-            last_message_at: new Date().toISOString(),
-            unread_count: 0,
-          })
-          .eq('id', conversationId);
-
-        console.log(`✨ Inbound greeting response completed! (Meta WAMID: ${dispatchedWamid})\n`);
-        return;
-      }
+    // 3.95 Send Official WhatsApp Typing Animation Indicator to Customer's Phone
+    if (channelType === 'whatsapp' && externalMessageId && phoneNumberId && accessToken) {
+      sendWhatsAppTypingIndicator({
+        phoneNumberId,
+        accessToken,
+        messageId: externalMessageId,
+      }).catch((tErr) => console.warn('[TypingIndicator] Note:', tErr.message));
     }
 
-    // Button quick-reply: "Yes, I'm interested" / "btn_yes" / "yes"
-    const isYesClick = cleanMsg.includes("yes, i'm interested") || cleanMsg.includes("yes, interested") || cleanMsg === 'btn_yes' || cleanMsg === 'yes';
-    if (isYesClick) {
-      const respText = "Awesome! 🚀 We're thrilled to connect. What type of project are you looking to build?\n\n1️⃣ Mobile App or Web Platform\n2️⃣ WhatsApp AI Auto-Pilot & CRM\n3️⃣ Custom Software / Workflow Automation\n\nReply with your preference and our solutions team will assist you!";
-      let outWamid = null;
-      if (sendReply) {
-        try {
-          const res = await sendReply(respText);
-          outWamid = res?.messages?.[0]?.id || null;
-          console.log(`✅ [WebhookHandler] Dispatched "Yes" reply to WhatsApp (WAMID: ${outWamid})`);
-        } catch (err) {
-          console.warn('[WebhookHandler] sendReply error on yes button:', err.message);
-        }
-      }
-      await supabase.from('messages').insert([{
-        workspace_id: effectiveWorkspaceId,
-        conversation_id: conversationId,
-        channel_id: channelId,
-        direction: 'outbound',
-        ai_generated: true,
-        type: 'text',
-        content: respText,
-        status: outWamid ? 'sent' : 'failed',
-        external_message_id: outWamid,
-      }]);
-      await supabase.from('conversations').update({ last_message_text: respText, last_message_at: new Date().toISOString(), unread_count: 0 }).eq('id', conversationId);
-      return;
+    // 3.96 Schedule 2-minute and 3-hour follow-up messages to maintain WhatsApp 24-hr session window
+    if (channelType === 'whatsapp') {
+      scheduleFollowUps({
+        recipientPhone: recipientPhone || senderIdentifier,
+        customerName,
+        conversationId,
+        channelId,
+        workspaceId: effectiveWorkspaceId,
+        phoneNumberId,
+        accessToken,
+      });
     }
 
-    // Button quick-reply: "Tell me more" / "btn_more" / "tell me"
-    const isMoreClick = cleanMsg.includes("tell me more") || cleanMsg.includes("tell me") || cleanMsg === 'btn_more' || cleanMsg === 'more';
-    if (isMoreClick) {
-      const respText = "At DhiGrowth IT Services, we help businesses grow with powerful technology:\n\n💻 Custom Apps & High-Converting Websites\n🤖 Meta-Approved WhatsApp Cloud API Automation\n📈 Omnichannel CRM & AI Sales Concierges\n\n👉 Learn more at: https://dhigrowth.com\n\nHow can we help your business today?";
-      let outWamid = null;
-      if (sendReply) {
-        try {
-          const res = await sendReply(respText);
-          outWamid = res?.messages?.[0]?.id || null;
-          console.log(`✅ [WebhookHandler] Dispatched "Tell me more" reply to WhatsApp (WAMID: ${outWamid})`);
-        } catch (err) {
-          console.warn('[WebhookHandler] sendReply error on tell me more:', err.message);
-        }
-      }
-      await supabase.from('messages').insert([{
-        workspace_id: effectiveWorkspaceId,
-        conversation_id: conversationId,
-        channel_id: channelId,
-        direction: 'outbound',
-        ai_generated: true,
-        type: 'text',
-        content: respText,
-        status: outWamid ? 'sent' : 'failed',
-        external_message_id: outWamid,
-      }]);
-      await supabase.from('conversations').update({ last_message_text: respText, last_message_at: new Date().toISOString(), unread_count: 0 }).eq('id', conversationId);
-      return;
-    }
+    // 4. Inbound Lead Qualification & Requirements Collection Flow
+    // Collects: 1. Service in DhiGrowth, 2. Customer Name, 3. Phone Number, 4. Project Purpose -> Pushes to Google Sheets
+    const qualificationHandled = await handleLeadQualificationFlow({
+      senderIdentifier,
+      customerName,
+      messageText,
+      channelType,
+      effectiveWorkspaceId,
+      conversationId,
+      channelId,
+      recipientPhone,
+      phoneNumberId,
+      accessToken,
+      sendReply,
+      supabase,
+      contactId,
+    });
 
-    // Option 1: Mobile App or Web Platform
-    const isOption1 = cleanMsg === '1' || cleanMsg === '1️⃣' || cleanMsg.includes('mobile app') || cleanMsg === 'app';
-    if (isOption1) {
-      const respText = "Awesome choice! 📱 We engineer high-performance iOS, Android, and Web applications built for scalability with Flutter, React Native, and robust cloud APIs.\n\nCould you tell us what type of app you have in mind (e.g., E-commerce, Booking, On-Demand, or SaaS) and any key features you need?";
-      let outWamid = null;
-      if (sendReply) {
-        try {
-          const res = await sendReply(respText);
-          outWamid = res?.messages?.[0]?.id || null;
-          console.log(`✅ [WebhookHandler] Dispatched Option 1 reply to WhatsApp (WAMID: ${outWamid})`);
-        } catch (err) {
-          console.warn('[WebhookHandler] sendReply error on option 1:', err.message);
-        }
-      }
-      await supabase.from('messages').insert([{
-        workspace_id: effectiveWorkspaceId,
-        conversation_id: conversationId,
-        channel_id: channelId,
-        direction: 'outbound',
-        ai_generated: true,
-        type: 'text',
-        content: respText,
-        status: outWamid ? 'sent' : 'failed',
-        external_message_id: outWamid,
-      }]);
-      await supabase.from('conversations').update({ last_message_text: respText, last_message_at: new Date().toISOString(), unread_count: 0 }).eq('id', conversationId);
-      return;
-    }
-
-    // Option 2: WhatsApp AI Auto-Pilot & CRM
-    const isOption2 = cleanMsg === '2' || cleanMsg === '2️⃣' || cleanMsg.includes('whatsapp crm') || cleanMsg.includes('crm') || cleanMsg.includes('auto-pilot');
-    if (isOption2) {
-      const respText = "Supercharge your business with WhatsApp Automation! 💬🤖\n\nWe provide:\n• Official Meta WhatsApp Cloud API setup\n• AI Sales Concierges (24/7 auto-pilot replies)\n• Automated Broadcast Campaigns & Lead Funnels\n• Multi-Agent Team Inbox\n\nHow many incoming leads or customer inquiries do you manage each day?";
-      let outWamid = null;
-      if (sendReply) {
-        try {
-          const res = await sendReply(respText);
-          outWamid = res?.messages?.[0]?.id || null;
-          console.log(`✅ [WebhookHandler] Dispatched Option 2 reply to WhatsApp (WAMID: ${outWamid})`);
-        } catch (err) {
-          console.warn('[WebhookHandler] sendReply error on option 2:', err.message);
-        }
-      }
-      await supabase.from('messages').insert([{
-        workspace_id: effectiveWorkspaceId,
-        conversation_id: conversationId,
-        channel_id: channelId,
-        direction: 'outbound',
-        ai_generated: true,
-        type: 'text',
-        content: respText,
-        status: outWamid ? 'sent' : 'failed',
-        external_message_id: outWamid,
-      }]);
-      await supabase.from('conversations').update({ last_message_text: respText, last_message_at: new Date().toISOString(), unread_count: 0 }).eq('id', conversationId);
-      return;
-    }
-
-    // Option 3: Custom Software / Workflow Automation
-    const isOption3 = cleanMsg === '3' || cleanMsg === '3️⃣' || cleanMsg.includes('custom software') || cleanMsg.includes('workflow') || cleanMsg.includes('automation');
-    if (isOption3) {
-      const respText = "Fantastic! 💻 We build enterprise-grade custom software, tailored web portals, and workflow automations to save your team hours every day.\n\nCould you describe the main operational bottleneck or workflow you are looking to automate?";
-      let outWamid = null;
-      if (sendReply) {
-        try {
-          const res = await sendReply(respText);
-          outWamid = res?.messages?.[0]?.id || null;
-          console.log(`✅ [WebhookHandler] Dispatched Option 3 reply to WhatsApp (WAMID: ${outWamid})`);
-        } catch (err) {
-          console.warn('[WebhookHandler] sendReply error on option 3:', err.message);
-        }
-      }
-      await supabase.from('messages').insert([{
-        workspace_id: effectiveWorkspaceId,
-        conversation_id: conversationId,
-        channel_id: channelId,
-        direction: 'outbound',
-        ai_generated: true,
-        type: 'text',
-        content: respText,
-        status: outWamid ? 'sent' : 'failed',
-        external_message_id: outWamid,
-      }]);
-      await supabase.from('conversations').update({ last_message_text: respText, last_message_at: new Date().toISOString(), unread_count: 0 }).eq('id', conversationId);
+    if (qualificationHandled) {
+      console.log(`✨ [WebhookHandler] Lead qualification turn handled for ${senderIdentifier}\n`);
       return;
     }
 
@@ -635,6 +447,8 @@ async function processIncomingChatMessage({
     let aiWamid = null;
     if (sendReply) {
       try {
+        // Allow customer to see "typing..." animation on WhatsApp for ~1.2s before the message arrives
+        await new Promise((resolve) => setTimeout(resolve, 1200));
         const sendResult = await sendReply(aiResponseText, aiImageUrl);
         aiWamid = sendResult?.messages?.[0]?.id || null;
         console.log(`📤 Outbound reply dispatched via Meta ${channelType.toUpperCase()} API. (WAMID: ${aiWamid})`);
@@ -683,6 +497,250 @@ async function processIncomingChatMessage({
   } catch (error) {
     console.error('Error in processIncomingChatMessage:', error);
   }
+}
+
+/**
+ * Conversational Lead Qualification:
+ * Greets customer -> Asks for DhiGrowth service -> Asks for Name -> Asks for Purpose -> Syncs to Google Sheets & CRM
+ */
+async function handleLeadQualificationFlow({
+  senderIdentifier,
+  customerName,
+  messageText,
+  channelType,
+  effectiveWorkspaceId,
+  conversationId,
+  channelId,
+  recipientPhone,
+  phoneNumberId,
+  accessToken,
+  sendReply,
+  supabase,
+  contactId,
+}) {
+  const cleanMsg = (messageText || '').trim();
+  const lowerMsg = cleanMsg.toLowerCase();
+  const session = getQualificationSession(senderIdentifier);
+
+  const cleanPhone = (recipientPhone || senderIdentifier).replace(/[^0-9]/g, '');
+
+  // Helper to dispatch outbound reply and record in Supabase
+  const dispatchBotReply = async (replyText) => {
+    let outWamid = null;
+    // Allow customer to see "typing..." animation on WhatsApp for ~1.2s before the message arrives
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    if (sendReply) {
+      try {
+        const res = await sendReply(replyText);
+        outWamid = res?.messages?.[0]?.id || null;
+      } catch (err) {
+        console.warn('[LeadQualification] sendReply error:', err.message);
+      }
+    }
+    if (supabase) {
+      try {
+        await supabase.from('messages').insert([{
+          workspace_id: effectiveWorkspaceId,
+          conversation_id: conversationId,
+          channel_id: channelId,
+          direction: 'outbound',
+          ai_generated: true,
+          type: 'text',
+          content: replyText,
+          status: outWamid ? 'sent' : 'failed',
+          external_message_id: outWamid,
+        }]);
+        await supabase.from('conversations').update({
+          last_message_text: replyText,
+          last_message_at: new Date().toISOString(),
+          unread_count: 0,
+        }).eq('id', conversationId);
+      } catch (dbErr) {
+        console.warn('[LeadQualification] DB record note:', dbErr.message);
+      }
+    }
+    return outWamid;
+  };
+
+  // 1. Reset / restart commands
+  if (['reset', 'restart', 'start over', 'menu'].includes(lowerMsg)) {
+    clearQualificationSession(senderIdentifier);
+  }
+
+  const isGreeting = ['hi', 'hello', 'hey', 'start', 'hlo', 'hai', 'hola', 'hi!'].includes(lowerMsg);
+  const isYesClick = lowerMsg.includes("yes, i'm interested") || lowerMsg.includes("yes, interested") || lowerMsg === 'btn_yes' || lowerMsg === 'yes';
+  const isTellMore = lowerMsg.includes("tell me more") || lowerMsg === 'btn_more';
+
+  // 2. Initial inquiry / greeting: start qualification session
+  if (!session || session.step === 'COMPLETED') {
+    if (isGreeting || isYesClick || isTellMore) {
+      const knownName = customerName && !customerName.startsWith('Customer') && !customerName.startsWith('Instagram') ? customerName : null;
+      updateQualificationSession(senderIdentifier, {
+        step: 'AWAITING_SERVICE',
+        channel: channelType,
+        phone: cleanPhone ? `+${cleanPhone}` : senderIdentifier,
+        name: knownName,
+      });
+
+      // Try sending interactive button message first on WhatsApp
+      if (channelType === 'whatsapp' && phoneNumberId && accessToken) {
+        try {
+          const interactiveRes = await sendWhatsAppInteractiveButtons({
+            phoneNumberId,
+            accessToken,
+            recipientPhone: cleanPhone,
+            headerText: 'DhiGrowth IT Services',
+            bodyText: `Hello! 👋 Welcome to DhiGrowth IT Services.\n\nTo help us understand your requirements and connect you with the right specialist, which service do you need?\n\n1️⃣ Mobile App or Web Platform\n2️⃣ AI Business Solutions & Bots\n3️⃣ WhatsApp CRM & Automation\n4️⃣ Custom IT Software`,
+            footerText: 'Reply with 1, 2, 3, 4 or tap below:',
+            buttons: [
+              { id: 'btn_yes', title: "Yes, I'm interested" },
+              { id: 'btn_more', title: 'Tell me more' },
+            ],
+          });
+          if (interactiveRes?.messages?.[0]?.id) {
+            const wamid = interactiveRes.messages[0].id;
+            console.log(`✅ [LeadQualification] Delivered interactive greeting to ${cleanPhone}`);
+            return true;
+          }
+        } catch (iErr) {
+          console.warn('[LeadQualification] Interactive buttons fallback:', iErr.message);
+        }
+      }
+
+      // Plain text fallback
+      const welcomeMsg = `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nTo help us assist you with the right solution, which service do you need?\n\n1️⃣ *Mobile App or Web Platform Development*\n2️⃣ *AI Business Solutions & Auto-Pilot Bots*\n3️⃣ *WhatsApp CRM & Marketing Automation*\n4️⃣ *Custom IT Software & Enterprise Systems*\n\n👉 *Reply with 1, 2, 3, or 4 (or describe what you need):*`;
+      await dispatchBotReply(welcomeMsg);
+      return true;
+    }
+  }
+
+  // 3. Multi-turn step handling
+  if (session) {
+    // STEP 1: Awaiting Service
+    if (session.step === 'AWAITING_SERVICE') {
+      if (isYesClick || isTellMore) {
+        const knownName = session.name || (customerName && !customerName.startsWith('Customer') && !customerName.startsWith('Instagram') ? customerName : 'Valued Customer');
+        const finalPhone = cleanPhone ? `+${cleanPhone}` : senderIdentifier;
+
+        // Auto-stream confirmation to Google Sheets right away
+        sendLeadToGoogleSheets({
+          name: knownName,
+          phone: finalPhone,
+          service: 'DhiGrowth Services (App Dev / AI Auto-Pilot / WhatsApp CRM)',
+          purpose: `Customer confirmed interest: "${cleanMsg}"`,
+          channel: channelType === 'whatsapp' ? 'WhatsApp' : 'Instagram',
+          workspaceId: effectiveWorkspaceId,
+          timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        }).catch((err) => console.warn('[Webhook AutoSync Sheets Error]:', err.message));
+
+        const reply = `Awesome, thank you for confirming, *${knownName}*! 🎉\n\nWe've noted your interest and automatically recorded your details for our development team.\n\nWhich service from DhiGrowth would you like to build or automate?\n\n1️⃣ *Mobile App or Web Platform*\n2️⃣ *AI Business Solutions & Auto-Pilot Bots*\n3️⃣ *WhatsApp CRM & Automation*\n4️⃣ *Custom IT Software*\n\n👉 *Reply with 1, 2, 3, or 4 (or describe what you need):*`;
+        await dispatchBotReply(reply);
+        return true;
+      }
+
+      let selectedService = null;
+      if (lowerMsg === '1' || lowerMsg === '1️⃣' || lowerMsg.includes('mobile app') || lowerMsg.includes('app') || lowerMsg.includes('flutter') || lowerMsg.includes('react native') || lowerMsg.includes('ios') || lowerMsg.includes('android')) {
+        selectedService = 'Mobile App & Web Development';
+      } else if (lowerMsg === '2' || lowerMsg === '2️⃣' || lowerMsg.includes('ai') || lowerMsg.includes('bot') || lowerMsg.includes('concierge') || lowerMsg.includes('auto-pilot') || lowerMsg.includes('agent')) {
+        selectedService = 'AI Business Solutions & Auto-Pilot Bots';
+      } else if (lowerMsg === '3' || lowerMsg === '3️⃣' || lowerMsg.includes('whatsapp') || lowerMsg.includes('crm') || lowerMsg.includes('broadcast') || lowerMsg.includes('marketing') || lowerMsg.includes('meta')) {
+        selectedService = 'WhatsApp CRM & Marketing Automation';
+      } else if (lowerMsg === '4' || lowerMsg === '4️⃣' || lowerMsg.includes('software') || lowerMsg.includes('custom') || lowerMsg.includes('enterprise') || lowerMsg.includes('portal') || lowerMsg.includes('it')) {
+        selectedService = 'Custom IT Software & Enterprise Systems';
+      } else if (cleanMsg.length >= 3 && !isGreeting && !isYesClick && !isTellMore) {
+        selectedService = cleanMsg;
+      }
+
+      if (selectedService) {
+        const knownName = session.name || (customerName && !customerName.startsWith('Customer') && !customerName.startsWith('Instagram') ? customerName : null);
+
+        if (knownName) {
+          updateQualificationSession(senderIdentifier, {
+            step: 'AWAITING_PURPOSE',
+            service: selectedService,
+            name: knownName,
+          });
+          const askPurposeMsg = `Great choice! 🚀 We've noted your interest in *${selectedService}*.\n\nCould you please describe the *purpose or key requirements* of your project?\n(e.g., Target audience, features you need, timeline, or current challenges)`;
+          await dispatchBotReply(askPurposeMsg);
+        } else {
+          updateQualificationSession(senderIdentifier, {
+            step: 'AWAITING_NAME',
+            service: selectedService,
+          });
+          const askNameMsg = `Great choice! 🚀 We've noted your interest in *${selectedService}*.\n\nMay I know your *Full Name* please?`;
+          await dispatchBotReply(askNameMsg);
+        }
+        return true;
+      }
+    }
+
+    // STEP 2: Awaiting Customer Name
+    else if (session.step === 'AWAITING_NAME') {
+      const extractedName = cleanMsg
+        .replace(/^(my name is|i am|this is|myself|i'm|im)\s+/i, '')
+        .replace(/[.,!]/g, '')
+        .trim();
+
+      const validName = extractedName.length > 0 ? extractedName : cleanMsg;
+      updateQualificationSession(senderIdentifier, {
+        step: 'AWAITING_PURPOSE',
+        name: validName,
+      });
+
+      const askPurposeMsg = `Nice to meet you, *${validName}*! 😊\n\nCould you please describe the *purpose or key requirements* of your project?\n(e.g., What features do you need, your business type, or goals?)`;
+      await dispatchBotReply(askPurposeMsg);
+      return true;
+    }
+
+    // STEP 3: Awaiting Purpose / Requirements
+    else if (session.step === 'AWAITING_PURPOSE') {
+      const purpose = cleanMsg;
+      const finalName = session.name || customerName || 'Valued Customer';
+      const finalService = session.service || 'DhiGrowth IT Services';
+      const finalPhone = cleanPhone ? `+${cleanPhone}` : (recipientPhone || senderIdentifier || '');
+
+      const leadData = {
+        name: finalName,
+        phone: finalPhone,
+        service: finalService,
+        purpose: purpose,
+        channel: channelType === 'whatsapp' ? 'WhatsApp' : channelType === 'instagram' ? 'Instagram' : 'Website',
+        timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        workspaceId: effectiveWorkspaceId,
+      };
+
+      console.log(`\n🎉 [LeadQualification] Lead requirements collected! Syncing to Google Sheets...`, leadData);
+
+      // 1. Post to Google Sheets
+      const sheetResult = await sendLeadToGoogleSheets(leadData);
+
+      // 2. Update Supabase CRM contact with Name, Lead Stage, Tags, and Purpose Notes
+      if (supabase && contactId) {
+        try {
+          await supabase.from('contacts').update({
+            full_name: finalName,
+            lead_stage: 'Qualified',
+            lead_score: 90,
+            notes: `Service Needed: ${finalService}\nPurpose / Requirements: ${purpose}\nGoogle Sheets Status: ${sheetResult.success ? 'Synced' : 'Pending'}\nCaptured: ${leadData.timestamp}`,
+            tags: [finalService, 'Google Sheets', 'Hot Lead'],
+          }).eq('id', contactId);
+          console.log(`✅ [LeadQualification] Updated Supabase contact ${contactId} with qualified requirements.`);
+        } catch (supErr) {
+          console.warn('[LeadQualification] Supabase contact update note:', supErr.message);
+        }
+      }
+
+      // 3. Mark completed and clear qualification session
+      clearQualificationSession(senderIdentifier);
+
+      const confirmMsg = `Thank you so much, *${finalName}*! 🎉\n\nWe have recorded your requirements:\n📋 *Service:* ${finalService}\n👤 *Name:* ${finalName}\n📞 *Contact:* ${finalPhone}\n🎯 *Purpose:* ${purpose}\n\n✅ Your details have been submitted to our DhiGrowth team & synced to our records. A solutions consultant will review your requirements and reach out to you shortly with a personalized proposal! 🚀`;
+
+      await dispatchBotReply(confirmMsg);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**

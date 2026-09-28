@@ -33,9 +33,15 @@ Core Behavior Instructions:
 1. UNDERSTAND THE USER'S SPECIFIC WORDS: Whatever question, topic, or industry the user mentions (e.g. ecommerce, fitness, healthcare, real estate, APIs, timelines, pricing, technologies), directly comprehend and analyze their exact question.
 2. TAILORED & RELEVANT: Give a direct, helpful, and highly relevant answer addressing specifically what THEY asked. Do not give generic replies or repeat boilerplate.
 3. CONCISE FOR WHATSAPP: Keep replies concise (2-4 clear sentences or short punchy bullet points with emojis).
-4. NEXT STEPS: Invite them to share details about their vision or offer to book a quick consultation call.
-5. MULTI-LINGUAL: If the user writes in Hindi, Tamil, Hinglish, or any other language, understand and reply naturally in that same language.
-6. CONVERSATION CONTEXT & AFFIRMATIONS: If the user says "Yes", "Ok", "Sure", "I am interested", or agrees with our previous suggestion/question, understand the context of the prior messages. Warmly acknowledge their confirmation, ask them for the next detail needed, or offer available meeting/demo slots.`;
+4. LEAD REQUIREMENTS COLLECTION: When a new customer reaches out, understand their requirements:
+   - What DhiGrowth service they need (App Development, AI Solutions, WhatsApp CRM, or Custom IT Software)
+   - Their Full Name
+   - Their Contact Phone Number
+   - The Purpose / specific features / goals of their project
+   Politely ask for any of these details that are missing so our solutions team can prepare an accurate proposal.
+5. NEXT STEPS: Confirm that their requirements have been recorded and our technical consultants will review and reach out to them shortly.
+6. MULTI-LINGUAL: If the user writes in Hindi, Tamil, Hinglish, or any other language, understand and reply naturally in that same language.
+7. CONVERSATION CONTEXT & AFFIRMATIONS: If the user says "Yes", "Ok", "Sure", "I am interested", or agrees with our previous suggestion/question, understand the context of the prior messages. Warmly acknowledge their confirmation, ask them for the next detail needed, or offer available meeting/demo slots.`;
 
 const DHIGROWTH_WELCOME = {
   reply: `Hello! 👋 Welcome to **DhiGrowth IT Services**.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 **App Development**\n🤖 **AI Business Solutions & Development**\n💬 **WhatsApp CRM & Automation**\n💻 **Custom IT Solutions**\n\nTell us what your business needs, and let's build something powerful together! 🚀`,
@@ -423,9 +429,22 @@ export const generateAIResponse = async ({
   }
 
   // 4. Smart Business Rules Engine Fallback
-  // 4.1 Positive affirmations & confirmations ("yes", "ok", "sure", "proceed", etc.)
-  if (/^(yes|yeah|yep|sure|ok|okay|yup|definitely|absolutely|interested|tell me more|let's do it|demo|start|call me|connect)$/i.test(query)) {
-    return `Awesome, thank you for confirming, ${customerName || 'friend'}! 🎉\n\nWe would love to help you get this started right away. Which service would you like to explore first (Mobile App, Custom AI Agent, WhatsApp CRM, or Web IT)?\n\nOr feel free to share your phone number/preferred time, and our specialist will give you a quick 10-minute discovery call! 🚀`;
+  // 4.1 Positive affirmations & confirmations ("yes, i'm interested", "tell me more", etc.)
+  if (query.includes('interested') || query.includes('tell me more') || /^(yes|yeah|yep|sure|ok|okay|yup|definitely|absolutely|let's do it|demo|start|call me|connect)$/i.test(query)) {
+    return `Awesome, thank you for confirming, ${customerName || 'friend'}! 🎉\n\nWe've noted your interest and automatically recorded your details into our system.\n\nTo help us tailor the perfect solution for you, which service do you need?\n\n1️⃣ Mobile App or Web Platform Development\n2️⃣ AI Business Solutions & Auto-Pilot Bots\n3️⃣ WhatsApp CRM & Marketing Automation\n4️⃣ Custom IT Software & Enterprise Systems\n\n👉 Reply with 1, 2, 3, or 4 (or describe what you'd like to build)! 🚀`;
+  }
+
+  if (query === '1' || query === '1️⃣') {
+    return `📱 **Mobile App or Web Platform Development**\n\nGreat choice! We engineer high-performance iOS, Android, and modern Web applications.\n\nCould you briefly share your project purpose and features you need? (e.g. Target audience, timeline, or reference app)`;
+  }
+  if (query === '2' || query === '2️⃣') {
+    return `🤖 **AI Business Solutions & Auto-Pilot Bots**\n\nExciting! We build custom 24/7 AI agents, customer concierges, and LLM automation tools.\n\nWhat workflow or tasks would you like your AI bot to handle automatically?`;
+  }
+  if (query === '3' || query === '3️⃣') {
+    return `📈 **WhatsApp CRM & Marketing Automation**\n\nSupercharge your business with WhatsApp broadcasts, catalog ordering, and auto-replies!\n\nWhat business goals are you aiming to achieve with WhatsApp automation?`;
+  }
+  if (query === '4' || query === '4️⃣') {
+    return `💻 **Custom IT Software & Enterprise Systems**\n\nRobust custom portals, internal dashboards, and enterprise cloud software.\n\nCould you tell us about the software or system you need built?`;
   }
 
   if (/\b(whatsapp|crm|marketing|broadcast|catalog|lead|inbox)\b/i.test(query)) {

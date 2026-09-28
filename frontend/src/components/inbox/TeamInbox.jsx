@@ -42,17 +42,23 @@ import {
   PanelRightOpen,
   CheckCircle2,
   AlertCircle,
+  Store,
+  UserPlus,
+  Share2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
 import { ContactAvatar } from '../common/ContactAvatar';
 import { BACKEND_URL } from '../../services/apiConfig';
+import { WhatsAppQuickActionBar } from './WhatsAppQuickActionBar';
+import { CatalogueModal } from './CatalogueModal';
 
 export const TeamInbox = () => {
   const {
     chats,
     activeChatId,
     setActiveChatId,
+    typingChatIds,
     openChat,
     requestNotificationPermission,
     sendMessage,
@@ -97,6 +103,9 @@ export const TeamInbox = () => {
   const [isTranslateMenuOpen, setIsTranslateMenuOpen] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  // Catalogue Modal State
+  const [isCatalogueModalOpen, setIsCatalogueModalOpen] = useState(false);
 
   // New Contact & Delete Modal State
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
@@ -486,6 +495,8 @@ export const TeamInbox = () => {
     ? (activeChatId ? chats.find((c) => c.id === activeChatId) : null)
     : (chats.find((c) => c.id === activeChatId) || (chats.length > 0 ? chats[0] : null));
 
+  const isAiTyping = Boolean(typingChatIds && activeChat && typingChatIds[activeChat.id]);
+
   const currentChatIndex = chats.findIndex((c) => c.id === activeChat?.id);
   const hasPrevChat = currentChatIndex > 0;
   const hasNextChat = currentChatIndex >= 0 && currentChatIndex < chats.length - 1;
@@ -510,7 +521,7 @@ export const TeamInbox = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeChat?.messages?.length, activeChatId]);
+  }, [activeChat?.messages?.length, activeChatId, isAiTyping]);
 
   const LANGUAGES = [
     { name: 'Hindi', code: 'hi', native: 'हिंदी', flag: '🇮🇳' },
@@ -854,6 +865,27 @@ export const TeamInbox = () => {
     } finally {
       setIsSendingLive(false);
     }
+  };
+
+  const handleSendCatalogueToChat = (text) => {
+    sendMessage(text, 'agent');
+    try {
+      const recipient = activeChat?.phone || '919791471277';
+      fetch(`${BACKEND_URL}/api/send-manual-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientPhone: recipient,
+          text: text,
+          conversationId: activeChat?.conversationId || activeChat?.id,
+          channelType: activeChat?.channel || 'whatsapp',
+          phoneNumberId: metaConfig?.phoneNumberId,
+          accessToken: metaConfig?.accessToken,
+          workspaceId: currentWorkspaceId,
+        }),
+      }).catch(() => {});
+    } catch {}
+    showToast('🛍️ Sent catalogue item to customer WhatsApp!', 'success');
   };
 
   const handleUserSimulatorSend = () => {
@@ -1402,9 +1434,16 @@ export const TeamInbox = () => {
                     </div>
                   </div>
 
-                  <p className={`text-xs truncate line-clamp-1 ${chat.unreadCount > 0 ? 'font-semibold text-[#101828]' : 'text-[#475467]'}`}>
-                    {lastMsg ? lastMsg.text : 'New lead inbound'}
-                  </p>
+                  {typingChatIds && typingChatIds[chat.id] ? (
+                    <p className="text-xs font-bold text-[#0284C7] flex items-center gap-1 animate-pulse">
+                      <Sparkles className="w-3 h-3 text-[#0284C7]" />
+                      <span>AI is typing...</span>
+                    </p>
+                  ) : (
+                    <p className={`text-xs truncate line-clamp-1 ${chat.unreadCount > 0 ? 'font-semibold text-[#101828]' : 'text-[#475467]'}`}>
+                      {lastMsg ? lastMsg.text : 'New lead inbound'}
+                    </p>
+                  )}
 
                   <div className="flex items-center gap-1.5 pt-0.5">
                     {channelIcons[chat.channel] || channelIcons.whatsapp}
@@ -1538,10 +1577,17 @@ export const TeamInbox = () => {
                     <div className="text-[11px] text-[#98A2B3] flex items-center gap-2 mt-0.5">
                       <span>{activeChat.city}</span>
                       <span>·</span>
-                      <span className={`font-mono font-semibold flex items-center gap-1.5 ${isAiAutoPilot ? 'text-[#0284C7]' : 'text-[#16A34A]'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isAiAutoPilot ? 'bg-[#0284C7] animate-pulse' : 'bg-[#16A34A]'}`} />
-                        <span className="truncate max-w-[120px] sm:max-w-none">{isAiAutoPilot ? 'AI Auto-Pilot' : 'Manual Agent'}</span>
-                      </span>
+                      {isAiTyping ? (
+                        <span className="font-mono font-bold text-[#0284C7] flex items-center gap-1.5 animate-pulse">
+                          <Sparkles className="w-3.5 h-3.5 animate-spin text-[#0284C7]" />
+                          <span>Dhigrowth AI is typing...</span>
+                        </span>
+                      ) : (
+                        <span className={`font-mono font-semibold flex items-center gap-1.5 ${isAiAutoPilot ? 'text-[#0284C7]' : 'text-[#16A34A]'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isAiAutoPilot ? 'bg-[#0284C7] animate-pulse' : 'bg-[#16A34A]'}`} />
+                          <span className="truncate max-w-[120px] sm:max-w-none">{isAiAutoPilot ? 'AI Auto-Pilot' : 'Manual Agent'}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1580,6 +1626,7 @@ export const TeamInbox = () => {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+
                 {/* Sri Exclusive: Send First Template to New Contact */}
                 {isSriUser && isNewContact && (
                   <button
@@ -1845,6 +1892,30 @@ export const TeamInbox = () => {
               </div>
             );
           })}
+
+          {/* AI Auto-Pilot Typing Animation Indicator Bubble */}
+          {isAiTyping && (
+            <div className="flex items-start gap-2.5 max-w-[85%] self-start animate-in fade-in slide-in-from-bottom-2 duration-300 my-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-400 to-sky-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs ring-2 ring-sky-200">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div className="p-3 bg-[#F0F9FF] border border-[#BAE6FD] text-[#101828] rounded-2xl rounded-tl-xs shadow-2xs">
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#0284C7] font-bold mb-1 pb-1 border-b border-[#BAE6FD]">
+                  <Sparkles className="w-3 h-3 text-[#0284C7]" />
+                  <span>Dhigrowth AI Auto-Pilot</span>
+                </div>
+                <div className="flex items-center gap-2 py-1 px-1">
+                  <span className="text-xs text-[#0284C7] font-semibold font-sans">typing</span>
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
@@ -2177,6 +2248,14 @@ export const TeamInbox = () => {
                     </button>
                   </div>
 
+                  {/* WhatsApp Quick Action Bar: Catalogue, Add, Share */}
+                  <WhatsAppQuickActionBar
+                    contact={activeChat}
+                    onOpenCatalogue={() => setIsCatalogueModalOpen(true)}
+                    onOpenAddContact={() => handleOpenEditModal(activeChat)}
+                    variant="dark"
+                  />
+
                 {/* Lead Stage Selector */}
                 <div className="space-y-1.5 pt-2 border-t border-[#EAECF0]">
                   <div className="text-[10px] font-mono text-[#98A2B3] uppercase font-semibold">Lead Stage</div>
@@ -2194,6 +2273,39 @@ export const TeamInbox = () => {
                         {stage}
                       </button>
                     ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 24-Hour Window & Auto Follow-up Protection Card */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-sky-500/5 to-white border border-emerald-500/25 space-y-2 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-xs font-bold text-[#101828]">24h Session Window</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Active
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-[#475467] leading-relaxed">
+                  Automated follow-ups keep conversation active inside Meta&apos;s 24-hour customer window:
+                </p>
+
+                <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                  <div className="p-2 rounded-xl bg-white border border-[#EAECF0] text-center shadow-2xs">
+                    <div className="text-[10px] font-mono text-[#667085]">Step 1</div>
+                    <div className="text-xs font-bold text-[#0284C7] mt-0.5">2 min Nudge</div>
+                    <div className="text-[9px] text-[#16A34A] font-semibold mt-0.5">● Auto Active</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white border border-[#EAECF0] text-center shadow-2xs">
+                    <div className="text-[10px] font-mono text-[#667085]">Step 2</div>
+                    <div className="text-xs font-bold text-[#0284C7] mt-0.5">3 hr Re-engage</div>
+                    <div className="text-[9px] text-[#16A34A] font-semibold mt-0.5">● Auto Active</div>
                   </div>
                 </div>
               </div>
@@ -3010,6 +3122,15 @@ export const TeamInbox = () => {
           </div>
         </div>
       )}
+
+      {/* WhatsApp Business Services Catalogue Modal */}
+      <CatalogueModal
+        isOpen={isCatalogueModalOpen}
+        onClose={() => setIsCatalogueModalOpen(false)}
+        onSendToChat={handleSendCatalogueToChat}
+        contactName={activeChat?.contactName}
+        phone={activeChat?.phone}
+      />
 
     </div>
   );

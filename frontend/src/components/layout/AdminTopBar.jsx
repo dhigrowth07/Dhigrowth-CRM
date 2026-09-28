@@ -11,6 +11,9 @@ export const AdminTopBar = () => {
       if (k === 'inbox') {
         return perms['inbox'] !== false && perms['team_inbox'] !== false && perms['teamInbox'] !== false;
       }
+      if (k === 'instagram-inbox') {
+        return perms['instagram-inbox'] !== false && perms['instagram_inbox'] !== false && perms['instagramInbox'] !== false;
+      }
       if (k === 'leads') {
         return perms['leads'] !== false && perms['crm_leads'] !== false;
       }

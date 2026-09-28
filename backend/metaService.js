@@ -75,6 +75,48 @@ export const sendWhatsAppMessage = async ({
 };
 
 /**
+ * Send official WhatsApp typing indicator to customer's phone
+ * Displays animated "typing..." status in customer's WhatsApp chat
+ */
+export const sendWhatsAppTypingIndicator = async ({
+  phoneNumberId,
+  accessToken,
+  messageId,
+}) => {
+  const token = accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
+  const phoneId = phoneNumberId || process.env.META_WHATSAPP_PHONE_NUMBER_ID;
+
+  if (!token || !phoneId || !messageId) {
+    return { simulated: true };
+  }
+
+  try {
+    const response = await fetch(`${GRAPH_BASE_URL}/${phoneId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        status: 'read',
+        message_id: messageId,
+        typing_indicator: {
+          type: 'text',
+        },
+      }),
+    });
+
+    const data = await response.json();
+    console.log(`💬 [WhatsApp Typing Indicator] Sent typing animation for msg ${messageId}:`, data?.success ? 'Success' : JSON.stringify(data));
+    return data;
+  } catch (err) {
+    console.warn(`[WhatsApp Typing Indicator] Note:`, err.message);
+    return { error: err.message };
+  }
+};
+
+/**
  * Send an outbound WhatsApp interactive message with quick-reply buttons (e.g. "Yes, I'm interested")
  */
 export const sendWhatsAppInteractiveButtons = async ({

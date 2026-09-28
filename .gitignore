@@ -21,6 +21,9 @@ server/metaConfig.json
 backend/invoices.json
 backend/aiConfig.json
 backend/metaConfig.json
+backend/followUpStore.json
+backend/leadsCollected.json
+backend/qualificationSessions.json
 
 # Editor directories and files
 .vscode/*

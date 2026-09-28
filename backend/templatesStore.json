@@ -82,10 +82,10 @@
         "name": "hi",
         "category": "MARKETING",
         "language": "en",
-        "status": "APPROVED",
+        "status": "PENDING",
         "header_type": "TEXT",
         "header_content": "DhiGrowth IT Services",
-        "body_text": "Hello sri! 👋 Welcome to DhiGrowth IT Services.\n \nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n \nTap below to connect with our team! 🚀\nTap an option to respond:",
+        "body_text": "Hello ! 👋 Welcome to DhiGrowth IT Services.\n \nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n \nTap below to connect with our team! 🚀\nTap an option to respond:",
         "footer_text": "Tap an option to respond:",
         "buttons": [
           {
@@ -98,9 +98,11 @@
           }
         ],
         "variables": [],
-        "syncedWithMeta": true,
+        "syncedWithMeta": false,
         "createdAt": "2026-09-17T06:16:03.989Z",
-        "updatedAt": "2026-09-19T05:10:00.000Z"
+        "updatedAt": "2026-09-28T06:00:25.244Z",
+        "reviewNote": "Meta API review queued (Invalid parameter)",
+        "submittedAt": "2026-09-28T06:00:25.244Z"
       }
     ],
     "b1a0a9dd26af-9d29-b53e-7fd6-c592f69f2bc5": [

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Tag as TagIcon,
@@ -28,10 +28,17 @@ import {
   Edit3,
   Upload,
   FileText,
+  FileSpreadsheet,
+  Check,
+  Send,
+  ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ContactAvatar } from '../common/ContactAvatar';
 import { BulkLeadImportModal } from './BulkLeadImportModal';
+import { GoogleSheetsIntegrationModal } from '../integrations/GoogleSheetsIntegrationModal';
+import { BACKEND_URL } from '../../services/apiConfig';
 
 export const LeadsCrm = () => {
   const {
@@ -47,6 +54,13 @@ export const LeadsCrm = () => {
   } = useApp();
 
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
+  const [isGoogleSheetsOpen, setIsGoogleSheetsOpen] = useState(false);
+  const [sheetsConfig, setSheetsConfig] = useState({ webhookUrl: '', sheetUrl: '', enabled: true });
+  const [sheetLinkInput, setSheetLinkInput] = useState('');
+  const [isSavingSheetLink, setIsSavingSheetLink] = useState(false);
+  const [isTestingSheet, setIsTestingSheet] = useState(false);
+  const [capturedLeadsCount, setCapturedLeadsCount] = useState(0);
+
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('all-leads'); // 'all-leads' | 'segments' | 'tags'
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'kanban'
@@ -55,6 +69,103 @@ export const LeadsCrm = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedTagFilter, setSelectedTagFilter] = useState('all');
   const [contactToDelete, setContactToDelete] = useState(null);
+
+  useEffect(() => {
+    fetchSheetsConfig();
+    fetchCapturedLeadsCount();
+  }, []);
+
+  const fetchSheetsConfig = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/integrations/google-sheets`);
+      const data = await res.json();
+      if (data.success && data.config) {
+        setSheetsConfig(data.config);
+        setSheetLinkInput(data.config.sheetUrl || data.config.webhookUrl || '');
+      }
+    } catch {}
+  };
+
+  const fetchCapturedLeadsCount = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/leads/captured`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.leads)) {
+        setCapturedLeadsCount(data.leads.length);
+      }
+    } catch {}
+  };
+
+  const handleSaveQuickSheetLink = async () => {
+    if (!sheetLinkInput.trim()) {
+      showToast('Please enter a Google Sheets URL or Apps Script Webhook URL', 'error');
+      return;
+    }
+    setIsSavingSheetLink(true);
+    try {
+      const input = sheetLinkInput.trim();
+      const isScriptUrl = input.includes('script.google.com') || input.includes('/exec');
+      const isDocUrl = input.includes('docs.google.com/spreadsheets');
+
+      const payload = { enabled: true };
+      if (isScriptUrl) {
+        payload.webhookUrl = input;
+      } else if (isDocUrl) {
+        payload.sheetUrl = input;
+      } else {
+        payload.webhookUrl = input;
+      }
+
+      const res = await fetch(`${BACKEND_URL}/api/integrations/google-sheets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSheetsConfig(data.config);
+        showToast('Google Sheets storage link saved successfully!', 'success');
+      } else {
+        showToast(data.error || 'Failed to save link', 'error');
+      }
+    } catch {
+      showToast('Error saving Google Sheets storage link', 'error');
+    } finally {
+      setIsSavingSheetLink(false);
+    }
+  };
+
+  const handleTestQuickSheet = async () => {
+    if (!sheetsConfig.webhookUrl) {
+      showToast('Please deploy and save the Google Apps Script Web App URL to test auto-sync.', 'info');
+      setIsGoogleSheetsOpen(true);
+      return;
+    }
+    setIsTestingSheet(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/integrations/google-sheets/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Sri (Test Lead)',
+          phone: '+91 97914 71277',
+          service: 'Mobile App & AI Automation',
+          purpose: 'Inbound customer requirements storage test from Leads CRM',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✅ Test row written to your Google Sheet!', 'success');
+        fetchCapturedLeadsCount();
+      } else {
+        showToast(`⚠️ Sync note: ${data.error || 'Check Google Sheet permissions'}`, 'error');
+      }
+    } catch {
+      showToast('Network error testing Google Sheets connection', 'error');
+    } finally {
+      setIsTestingSheet(false);
+    }
+  };
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -339,6 +450,91 @@ export const LeadsCrm = () => {
         </div>
       </div>
 
+      {/* 2.5 Google Sheets Inbound Requirements Storage Banner */}
+      <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-emerald-50/90 border border-emerald-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[#101828]">Google Sheets Requirements Storage</h3>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  sheetsConfig.webhookUrl
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border-amber-300'
+                }`}>
+                  {sheetsConfig.webhookUrl ? 'Auto-Sync Active' : 'Setup Storage Link'}
+                </span>
+                {sheetsConfig.sheetUrl && (
+                  <a
+                    href={sheetsConfig.sheetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1 ml-1"
+                    title="Open live Google Sheet"
+                  >
+                    <span>Open Sheet</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+              <p className="text-xs text-[#475467] mt-0.5">
+                Incoming customers are asked for their <strong>Service Needed, Name, Phone &amp; Purpose</strong> and auto-saved to your Google Sheet.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsGoogleSheetsOpen(true)}
+              className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+            >
+              <span>Setup Guide &amp; Log ({capturedLeadsCount})</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Storage Link Input & Fast Actions */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-emerald-200/70">
+          <div className="relative flex-1">
+            <input
+              type="url"
+              value={sheetLinkInput}
+              onChange={(e) => setSheetLinkInput(e.target.value)}
+              placeholder="Paste your Google Apps Script Web App URL or Google Sheet link here..."
+              className="w-full px-3.5 py-2 text-xs bg-white rounded-xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-mono text-[#101828]"
+            />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleSaveQuickSheetLink}
+              disabled={isSavingSheetLink}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>{isSavingSheetLink ? 'Saving...' : 'Save Storage Link'}</span>
+            </button>
+
+            {sheetsConfig.webhookUrl && (
+              <button
+                type="button"
+                onClick={handleTestQuickSheet}
+                disabled={isTestingSheet}
+                className="px-3 py-2 bg-white hover:bg-gray-50 text-[#344054] border border-[#D0D5DD] rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                title="Send test lead row to verify Google Sheet connection"
+              >
+                <Send className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="hidden md:inline">Test Sync</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* 3. Toolbar: Search | Filter | Column Customizer | Refresh | Low Balance | View Switch | + Add Contact */}
       <div className="sendiee-card p-3 flex flex-col lg:flex-row items-center justify-between gap-3">
         {/* Left Search and Filter Actions */}
@@ -419,6 +615,17 @@ export const LeadsCrm = () => {
               <span>Kanban</span>
             </button>
           </div>
+
+          {/* Google Sheets Sync Button */}
+          <button
+            type="button"
+            onClick={() => setIsGoogleSheetsOpen(true)}
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+            title="Configure Google Sheets & View Captured Requirements Log"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="hidden sm:inline">Google Sheets</span>
+          </button>
 
           {/* Quick Import CSV Button */}
           <button
@@ -990,6 +1197,12 @@ export const LeadsCrm = () => {
         createLead={createLead}
         showToast={showToast}
         currentWorkspaceId={currentWorkspaceId}
+      />
+
+      {/* 8. Google Sheets Requirements & Sync Modal */}
+      <GoogleSheetsIntegrationModal
+        isOpen={isGoogleSheetsOpen}
+        onClose={() => setIsGoogleSheetsOpen(false)}
       />
     </div>
   );

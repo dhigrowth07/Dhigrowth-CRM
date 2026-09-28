@@ -45,6 +45,19 @@ import {
   STARTER_TEMPLATES,
 } from './templateService.js';
 import {
+  getGoogleSheetsConfig,
+  saveGoogleSheetsConfig,
+  getCapturedLeads,
+  sendLeadToGoogleSheets,
+  GOOGLE_APPS_SCRIPT_TEMPLATE,
+} from './googleSheetsService.js';
+import {
+  getFollowUpStatus,
+  triggerTestFollowUp,
+  DELAY_STEP_1_MS,
+  DELAY_STEP_2_MS,
+} from './followUpService.js';
+import {
   initBroadcastStore,
   getWorkspaceCampaigns,
   createBroadcastCampaign,
@@ -308,6 +321,35 @@ app.post('/api/test-inbound', async (req, res) => {
   // Pass to the inbound webhook handler
   req.body = simulatedPayload;
   await handleInboundWebhook(req, res);
+});
+
+// 4.5 Follow-Up Automation Status (2-min and 3-hr session keep-alive)
+app.get('/api/automations/follow-up-status', (req, res) => {
+  const { phone } = req.query;
+  const status = getFollowUpStatus(phone);
+  res.json({
+    success: true,
+    delays: {
+      step1: '2 minutes',
+      step1Ms: DELAY_STEP_1_MS,
+      step2: '3 hours',
+      step2Ms: DELAY_STEP_2_MS,
+    },
+    status,
+  });
+});
+
+app.post('/api/automations/trigger-follow-up', async (req, res) => {
+  try {
+    const { phone, step = 1 } = req.body;
+    if (!phone) {
+      return res.status(400).json({ success: false, error: 'phone is required' });
+    }
+    const result = await triggerTestFollowUp(phone, Number(step));
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 5. Manual Message Dispatch Endpoint (Dispatches live to WhatsApp/IG + logs in Supabase)
@@ -1264,21 +1306,67 @@ app.post('/api/ai-config/test', async (req, res) => {
   }
 });
 
-// 9.1 Generate Dynamic AI Response On-Demand
+// 9.1 Generate Dynamic AI Response On-Demand & Auto-Record Customer Details to Google Sheets
 const handleAiGenerate = async (req, res) => {
   try {
-    const { customerMessage, customerName = 'Valued Client', channelType = 'whatsapp' } = req.body || {};
+    const {
+      customerMessage,
+      customerName = 'Valued Client',
+      channelType = 'whatsapp',
+      phone = '',
+      workspaceId = 'b0000000-0000-0000-0000-000000000001',
+      service,
+      purpose,
+    } = req.body || {};
+
     if (!customerMessage) {
       return res.status(400).json({ success: false, error: 'customerMessage is required' });
     }
+
     const result = await generateAIResponse({
       customerName,
       customerMessage,
       channelType,
     });
+
     const replyText = typeof result === 'object' && result.reply ? result.reply : String(result);
     const imageUrl = typeof result === 'object' && result.imageUrl ? result.imageUrl : null;
-    res.json({ success: true, reply: replyText, imageUrl });
+
+    // Automatically record customer interest and details to Google Sheets
+    const lower = String(customerMessage || '').toLowerCase();
+    let detectedService = service || 'DhiGrowth IT Services';
+    if (lower.includes('app') || lower.includes('mobile') || lower.includes('flutter') || lower.includes('ios') || lower.includes('android') || lower === '1') {
+      detectedService = 'Mobile App & Web Development';
+    } else if (lower.includes('ai') || lower.includes('bot') || lower.includes('autopilot') || lower.includes('auto-pilot') || lower === '2') {
+      detectedService = 'AI Business Solutions & Auto-Pilot Bots';
+    } else if (lower.includes('whatsapp') || lower.includes('crm') || lower.includes('broadcast') || lower === '3') {
+      detectedService = 'WhatsApp CRM & Marketing Automation';
+    } else if (lower.includes('software') || lower.includes('custom') || lower.includes('enterprise') || lower === '4') {
+      detectedService = 'Custom IT Software & Enterprise Systems';
+    } else if (lower.includes('interested') || lower.includes('yes') || lower.includes('demo') || lower.includes('sure')) {
+      detectedService = 'App Development, AI Auto-Pilot & WhatsApp CRM';
+    }
+
+    const validPhone = phone ? String(phone).trim() : '';
+    const validName = customerName && customerName !== 'Valued Client' && customerName !== 'Instagram User' ? customerName : '';
+
+    if (validPhone || validName) {
+      sendLeadToGoogleSheets({
+        name: validName || 'Anonymous Customer',
+        phone: validPhone,
+        service: detectedService,
+        purpose: purpose || (lower.includes('interested') ? `Customer confirmed interest: "${customerMessage}"` : customerMessage),
+        channel: channelType === 'instagram' ? 'Instagram' : 'WhatsApp',
+        workspaceId,
+        timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      }).then((sheetRes) => {
+        console.log(`📊 [AutoSync Sheets] Lead recorded to Google Sheet: ${validName || 'Client'} (${validPhone}) - Success: ${sheetRes.success}`);
+      }).catch((sheetErr) => {
+        console.warn(`⚠️ [AutoSync Sheets] Error:`, sheetErr.message);
+      });
+    }
+
+    res.json({ success: true, reply: replyText, imageUrl, leadSynced: Boolean(validPhone || validName) });
   } catch (err) {
     console.error('[AI Generate Route Error]:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -1315,7 +1403,7 @@ function loadTenants() {
       isAdmin: false,
       isExternalClient: false,
       password: 'dhigrowth2026',
-      permissions: { sendDueToAll: true, teamInbox: true, metaKeys: true, aiStudio: true, fileManager: true, invoicing: true },
+      permissions: { sendDueToAll: true, teamInbox: true, 'instagram-inbox': true, instagram_inbox: true, instagramInbox: true, metaKeys: true, aiStudio: true, fileManager: true, invoicing: true },
       status: 'active',
       createdAt: '2026-09-10T00:00:00.000Z',
     },
@@ -2303,6 +2391,75 @@ app.delete('/api/workspace/members/:id', async (req, res) => {
     const { workspaceId } = req.query;
     const result = await removeWorkspaceMember(req.params.id, workspaceId);
     res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Google Sheets Integration & Inbound Customer Requirements Endpoints
+app.get('/api/integrations/google-sheets', (req, res) => {
+  try {
+    const config = getGoogleSheetsConfig();
+    res.json({ success: true, config, scriptTemplate: GOOGLE_APPS_SCRIPT_TEMPLATE });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/integrations/google-sheets', (req, res) => {
+  try {
+    const { webhookUrl, sheetUrl, enabled, sheetName } = req.body;
+    const updated = saveGoogleSheetsConfig({
+      webhookUrl: typeof webhookUrl === 'string' ? webhookUrl.trim() : undefined,
+      sheetUrl: typeof sheetUrl === 'string' ? sheetUrl.trim() : undefined,
+      enabled: enabled !== undefined ? Boolean(enabled) : undefined,
+      sheetName: sheetName || undefined,
+    });
+    res.json({ success: true, config: updated, message: 'Google Sheets integration settings saved' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/integrations/google-sheets/test', async (req, res) => {
+  try {
+    const testLead = {
+      name: req.body.name || 'Sri (Test Customer)',
+      phone: req.body.phone || '+91 97914 71277',
+      service: req.body.service || 'App Development & AI Automation',
+      purpose: req.body.purpose || 'Testing Google Sheets integration from Wappilot',
+      channel: 'Wappilot Dashboard (Test)',
+      timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    };
+    const result = await sendLeadToGoogleSheets(testLead);
+    res.json({ success: result.success, lead: result.lead, error: result.error });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/integrations/google-sheets/record-lead', async (req, res) => {
+  try {
+    const { name, phone, service, purpose, channel = 'WhatsApp', workspaceId } = req.body || {};
+    const result = await sendLeadToGoogleSheets({
+      name: name || 'Valued Customer',
+      phone: phone || '',
+      service: service || 'DhiGrowth IT Services',
+      purpose: purpose || 'Customer requirement inquiry',
+      channel,
+      workspaceId,
+      timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    });
+    res.json({ success: result.success, lead: result.lead, error: result.error });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/leads/captured', (req, res) => {
+  try {
+    const leads = getCapturedLeads();
+    res.json({ success: true, leads, total: leads.length });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

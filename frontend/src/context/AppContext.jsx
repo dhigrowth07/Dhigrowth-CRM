@@ -72,6 +72,9 @@ export const SEED_TENANTS = [
     permissions: {
       sendDueToAll: true,
       teamInbox: true,
+      instagramInbox: true,
+      'instagram-inbox': true,
+      instagram_inbox: true,
       metaKeys: true,
       aiStudio: true,
       fileManager: true,
@@ -89,6 +92,7 @@ export const NAVIGATION_MODULES = [
     items: [
       { id: 'dashboard', label: 'Dashboard', default: true },
       { id: 'inbox', label: 'Inbox', default: true },
+      { id: 'instagram-inbox', label: 'Instagram Inbox', default: true },
       { id: 'leads', label: 'Leads', default: true },
       { id: 'insights', label: 'Insights', default: true },
       { id: 'files', label: 'Files', default: true },
@@ -226,6 +230,7 @@ export const AppProvider = ({ children }) => {
   const [isBroadcastDueModalOpen, setIsBroadcastDueModalOpen] = useState(false);
   const [isBroadcastTemplateModalOpen, setIsBroadcastTemplateModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [typingChatIds, setTypingChatIds] = useState({});
 
   // Multi-Tenant Directory State
   const [tenants, setTenants] = useState(() => {
@@ -413,9 +418,15 @@ export const AppProvider = ({ children }) => {
       const perms = activeTarget.permissions || {};
 
       // Backward compatibility aliases
-      if (navId === 'inbox' || navId === 'instagram-inbox') {
-        if (perms['inbox'] === true || perms['instagram-inbox'] === true || perms['team_inbox'] === true) return true;
+      if (navId === 'instagram-inbox') {
+        if (perms['instagram-inbox'] === false || perms['instagram_inbox'] === false || perms['instagramInbox'] === false) return false;
+        if (perms['instagram-inbox'] === true || perms['instagram_inbox'] === true || perms['instagramInbox'] === true) return true;
         if (perms['inbox'] === false || perms['team_inbox'] === false || perms['teamInbox'] === false) return false;
+        return true;
+      }
+      if (navId === 'inbox') {
+        if (perms['inbox'] === false || perms['team_inbox'] === false || perms['teamInbox'] === false) return false;
+        if (perms['inbox'] === true || perms['team_inbox'] === true || perms['teamInbox'] === true) return true;
         return true;
       }
       if (navId === 'leads') {
@@ -1812,6 +1823,9 @@ export const AppProvider = ({ children }) => {
     if (permissionKey === 'inbox') {
       updatedPerms.team_inbox = nextVal;
       updatedPerms.teamInbox = nextVal;
+    } else if (permissionKey === 'instagram-inbox') {
+      updatedPerms.instagram_inbox = nextVal;
+      updatedPerms.instagramInbox = nextVal;
     } else if (permissionKey === 'leads') {
       updatedPerms.crm_leads = nextVal;
     } else if (permissionKey === 'ai-assistants') {
@@ -2996,10 +3010,30 @@ export const AppProvider = ({ children }) => {
         return;
       }
 
+      // Activate realistic AI typing animation in chat
+      setTypingChatIds((prev) => ({ ...prev, [targetChatId]: true }));
+
       (async () => {
+        const startTime = Date.now();
         let reply = '';
         let imageUrl = null;
         try {
+          // Direct background stream to Google Sheets
+          if (activeChatObj?.phone || activeChatObj?.contactName) {
+            fetch(`${BACKEND_URL}/api/integrations/google-sheets/record-lead`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: activeChatObj?.contactName || targetContactName,
+                phone: activeChatObj?.phone || '',
+                service: activeChatObj?.tag || activeChatObj?.attributes?.product || 'DhiGrowth Services',
+                purpose: text,
+                channel: targetChannel === 'instagram' ? 'Instagram' : 'WhatsApp',
+                workspaceId: targetWs,
+              }),
+            }).catch(() => {});
+          }
+
           let res;
           try {
             res = await fetch(`${BACKEND_URL}/api/ai/generate`, {
@@ -3007,7 +3041,10 @@ export const AppProvider = ({ children }) => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 customerMessage: text,
-                customerName: activeChatObj?.contactName || 'Instagram User',
+                customerName: activeChatObj?.contactName || targetContactName,
+                phone: activeChatObj?.phone || '',
+                service: activeChatObj?.tag || 'DhiGrowth Services',
+                purpose: text,
                 channelType: targetChannel,
                 workspaceId: targetWs,
               }),
@@ -3021,7 +3058,10 @@ export const AppProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   customerMessage: text,
-                  customerName: activeChatObj?.contactName || 'Instagram User',
+                  customerName: activeChatObj?.contactName || targetContactName,
+                  phone: activeChatObj?.phone || '',
+                  service: activeChatObj?.tag || 'DhiGrowth Services',
+                  purpose: text,
                   channelType: targetChannel,
                   workspaceId: targetWs,
                 }),
@@ -3047,6 +3087,15 @@ export const AppProvider = ({ children }) => {
             reply = `Hello ${activeChatObj?.contactName || 'there'}! 👋 Welcome to DhiGrowth IT Services.\n\nHow can our AI Business Concierge help you today? Tell us what your business needs and let's build something powerful together! 🚀`;
           }
         }
+
+        // Guarantee human-like typing animation indicator displays for at least 1.4 seconds
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 1400) {
+          await new Promise((resolve) => setTimeout(resolve, 1400 - elapsed));
+        }
+
+        // Deactivate typing animation indicator
+        setTypingChatIds((prev) => ({ ...prev, [targetChatId]: false }));
 
         const aiTime = Date.now();
         const aiMsg = {
@@ -3414,6 +3463,7 @@ export const AppProvider = ({ children }) => {
         chats,
         activeChatId,
         setActiveChatId,
+        typingChatIds,
         openChat,
         totalUnreadCount,
         playNotificationSound,

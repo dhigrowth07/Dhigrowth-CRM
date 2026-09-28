@@ -19,6 +19,22 @@ let isCloudDripTableAvailable = false;
 
 const DEFAULT_STARTER_DRIPS = [
   {
+    id: 'drip_24h_session_protection',
+    name: '24-Hour WhatsApp Session Window Keep-Alive',
+    category: 'session_protection',
+    trigger: 'Inbound WhatsApp Message',
+    delay: '2 min & 3 hrs',
+    status: 'Active',
+    enrolled: 412,
+    delivered: 406,
+    steps: [
+      { step: 1, delay: 'After 2 Minutes', action: 'Gentle Inquiry Nudge & Requirements Check-in' },
+      { step: 2, delay: 'After 3 Hours', action: 'Solutions Specialist Follow-up & 24h Window Extension' },
+    ],
+    createdAt: new Date().toISOString(),
+    lastTriggerAt: new Date().toISOString(),
+  },
+  {
     id: 'drip_hot_fasttrack',
     name: 'Hot Lead Fast-Track Nurture',
     category: 'lead_stage',

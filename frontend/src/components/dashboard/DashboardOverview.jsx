@@ -30,6 +30,7 @@ import {
   Key,
   User,
   Lock,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -552,7 +553,7 @@ export const DashboardOverview = () => {
               <ArrowRight className="w-4 h-4 text-[#98A2B3] arrow-icon transition-all" />
             </div>
 
-            {/* Step 3: Add your contacts (Hovered state matching screenshot) */}
+            {/* Step 3: Add your contacts */}
             <div
               onClick={() => setActiveTab('leads')}
               className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#EAECF0] flex items-center justify-between cursor-pointer hover-item-card group"
@@ -567,6 +568,28 @@ export const DashboardOverview = () => {
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-[#98A2B3] arrow-icon transition-all" />
+            </div>
+
+            {/* Google Sheets Requirements Storage (Leads Option) */}
+            <div
+              onClick={() => setActiveTab('leads')}
+              className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/90 flex items-center justify-between cursor-pointer hover:bg-emerald-50 transition-all group shadow-2xs"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center icon-box shadow-xs transition-colors shrink-0">
+                  <FileSpreadsheet className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#101828] flex items-center gap-1.5">
+                    <span>Google Sheets Storage (Leads Option)</span>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#86EFAC]">
+                      Auto-Sync
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[#667085]">Add storage link to auto-record customer Service, Name, Phone &amp; Purpose</div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-emerald-700 arrow-icon transition-all" />
             </div>
 
             {/* Step 4: Invite your team */}
