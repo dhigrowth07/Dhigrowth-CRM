@@ -103,6 +103,7 @@ export const TeamInbox = () => {
   const [isTranslateMenuOpen, setIsTranslateMenuOpen] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isSimulatingInbound, setIsSimulatingInbound] = useState(false);
 
   // Catalogue Modal State
   const [isCatalogueModalOpen, setIsCatalogueModalOpen] = useState(false);
@@ -921,6 +922,69 @@ export const TeamInbox = () => {
     if (!inputMessage.trim()) return;
     sendMessage(inputMessage, 'user');
     setInputMessage('');
+  };
+
+  // Simulate customer sending message to test AI Auto-Pilot response
+  const handleSimulateInboundAi = async (testText = 'Hi') => {
+    if (!activeChat) return;
+    setIsSimulatingInbound(true);
+    showToast(`🤖 Testing AI Auto-Pilot with inbound "${testText}" from customer...`, 'info');
+    try {
+      const cleanPhone = (activeChat.phone || '').replace(/[^0-9]/g, '') || '919791471277';
+      const payload = {
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: '1611291237194962',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '15550616853',
+                    phone_number_id: '1272943605907701'
+                  },
+                  contacts: [
+                    {
+                      profile: { name: activeChat.contactName || 'Sri' },
+                      wa_id: cleanPhone
+                    }
+                  ],
+                  messages: [
+                    {
+                      from: cleanPhone,
+                      id: 'wamid.SIMULATED_' + Date.now(),
+                      timestamp: String(Math.floor(Date.now() / 1000)),
+                      text: { body: testText },
+                      type: 'text'
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      };
+
+      await fetch(`${BACKEND_URL}/webhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+
+      await fetch('http://localhost:4000/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+
+      showToast(`✨ Customer inbound "${testText}" simulated! Live AI response generated.`, 'success');
+    } catch (err) {
+      showToast('Simulation note: ' + err.message, 'error');
+    } finally {
+      setIsSimulatingInbound(false);
+    }
   };
 
   // 1. AI Reply Generator (Connects to Live Gemini AI Engine)
@@ -2028,6 +2092,16 @@ export const TeamInbox = () => {
                 <span>{isGeneratingAi ? 'Drafting...' : 'AI Draft'}</span>
               </button>
 
+              <button
+                type="button"
+                onClick={() => handleSimulateInboundAi('Hi')}
+                disabled={isSimulatingInbound}
+                className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-300 hover:border-emerald-500 text-emerald-700 text-[11px] font-bold shrink-0 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                title="Simulate customer sending 'Hi' to verify AI Auto-Pilot response"
+              >
+                <Bot className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{isSimulatingInbound ? 'Simulating...' : '🧪 Test AI Reply'}</span>
+              </button>
 
               <button
                 type="button"
@@ -2056,7 +2130,7 @@ export const TeamInbox = () => {
                   ? `✨ New Contact: Sri can click 'Send First Template' to dispatch Meta-approved 'hello_world' template and get their reply!`
                   : !isAiAutoPilot
                     ? `👤 Manual Agent Active: Type message to send directly to WhatsApp (${activeChat.phone})... (AI reply is paused)`
-                    : `🤖 AI Auto-Pilot Active: Type message as agent, or test inbound inquiry...`
+                    : `🤖 AI Auto-Pilot Active: Type message to send to ${activeChat.phone} (or click '🧪 Test AI Reply' above)...`
               }
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
