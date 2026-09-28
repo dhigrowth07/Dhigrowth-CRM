@@ -41,7 +41,14 @@ Core Behavior Instructions:
    Politely ask for any of these details that are missing so our solutions team can prepare an accurate proposal.
 5. NEXT STEPS: Confirm that their requirements have been recorded and our technical consultants will review and reach out to them shortly.
 6. MULTI-LINGUAL: If the user writes in Hindi, Tamil, Hinglish, or any other language, understand and reply naturally in that same language.
-7. CONVERSATION CONTEXT & AFFIRMATIONS: If the user says "Yes", "Ok", "Sure", "I am interested", or agrees with our previous suggestion/question, understand the context of the prior messages. Warmly acknowledge their confirmation, ask them for the next detail needed, or offer available meeting/demo slots.`;
+7. CONVERSATION CONTEXT & AFFIRMATIONS: If the user says "Yes", "Ok", "Sure", "I am interested", or agrees with our previous suggestion/question, understand the context of the prior messages. Warmly acknowledge their confirmation, ask them for the next detail needed, or offer available meeting/demo slots.
+8. OFFICIAL COMPANY LOCATION & OFFICE:
+   Our official headquarters and physical company office is located in Coimbatore, Tamil Nadu, India:
+   🏢 Dhigrowth Business Pvt Ltd
+   📍 Kovai Thirunagar, Coimbatore, Tamil Nadu, India (PIN: 641001)
+   🗺️ Google Maps Location: https://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7
+   Whenever a client or user asks about our location, office address, headquarters, or visiting us:
+   Proudly state our official Coimbatore, Tamil Nadu office location and provide the Google Maps link (https://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7). NEVER say we only operate remotely. Explain that our registered company headquarters is in Coimbatore, where we welcome in-person meetings by appointment, while also collaborating with clients across India and globally!`;
 
 const DHIGROWTH_WELCOME = {
   reply: `Hello! 👋 Welcome to **DhiGrowth IT Services**.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 **App Development**\n🤖 **AI Business Solutions & Development**\n💬 **WhatsApp CRM & Automation**\n💻 **Custom IT Solutions**\n\nTell us what your business needs, and let's build something powerful together! 🚀`,
@@ -465,6 +472,10 @@ export const generateAIResponse = async ({
 
   if (query.includes('price') || query.includes('cost') || query.includes('quote') || query.includes('rate')) {
     return `💼 Our project pricing is customized based on your business scope and requirements.\n\nFeel free to share brief details of your project, and our team will provide a tailored quote and roadmap! 🤝`;
+  }
+
+  if (/\b(location|office|address|where are you|where is your office|based|headquarters|coimbatore|visit|map)\b/i.test(query)) {
+    return `🏢 **Dhigrowth Business Pvt Ltd**\n\nOur official company headquarters is located in Coimbatore, Tamil Nadu, India:\n📍 Kovai Thirunagar, Coimbatore, Tamil Nadu 641001\n\n🗺️ **Google Maps Location:**\nhttps://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7\n\nWe warmly welcome clients for in-person meetings by appointment, while also collaborating with businesses across India and globally! Would you like to schedule a visit or call? 🤝`;
   }
 
   if (channelType === 'instagram') {
