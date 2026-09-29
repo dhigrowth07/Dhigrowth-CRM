@@ -2,6 +2,41 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
+        "id": "4c8bc626-c03d-4329-8979-a20d1116d9ef",
+        "name": "Direct Template: new_client_welcome",
+        "channel": "WhatsApp",
+        "templateName": "new_client_welcome",
+        "status": "completed",
+        "audienceType": "All Contacts",
+        "targetCount": 1,
+        "sentCount": 1,
+        "deliveredCount": 1,
+        "readCount": 1,
+        "repliedCount": 0,
+        "failedCount": 0,
+        "recipients": [
+          {
+            "phone": "918056649692",
+            "name": "dhi",
+            "company": "DhiGrowth IT Services"
+          }
+        ],
+        "variableMapping": [],
+        "scheduledAt": null,
+        "createdAt": "2026-09-29T09:42:09.665Z",
+        "completedAt": "2026-09-29T09:42:12.069Z",
+        "logs": [
+          {
+            "phone": "918056649692",
+            "name": "dhi",
+            "status": "sent",
+            "templateUsed": "new_client_welcome",
+            "messageId": "wamid.HBgMOTE4MDU2NjQ5NjkyFQIAERgSMjFDOUQxNzM4QzQ3MkE4MzgxAA==",
+            "timestamp": "2026-09-29T09:42:11.981Z"
+          }
+        ]
+      },
+      {
         "id": "49f1562c-7659-406e-b03c-359de0e4cc36",
         "name": "Direct Template Test",
         "channel": "WhatsApp",

@@ -969,11 +969,18 @@ export async function broadcastTemplateToAll({
 
   for (const contact of validContacts) {
     const contactName = contact.name || contact.full_name || 'Valued Client';
-    const personalizedBody = (bodyText || matchedTemplate?.body_text || '')
+    let personalizedBody = (bodyText || matchedTemplate?.body_text || '')
       .replace(/\{\{1\}\}/gi, contactName)
+      .replace(/\{\{2\}\}/gi, 'festive season')
+      .replace(/\{\{3\}\}/gi, headerText || 'Dhigrowth')
       .replace(/\{\{name\}\}/gi, contactName)
       .replace(/\{\{first_name\}\}/gi, contactName.split(' ')[0] || contactName)
       .replace(/\{\{phone\}\}/gi, contact.phone);
+
+    personalizedBody = personalizedBody
+      .replace(/Hello\s*!\s*✨/gi, `Hello ${contactName}! ✨`)
+      .replace(/prosperous\s+from all of us/gi, 'prosperous festive season from all of us')
+      .replace(/all of us at\s*\.\s*May/gi, `all of us at ${headerText || 'Dhigrowth'}. May`);
 
     try {
       let metaResult = null;
@@ -1189,7 +1196,9 @@ export async function sendDirectTemplateMessage({
     throw new Error('recipientPhone is required to send template message');
   }
 
-  const cleanPhone = recipientPhone.replace(/[^0-9]/g, '');
+  let cleanPhone = recipientPhone.replace(/[^0-9]/g, '');
+  if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+  if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) cleanPhone = '91' + cleanPhone.slice(1);
   const campaignRes = await sendCampaignMessages({
     workspaceId,
     name: `Direct Template: ${templateName}`,
