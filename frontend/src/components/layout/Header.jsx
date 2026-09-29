@@ -6,6 +6,7 @@ export const Header = () => {
   const {
     credits,
     activeTab,
+    activeChatId,
     setActiveTab,
     setIsSearchOpen,
     setIsUpgradeModalOpen,
@@ -82,9 +83,9 @@ export const Header = () => {
   );
 
   return (
-    <header className="h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans">
+    <header className={`h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans ${activeTab === 'inbox' && activeChatId ? 'hidden md:flex' : 'flex'}`}>
       {/* Left: Mobile Hamburger & Page Title */}
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(true)}
@@ -95,12 +96,13 @@ export const Header = () => {
         </button>
 
         <h1 className="text-base sm:text-lg md:text-xl font-bold text-[#101828] font-sans truncate">
-          {getTitle()}
+          <span className="sm:hidden">{activeTab === 'inbox' ? 'Inbox' : activeTab === 'instagram-inbox' ? 'Instagram' : getTitle()}</span>
+          <span className="hidden sm:inline">{getTitle()}</span>
         </h1>
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-3 shrink-0">
         {/* Search Bar with Ctrl+K trigger */}
         <button
           onClick={() => setIsSearchOpen(true)}
@@ -117,14 +119,14 @@ export const Header = () => {
         {/* Credits Badge */}
         <button
           onClick={() => setActiveTab('wallet')}
-          className="flex items-center gap-1 sm:gap-1.5 bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-[#0284C7] cursor-pointer transition-colors shrink-0"
+          className="flex items-center gap-1 sm:gap-1.5 bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold text-[#0284C7] cursor-pointer transition-colors shrink-0"
           title="Click to manage credits and wallet"
         >
           <div className="w-4 h-4 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-[10px] shrink-0 font-bold">
             $
           </div>
           <span className="font-mono tracking-tight font-bold text-[11px] sm:text-xs">
-            ${credits.toFixed(2)}<span className="hidden sm:inline"> CREDITS</span>
+            ${credits.toFixed(0)}<span className="hidden sm:inline">.{credits.toFixed(2).split('.')[1]} CREDITS</span>
           </span>
         </button>
 
@@ -132,22 +134,25 @@ export const Header = () => {
         <div className="relative">
           <button
             onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-            className="flex items-center gap-2 bg-white hover:bg-[#F9FAFB] border border-[#EAECF0] px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer shadow-2xs"
+            className="flex items-center gap-1 sm:gap-2 bg-white hover:bg-[#F9FAFB] border border-[#EAECF0] p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl transition-colors cursor-pointer shadow-2xs"
+            title={effectiveUser?.name || effectiveUser?.username || 'Sri'}
           >
-            <div className="w-6 h-6 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-[10px] font-bold">
+            <div className="w-6 h-6 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-[10px] font-bold shrink-0">
               {(effectiveUser?.name?.[0] || effectiveUser?.username?.[0] || 'S').toUpperCase()}
             </div>
-            <span className="text-xs font-semibold text-[#344054]">
+            <span className="text-xs font-semibold text-[#344054] hidden sm:inline">
               {effectiveUser?.name || effectiveUser?.username || 'Sri'}
             </span>
-            {impersonatedTenant ? (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold font-mono">VIEWING AS</span>
-            ) : isSuperAdmin ? (
-              <span className="text-xs" title="Super Administrator">👑</span>
-            ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 font-bold font-mono">ADMIN</span>
-            ) : null}
-            <ChevronDown className="w-3.5 h-3.5 text-[#98A2B3]" />
+            <span className="hidden sm:inline">
+              {impersonatedTenant ? (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold font-mono">VIEWING AS</span>
+              ) : isSuperAdmin ? (
+                <span className="text-xs" title="Super Administrator">👑</span>
+              ) : (currentUser?.role?.includes('Admin') || currentUser?.username === 'sri') ? (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 font-bold font-mono">ADMIN</span>
+              ) : null}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-[#98A2B3] shrink-0" />
           </button>
 
           {isWorkspaceDropdownOpen && (

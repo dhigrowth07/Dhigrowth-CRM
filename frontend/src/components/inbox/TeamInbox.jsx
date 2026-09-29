@@ -1315,8 +1315,8 @@ export const TeamInbox = () => {
 
   return (
     <div className="h-full flex-1 flex flex-col overflow-hidden bg-[#F8F9FC] font-sans">
-      {/* Mobile Top Contact Quick Switch Bar (Thumb Carousel) */}
-      <div className="md:hidden bg-white border-b border-[#EAECF0] px-3 py-2 shrink-0 z-20 shadow-2xs">
+      {/* Mobile Top Contact Quick Switch Bar (Thumb Carousel) - only shown during active chat so user can switch without leaving */}
+      <div className={`md:hidden bg-white border-b border-[#EAECF0] px-3 py-2 shrink-0 z-20 shadow-2xs ${!activeChat ? 'hidden' : 'block'}`}>
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-[#0284C7]" />
@@ -1377,7 +1377,7 @@ export const TeamInbox = () => {
           }`}
         >
         {/* Header & New Contact & Search */}
-        <div className="p-3.5 border-b border-[#EAECF0] space-y-2.5 shrink-0">
+        <div className="p-2.5 sm:p-3.5 border-b border-[#EAECF0] space-y-2 sm:space-y-2.5 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-[#101828]">Messages</h2>
@@ -1417,7 +1417,7 @@ export const TeamInbox = () => {
 
           {/* Super Admin Client Profile Selector */}
           {isSuperAdmin && (
-            <div className="bg-gradient-to-r from-sky-50/90 via-blue-50/60 to-sky-50/90 border border-sky-200/90 rounded-2xl p-2.5 shadow-2xs space-y-1.5">
+            <div className="bg-gradient-to-r from-sky-50/90 via-blue-50/60 to-sky-50/90 border border-sky-200/90 rounded-2xl p-2 sm:p-2.5 shadow-2xs space-y-1 sm:space-y-1.5">
               <div className="flex items-center justify-between px-0.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#0284C7]">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#0284C7]" />
@@ -1442,7 +1442,7 @@ export const TeamInbox = () => {
                 <select
                   value={selectedClientWorkspace}
                   onChange={(e) => selectClientWorkspace(e.target.value)}
-                  className="w-full bg-white border border-sky-200 text-[#101828] text-xs font-semibold rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-[#0284C7] focus:border-transparent cursor-pointer shadow-2xs appearance-none truncate"
+                  className="w-full bg-white border border-sky-200 text-[#101828] text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-[#0284C7] focus:border-transparent cursor-pointer shadow-2xs appearance-none truncate"
                 >
                   <option value="all">
                     🌐 All Clients (Global Inbox Feed)
@@ -1470,7 +1470,7 @@ export const TeamInbox = () => {
                 setBroadcastSummary(null);
                 setIsBroadcastDueModalOpen(true);
               }}
-              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
+              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1 sm:py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
               title="Send Payment Due PDF with payment link to all WhatsApp contacts"
             >
               <Zap className="w-3.5 h-3.5 text-[#0284C7] group-hover:scale-110 transition-transform shrink-0" />
@@ -1479,7 +1479,7 @@ export const TeamInbox = () => {
             <button
               type="button"
               onClick={() => setIsBroadcastTemplateModalOpen(true)}
-              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
+              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1 sm:py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
               title="Send interactive template with Yes reply button to all WhatsApp contacts"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#0284C7] group-hover:scale-110 transition-transform shrink-0" />
@@ -1488,17 +1488,17 @@ export const TeamInbox = () => {
           </div>
 
           <div className="relative">
-            <Search className="w-4 h-4 text-[#98A2B3] absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-[#98A2B3] absolute left-3 top-2 sm:top-2.5" />
             <input
               type="text"
               placeholder="Search leads, phone, tags..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8.5 pr-3 py-1.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#0284C7]"
+              className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-8 sm:pl-8.5 pr-2.5 sm:pr-3 py-1.5 rounded-xl text-xs text-[#101828] placeholder-[#98A2B3] focus:outline-none focus:border-[#0284C7]"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 text-[11px] font-medium overflow-x-auto pb-0.5 no-scrollbar">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-[11px] font-medium overflow-x-auto pb-0.5 no-scrollbar">
             {[
               { id: 'all', label: 'All Threads' },
               { id: 'ai', label: '🤖 AI Handled' },
@@ -1508,7 +1508,7 @@ export const TeamInbox = () => {
               <button
                 key={f.id}
                 onClick={() => setStatusFilter(f.id)}
-                className={`px-2.5 py-1 rounded-lg shrink-0 transition-colors cursor-pointer ${
+                className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shrink-0 transition-colors cursor-pointer ${
                   statusFilter === f.id
                     ? 'bg-[#0284C7] text-white font-semibold'
                     : 'bg-[#F9FAFB] text-[#475467] hover:text-[#101828]'
@@ -1530,7 +1530,7 @@ export const TeamInbox = () => {
               <div
                 key={chat.id}
                 onClick={() => (openChat ? openChat(chat.id) : setActiveChatId(chat.id))}
-                className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all ${
+                className={`p-2.5 sm:p-3.5 flex items-start gap-2.5 sm:gap-3 cursor-pointer transition-all ${
                   isSelected
                     ? 'bg-[#F0F9FF] border-l-4 border-l-[#0284C7]'
                     : chat.unreadCount > 0
@@ -1667,13 +1667,13 @@ export const TeamInbox = () => {
         ) : (
           <>
             {/* Chat Top Header */}
-            <div className="h-16 border-b border-[#EAECF0] bg-white px-3 sm:px-5 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="h-14 sm:h-16 border-b border-[#EAECF0] bg-white px-2 sm:px-5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                 {/* Mobile Back to Contacts Button */}
                 <button
                   type="button"
                   onClick={() => setActiveChatId(null)}
-                  className="md:hidden p-2 -ml-1 text-[#475467] hover:text-[#101828] hover:bg-[#F2F4F7] rounded-xl transition-colors cursor-pointer shrink-0"
+                  className="md:hidden p-1.5 -ml-0.5 text-[#475467] hover:text-[#101828] hover:bg-[#F2F4F7] rounded-xl transition-colors cursor-pointer shrink-0"
                   title="Back to conversations list"
                   aria-label="Back to conversations"
                 >
@@ -1682,21 +1682,21 @@ export const TeamInbox = () => {
 
                 {/* Contact Avatar & Info (Tap on mobile to open quick switch modal) */}
                 <div
-                  className="flex items-center gap-2.5 min-w-0 cursor-pointer group"
+                  className="flex items-center gap-2 sm:gap-2.5 min-w-0 cursor-pointer group"
                   onClick={() => setIsMobileContactPickerOpen(true)}
                   title="Tap to switch user / contact"
                 >
-                  <ContactAvatar name={activeChat.contactName} size="lg" />
+                  <ContactAvatar name={activeChat.contactName} size="md" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <h2 className="text-sm font-bold text-[#101828] truncate group-hover:text-[#0284C7] transition-colors">
+                      <h2 className="text-xs sm:text-sm font-bold text-[#101828] truncate group-hover:text-[#0284C7] transition-colors max-w-[100px] sm:max-w-none">
                         {activeChat.contactName}
                       </h2>
-                      <ChevronDown className="w-3.5 h-3.5 text-[#0284C7] md:hidden shrink-0" />
+                      <ChevronDown className="w-3 h-3 text-[#0284C7] md:hidden shrink-0" />
                       <span className="hidden sm:inline text-xs font-mono text-[#667085]">
                         {activeChat.phone}
                       </span>
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${tagColors[activeChat.tag]}`}>
+                      <span className={`text-[9px] sm:text-[10px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-full border ${tagColors[activeChat.tag]}`}>
                         {activeChat.tag}
                       </span>
                       {isSuperAdmin && (activeChat.clientProfileName || activeChat.clientCompanyName) && (
@@ -1708,18 +1708,18 @@ export const TeamInbox = () => {
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-[#98A2B3] flex items-center gap-2 mt-0.5">
-                      <span>{activeChat.city}</span>
+                    <div className="text-[10px] sm:text-[11px] text-[#98A2B3] flex items-center gap-1.5 sm:gap-2 mt-0.5">
+                      <span className="truncate max-w-[80px] sm:max-w-none">{activeChat.city}</span>
                       <span>·</span>
                       {isAiTyping ? (
-                        <span className="font-mono font-bold text-[#0284C7] flex items-center gap-1.5 animate-pulse">
-                          <Sparkles className="w-3.5 h-3.5 animate-spin text-[#0284C7]" />
-                          <span>Dhigrowth AI is typing...</span>
+                        <span className="font-mono font-bold text-[#0284C7] flex items-center gap-1 animate-pulse">
+                          <Sparkles className="w-3 h-3 animate-spin text-[#0284C7]" />
+                          <span className="truncate max-w-[100px] sm:max-w-none">AI typing...</span>
                         </span>
                       ) : (
-                        <span className={`font-mono font-semibold flex items-center gap-1.5 ${isAiAutoPilot ? 'text-[#0284C7]' : 'text-[#16A34A]'}`}>
+                        <span className={`font-mono font-semibold flex items-center gap-1 ${isAiAutoPilot ? 'text-[#0284C7]' : 'text-[#16A34A]'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${isAiAutoPilot ? 'bg-[#0284C7] animate-pulse' : 'bg-[#16A34A]'}`} />
-                          <span className="truncate max-w-[120px] sm:max-w-none">{isAiAutoPilot ? 'AI Auto-Pilot' : 'Manual Agent'}</span>
+                          <span className="truncate max-w-[100px] sm:max-w-none">{isAiAutoPilot ? 'AI Auto-Pilot' : 'Manual Agent'}</span>
                         </span>
                       )}
                     </div>
@@ -1727,7 +1727,7 @@ export const TeamInbox = () => {
                 </div>
 
                 {/* Mobile Next / Previous User Arrows */}
-                <div className="md:hidden flex items-center bg-[#F2F4F7] rounded-xl p-0.5 border border-[#EAECF0] shrink-0 ml-1">
+                <div className="hidden sm:flex md:hidden items-center bg-[#F2F4F7] rounded-xl p-0.5 border border-[#EAECF0] shrink-0 ml-1">
                   <button
                     type="button"
                     onClick={handlePrevChat}
@@ -1759,26 +1759,26 @@ export const TeamInbox = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
                 {/* Sri Exclusive: Send First Template to New Contact */}
                 {isSriUser && isNewContact && (
                   <button
                     type="button"
                     onClick={() => setIsTemplateSendModalOpen(true)}
-                    className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer bg-[#0284C7] hover:bg-[#0369A1] text-white animate-pulse shrink-0"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all shadow-xs cursor-pointer bg-[#0284C7] hover:bg-[#0369A1] text-white animate-pulse shrink-0"
                     title="Sri Exclusive: Send approved Meta template to new contact to get their first reply and open 24h window"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Send First Template</span>
-                    <span className="sm:hidden">Template</span>
+                    <span className="sm:hidden text-[10px]">Template</span>
                   </button>
                 )}
 
                 {/* AI Auto-Pilot Switch */}
                 <button
                   onClick={() => toggleAiForChat(activeChat.id)}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0 ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all shadow-xs cursor-pointer shrink-0 ${
                     isAiAutoPilot
                       ? 'bg-[#F0F9FF] text-[#0284C7] border border-[#BAE6FD] hover:bg-[#E0F2FE]'
                       : 'bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0] hover:bg-[#D1FAE5]'
@@ -1786,7 +1786,7 @@ export const TeamInbox = () => {
                   title={isAiAutoPilot ? "Click to switch to Manual Agent (Turn off AI auto-reply)" : "Click to switch to AI Auto-Pilot (Turn on AI auto-reply)"}
                 >
                   {isAiAutoPilot ? <Bot className="w-3.5 h-3.5 text-[#0284C7]" /> : <User className="w-3.5 h-3.5 text-[#16A34A]" />}
-                  <span className="hidden sm:inline">{isAiAutoPilot ? 'AI Auto-Pilot ON' : 'Manual Agent Active'}</span>
+                  <span className="hidden md:inline">{isAiAutoPilot ? 'AI Auto-Pilot ON' : 'Manual Agent'}</span>
                 </button>
 
                 {/* Toggle Lead Intelligence Panel */}

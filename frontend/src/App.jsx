@@ -52,6 +52,7 @@ import { TeamMembersPage } from './components/settings/TeamMembersPage';
 const AppContent = () => {
   const {
     activeTab,
+    activeChatId,
     setActiveTab,
     hasNavPermission,
     isAuthenticated,
@@ -400,7 +401,7 @@ const AppContent = () => {
         {/* Main App Container */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
           <Header />
-          <main className={`flex-1 min-w-0 pb-16 md:pb-0 ${activeTab === 'inbox' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
+          <main className={`flex-1 min-w-0 ${activeTab === 'inbox' && activeChatId ? 'pb-0' : 'pb-16 md:pb-0'} ${activeTab === 'inbox' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
             {renderActiveView()}
           </main>
           {/* Mobile Bottom Thumb Navigation */}

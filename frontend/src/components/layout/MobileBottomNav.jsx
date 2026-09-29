@@ -13,6 +13,7 @@ import { useApp } from '../../context/AppContext';
 export const MobileBottomNav = () => {
   const {
     activeTab,
+    activeChatId,
     setActiveTab,
     credits,
     totalUnreadCount,
@@ -57,7 +58,7 @@ export const MobileBottomNav = () => {
   return (
     <nav
       aria-label="Mobile Bottom Thumb Navigation"
-      className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAECF0] md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] select-none"
+      className={`fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAECF0] md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] select-none ${activeTab === 'inbox' && activeChatId ? 'hidden' : 'block'}`}
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div
