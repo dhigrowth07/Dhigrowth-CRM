@@ -960,6 +960,7 @@ app.post('/api/invoices/broadcast-due-to-all', async (req, res) => {
 app.post('/api/templates/broadcast-to-all', async (req, res) => {
   try {
     const {
+      templateName,
       contacts,
       headerText,
       bodyText,
@@ -968,9 +969,10 @@ app.post('/api/templates/broadcast-to-all', async (req, res) => {
       workspaceId = 'b0000000-0000-0000-0000-000000000001',
     } = req.body || {};
 
-    console.log(`📡 [Broadcast Template API Request] Workspace: ${workspaceId} | Contacts: ${contacts?.length || 'all'}`);
+    console.log(`📡 [Broadcast Template API Request] Workspace: ${workspaceId} | Template: ${templateName || 'new_client_welcome'} | Contacts: ${contacts?.length || 'all'}`);
 
     const summary = await broadcastTemplateToAll({
+      templateName,
       contacts,
       headerText,
       bodyText,

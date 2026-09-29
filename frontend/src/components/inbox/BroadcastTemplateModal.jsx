@@ -20,6 +20,13 @@ import { useApp } from '../../context/AppContext';
 import { ContactAvatar } from '../common/ContactAvatar';
 import { BACKEND_URL } from '../../services/apiConfig';
 
+const normalizePhoneNumber = (raw) => {
+  let clean = (raw || '').replace(/[^0-9]/g, '');
+  if (clean.length === 10) clean = '91' + clean;
+  if (clean.length === 11 && clean.startsWith('0')) clean = '91' + clean.slice(1);
+  return clean;
+};
+
 export const DEFAULT_WORKSPACE_PRESETS = [
   {
     id: '2950860201937776',
@@ -29,7 +36,7 @@ export const DEFAULT_WORKSPACE_PRESETS = [
     badge: 'Marketing',
     category: 'MARKETING',
     varsCount: '3 VARS',
-    header: '{{1}}',
+    header: 'Dhigrowth',
     body: `"Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!"`,
     footer: '',
     buttons: [
@@ -241,7 +248,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     const list = [];
     chats.forEach((c) => {
       const rawPhone = c.phone || c.phone_number || '';
-      const clean = rawPhone.replace(/[^0-9]/g, '');
+      const clean = normalizePhoneNumber(rawPhone);
       if (clean && !seen.has(clean)) {
         seen.add(clean);
         list.push({
@@ -288,18 +295,19 @@ export const BroadcastTemplateModal = ({ onClose }) => {
   };
 
   const toggleContact = (phone) => {
+    const clean = normalizePhoneNumber(phone);
     setSelectedContacts((prev) => {
-      const exists = prev.some((c) => c.phone === phone);
+      const exists = prev.some((c) => c.phone === clean);
       if (exists) {
-        return prev.filter((c) => c.phone !== phone);
+        return prev.filter((c) => c.phone !== clean);
       } else {
-        const found = chats.find((c) => (c.phone || '').replace(/[^0-9]/g, '') === phone);
+        const found = chats.find((c) => normalizePhoneNumber(c.phone || c.phone_number || '') === clean);
         return [
           ...prev,
           {
-            id: found?.id || phone,
+            id: found?.id || clean,
             name: found?.contactName || 'Valued Client',
-            phone,
+            phone: clean,
             avatar: found?.avatar,
           },
         ];
@@ -312,7 +320,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     const all = [];
     chats.forEach((c) => {
       const raw = c.phone || c.phone_number || '';
-      const clean = raw.replace(/[^0-9]/g, '');
+      const clean = normalizePhoneNumber(raw);
       if (clean && !seen.has(clean)) {
         seen.add(clean);
         all.push({
@@ -372,9 +380,9 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     const payload = {
       contacts: selectedContacts.map((c) => ({
         name: c.name,
-        phone: c.phone,
+        phone: normalizePhoneNumber(c.phone),
       })),
-      templateName: selectedPreset?.rawName || selectedPreset?.name || 'custom_template',
+      templateName: selectedPreset?.rawName || selectedPreset?.name || 'new_client_welcome',
       headerText: headerText.trim() || undefined,
       bodyText: bodyText.trim(),
       footerText: footerText.trim() || undefined,
@@ -406,23 +414,16 @@ export const BroadcastTemplateModal = ({ onClose }) => {
 
       if (res && res.ok) {
         const data = await res.json();
-        const summary = data.summary || {
-          total: selectedContacts.length,
-          dispatched: selectedContacts.length,
-          failed: 0,
-          results: selectedContacts.map((c) => ({
-            name: c.name,
-            phone: c.phone,
-            success: true,
-            metaDelivered: true,
-          })),
-        };
+        const summary = data.summary;
+        if (!summary) throw new Error('No summary returned from server');
         setBroadcastSummary(summary);
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
+        if (summary.dispatched > 0) {
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        }
 
         if (summary.failed > 0) {
           showToast(
@@ -787,7 +788,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
 
                 return chats.map((c) => {
                   const raw = c.phone || c.phone_number || '';
-                  const clean = raw.replace(/[^0-9]/g, '');
+                  const clean = normalizePhoneNumber(raw);
                   if (!clean) return null;
                   const isSelected = selectedContacts.some((sc) => sc.phone === clean);
                   const result = resultMap.get(clean.slice(-10));
@@ -802,6 +803,10 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                   } else if (isSelected) {
                     chipClasses = 'bg-[#E0F2FE] border-[#BAE6FD] text-[#0369A1] font-bold shadow-2xs';
                   }
+
+                  const displayPhone = clean.startsWith('91') && clean.length === 12
+                    ? `+91 ${clean.slice(2)}`
+                    : `+${clean}`;
 
                   return (
                     <button
@@ -824,7 +829,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                         />
                       )}
                       <span>{c.contactName || 'Client'}</span>
-                      <span className="text-[10px] opacity-75 font-mono">+{clean.slice(-10)}</span>
+                      <span className="text-[10px] opacity-75 font-mono">{displayPhone}</span>
 
                       {/* Live Received or Failed Status Badge */}
                       {isDelivered && (

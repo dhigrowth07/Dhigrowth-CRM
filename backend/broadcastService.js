@@ -166,26 +166,38 @@ export function buildTemplateParameters(template, contact = {}, variableMapping 
 
   // 1. Explicitly approved 'new_client_welcome' template
   if (tplName === 'new_client_welcome') {
+    const brandName = customHeader || 'Dhigrowth';
     components.push({
       type: 'header',
       parameters: [
-        { type: 'text', text: customHeader || 'Welcome to WAPPPILOT' }
+        { type: 'text', text: brandName }
       ]
     });
     components.push({
       type: 'body',
       parameters: [
-        { type: 'text', text: contact.name || 'Friend' },
-        { type: 'text', text: 'growth & prosperity' },
-        { type: 'text', text: contact.company || 'WAPPPILOT' }
+        { type: 'text', text: contact.name || 'Valued Client' },
+        { type: 'text', text: 'festive season' },
+        { type: 'text', text: contact.company || brandName }
       ]
     });
     return components;
   }
 
-  // 2. Official 'hello_world' sample template (has 0 variables, components must be omitted)
-  if (tplName === 'hello_world') {
+  // 2. Official templates with 0 variables (Meta strictly rejects if components is passed)
+  if (tplName === 'hello_world' || tplName === 'dhigrowth_welcome_lead' || tplName === 'ai_it_discovery') {
     return [];
+  }
+
+  // 3. Official templates with 1 variable (name)
+  if (tplName === 'custom_template' || tplName === 'whatsapp_crm_demo' || tplName === 'free_15_min_call') {
+    components.push({
+      type: 'body',
+      parameters: [
+        { type: 'text', text: contact.name || 'Valued Client' }
+      ]
+    });
+    return components;
   }
 
   // 3. Header parameters if header has variables or customHeader is specified
@@ -872,18 +884,18 @@ function startSchedulerLoop() {
 }
 
 /**
- * Broadcast an interactive template message with "Yes" reply buttons to all contacts
+ * Broadcast an official Meta WhatsApp template message to all contacts
+ * (Directly delivers to new and cold contacts outside the 24-hour window)
  */
 export async function broadcastTemplateToAll({
+  templateName = 'new_client_welcome',
   contacts = [],
-  headerText = 'DhiGrowth IT Services',
-  bodyText = 'Hello {{name}}! 👋 Welcome to DhiGrowth IT Services.\n\nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n\nTap below to connect with our team! 🚀',
-  footerText = 'Click below to reply:',
-  buttons = [
-    { id: 'btn_yes_interested', title: "Yes, I'm interested" },
-    { id: 'btn_tell_more', title: 'Tell me more' },
-  ],
+  headerText = 'Dhigrowth',
+  bodyText = '',
+  footerText = '',
+  buttons = [],
   workspaceId = 'b0000000-0000-0000-0000-000000000001',
+  variableMapping = [],
 } = {}) {
   let targetContacts = [...(contacts || [])];
 
@@ -917,13 +929,14 @@ export async function broadcastTemplateToAll({
     }
   }
 
-  // Deduplicate and filter contacts with phone numbers
+  // Deduplicate and filter contacts with phone numbers, normalizing Indian phone numbers
   const seenPhones = new Set();
   const validContacts = [];
   for (const c of targetContacts) {
     const raw = c.phone || c.phone_number || '';
     let clean = raw.replace(/[^0-9]/g, '');
     if (clean.length === 10) clean = '91' + clean;
+    if (clean.length === 11 && clean.startsWith('0')) clean = '91' + clean.slice(1);
     if (clean && !seenPhones.has(clean)) {
       seenPhones.add(clean);
       validContacts.push({
@@ -933,7 +946,21 @@ export async function broadcastTemplateToAll({
     }
   }
 
-  console.log(`📢 [Broadcast Template] Starting broadcast to ${validContacts.length} contacts with Yes reply button...`);
+  // Resolve template definition & language code
+  const templates = getWorkspaceTemplates(workspaceId);
+  const matchedTemplate =
+    templates.find((t) => t.name === (templateName || 'new_client_welcome')) ||
+    STARTER_TEMPLATES.find((t) => t.name === (templateName || 'new_client_welcome')) ||
+    templates[0] ||
+    STARTER_TEMPLATES[0];
+
+  const tplName = matchedTemplate?.name || templateName || 'new_client_welcome';
+  let langCode = matchedTemplate?.language;
+  if (!langCode) {
+    langCode = tplName === 'new_client_welcome' ? 'en' : 'en_US';
+  }
+
+  console.log(`📢 [Broadcast Template] Starting Meta template broadcast "${tplName}" (${langCode}) to ${validContacts.length} contacts...`);
   const results = [];
 
   const tenantMeta = getTenantMetaConfig({ workspaceId });
@@ -942,63 +969,106 @@ export async function broadcastTemplateToAll({
 
   for (const contact of validContacts) {
     const contactName = contact.name || contact.full_name || 'Valued Client';
-    const personalizedBody = (bodyText || '')
+    const personalizedBody = (bodyText || matchedTemplate?.body_text || '')
+      .replace(/\{\{1\}\}/gi, contactName)
       .replace(/\{\{name\}\}/gi, contactName)
       .replace(/\{\{first_name\}\}/gi, contactName.split(' ')[0] || contactName)
       .replace(/\{\{phone\}\}/gi, contact.phone);
 
     try {
-      // 1. Dispatch via Meta Cloud API Interactive Buttons
       let metaResult = null;
+      let metaError = null;
+      let templateUsed = tplName;
+
       if (token && phoneId && !token.includes('placeholder')) {
-        try {
-          metaResult = await sendWhatsAppInteractiveButtons({
-            phoneNumberId: phoneId,
-            accessToken: token,
-            recipientPhone: contact.phone,
-            headerText,
-            bodyText: personalizedBody,
-            footerText,
-            buttons,
+        const components = buildTemplateParameters(
+          matchedTemplate,
+          contact,
+          variableMapping,
+          headerText
+        );
+
+        const payload = {
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: contact.phone,
+          type: 'template',
+          template: {
+            name: tplName,
+            language: { code: langCode },
+          },
+        };
+
+        if (components && components.length > 0) {
+          payload.template.components = components;
+        }
+
+        let res = await fetch(`${GRAPH_BASE_URL}/${phoneId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        let data = await res.json();
+
+        // Retry with alternate language code if Meta rejected due to language code mismatch (en <-> en_US)
+        if (!res.ok && (data.error?.message?.includes('language') || data.error?.code === 132000)) {
+          const alternateLang = langCode === 'en' ? 'en_US' : 'en';
+          console.log(`[BroadcastTemplate] Retrying ${tplName} for ${contact.phone} with alternate language "${alternateLang}"...`);
+          payload.template.language.code = alternateLang;
+          res = await fetch(`${GRAPH_BASE_URL}/${phoneId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
           });
-        } catch (interactiveErr) {
-          // Interactive messages require 24hr conversation window.
-          // Fall back to hello_world approved template for new/cold contacts.
-          console.warn(`[BroadcastTemplate] Interactive failed for ${contact.phone}, trying hello_world:`, interactiveErr.message);
-          try {
-            const fallbackRes = await fetch(`${GRAPH_BASE_URL}/${phoneId}/messages`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
+          data = await res.json();
+        }
+
+        // Guaranteed fallback: If template still rejected, deliver via official 'hello_world' template
+        if (!res.ok && tplName !== 'hello_world') {
+          console.warn(`[BroadcastTemplate] Primary template "${tplName}" failed for ${contact.phone}: ${data.error?.message}. Retrying with official hello_world template...`);
+          const hwRes = await fetch(`${GRAPH_BASE_URL}/${phoneId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              recipient_type: 'individual',
+              to: contact.phone,
+              type: 'template',
+              template: {
+                name: 'hello_world',
+                language: { code: 'en_US' },
               },
-              body: JSON.stringify({
-                messaging_product: 'whatsapp',
-                recipient_type: 'individual',
-                to: contact.phone,
-                type: 'template',
-                template: {
-                  name: 'hello_world',
-                  language: { code: 'en_US' },
-                },
-              }),
-            });
-            const fallbackData = await fallbackRes.json();
-            if (fallbackRes.ok) {
-              metaResult = fallbackData;
-            } else {
-              console.warn(`[BroadcastTemplate] hello_world also failed for ${contact.phone}:`, fallbackData?.error?.message);
-              metaResult = { simulated: true };
-            }
-          } catch (fallbackErr) {
-            console.warn(`[BroadcastTemplate] All fallbacks failed for ${contact.phone}:`, fallbackErr.message);
-            metaResult = { simulated: true };
+            }),
+          });
+          const hwData = await hwRes.json();
+          if (hwRes.ok && hwData?.messages?.[0]?.id) {
+            metaResult = hwData;
+            templateUsed = 'hello_world';
+          } else {
+            metaError = data.error?.message || hwData.error?.message || 'Meta Cloud API rejected template delivery';
           }
+        } else if (res.ok && data?.messages?.[0]?.id) {
+          metaResult = data;
+        } else {
+          metaError = data.error?.message || 'Meta Cloud API rejected template delivery';
         }
       }
 
+      const isDelivered = Boolean(metaResult?.messages?.[0]?.id);
+      const messageId = metaResult?.messages?.[0]?.id || null;
+
       // 2. Find or create conversation in Supabase so it shows in Team Inbox
-      if (supabase) {
+      if (isDelivered && supabase) {
         try {
           const cleanDigits = contact.phone.slice(-10);
           const { data: cList } = await supabase
@@ -1026,7 +1096,7 @@ export async function broadcastTemplateToAll({
                     contact_id: contactId,
                     channel_type: 'whatsapp',
                     status: 'bot_active',
-                    last_message_text: personalizedBody,
+                    last_message_text: personalizedBody || `Template: ${templateUsed}`,
                     last_message_at: new Date().toISOString(),
                   },
                 ])
@@ -1043,17 +1113,17 @@ export async function broadcastTemplateToAll({
                   conversation_id: convId,
                   direction: 'outbound',
                   ai_generated: false,
-                  type: 'interactive',
-                  content: `${personalizedBody}\n\n${buttonSummary}`,
+                  type: 'template',
+                  content: `${personalizedBody}\n\n${buttonSummary}`.trim(),
                   status: 'delivered',
-                  external_message_id: metaResult?.messages?.[0]?.id || null,
+                  external_message_id: messageId,
                 },
               ]);
 
               await supabase
                 .from('conversations')
                 .update({
-                  last_message_text: personalizedBody,
+                  last_message_text: personalizedBody || `Template: ${templateUsed}`,
                   last_message_at: new Date().toISOString(),
                 })
                 .eq('id', convId);
@@ -1064,24 +1134,37 @@ export async function broadcastTemplateToAll({
         }
       }
 
-      results.push({
-        name: contactName,
-        phone: contact.phone,
-        success: true,
-        metaDelivered: Boolean(metaResult?.messages?.[0]?.id),
-      });
+      if (isDelivered) {
+        results.push({
+          name: contactName,
+          phone: contact.phone,
+          success: true,
+          metaDelivered: true,
+          messageId,
+          templateUsed,
+        });
+      } else {
+        results.push({
+          name: contactName,
+          phone: contact.phone,
+          success: false,
+          metaDelivered: false,
+          error: metaError || 'Template delivery failed',
+        });
+      }
     } catch (err) {
       console.error(`❌ [Broadcast Template] Error for ${contact.phone}:`, err.message);
       results.push({
         name: contactName,
         phone: contact.phone,
         success: false,
+        metaDelivered: false,
         error: err.message,
       });
     }
   }
 
-  console.log(`✅ [Broadcast Template] Completed: ${results.filter((r) => r.success).length}/${validContacts.length} sent.`);
+  console.log(`✅ [Broadcast Template] Completed: ${results.filter((r) => r.success).length}/${validContacts.length} sent via Meta Cloud API.`);
 
   return {
     total: validContacts.length,

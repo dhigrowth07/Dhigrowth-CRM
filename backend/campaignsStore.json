@@ -2,6 +2,40 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
+        "id": "49f1562c-7659-406e-b03c-359de0e4cc36",
+        "name": "Direct Template Test",
+        "channel": "WhatsApp",
+        "templateName": "new_client_welcome",
+        "status": "completed",
+        "audienceType": "All Contacts",
+        "targetCount": 1,
+        "sentCount": 1,
+        "deliveredCount": 1,
+        "readCount": 1,
+        "repliedCount": 0,
+        "failedCount": 0,
+        "recipients": [
+          {
+            "phone": "918438489978",
+            "name": "Sri"
+          }
+        ],
+        "variableMapping": [],
+        "scheduledAt": null,
+        "createdAt": "2026-09-29T09:24:44.304Z",
+        "completedAt": "2026-09-29T09:24:46.384Z",
+        "logs": [
+          {
+            "phone": "918438489978",
+            "name": "Sri",
+            "status": "sent",
+            "templateUsed": "new_client_welcome",
+            "messageId": "wamid.HBgMOTE4NDM4NDg5OTc4FQIAERgSNTdDOEM4OTBBQjNFQTM0QjdFAA==",
+            "timestamp": "2026-09-29T09:24:46.294Z"
+          }
+        ]
+      },
+      {
         "id": "26b27c01-d0d7-468f-91d9-b4c42105d420",
         "name": "24h Window Opener Test",
         "channel": "WhatsApp",

@@ -6,7 +6,7 @@
         "name": "dhigrowth_welcome_lead",
         "category": "MARKETING",
         "language": "en_US",
-        "status": "PENDING",
+        "status": "APPROVED",
         "header_type": "TEXT",
         "header_content": "DhiGrowth IT Services",
         "body_text": "Hello! 👋 Welcome to DhiGrowth IT Services. We help businesses scale with App Development, AI Business Bots, and WhatsApp CRM Automation. Tap below to connect with us! 🚀",
@@ -23,8 +23,7 @@
         ],
         "variables": [],
         "syncedWithMeta": true,
-        "createdAt": "2026-09-29T06:49:47.984Z",
-        "updatedAt": "2026-09-29T06:49:47.984Z"
+        "updatedAt": "2026-09-29T09:26:24.906Z"
       },
       {
         "id": "2950860201937776",
@@ -48,7 +47,7 @@
           "var_3"
         ],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-29T06:48:08.417Z"
+        "updatedAt": "2026-09-29T09:26:24.906Z"
       },
       {
         "id": "1744607210078710",
@@ -63,7 +62,7 @@
         "buttons": [],
         "variables": [],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-29T06:48:08.417Z"
+        "updatedAt": "2026-09-29T09:26:24.906Z"
       },
       {
         "id": "tpl_ai_discovery",
