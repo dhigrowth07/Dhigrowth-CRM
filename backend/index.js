@@ -68,6 +68,7 @@ import {
   sendTestBroadcast,
   cancelScheduledCampaign,
   broadcastTemplateToAll,
+  sendDirectTemplateMessage,
 } from './broadcastService.js';
 import {
   initWalletStore,
@@ -985,6 +986,38 @@ app.post('/api/templates/broadcast-to-all', async (req, res) => {
   } catch (err) {
     console.error('[Broadcast Template Route Error]:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// 7.1.3 Send Direct Template Message to New Contact to open 24h context window
+app.post('/api/send-template-message', async (req, res) => {
+  try {
+    const {
+      recipientPhone,
+      templateName = 'new_client_welcome',
+      contactName,
+      company,
+      conversationId,
+      workspaceId = process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001',
+    } = req.body || {};
+
+    if (!recipientPhone) {
+      return res.status(400).json({ success: false, error: 'recipientPhone is required' });
+    }
+
+    const result = await sendDirectTemplateMessage({
+      workspaceId,
+      recipientPhone,
+      templateName,
+      contactName,
+      company,
+      conversationId,
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('[API Send Template Error]:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

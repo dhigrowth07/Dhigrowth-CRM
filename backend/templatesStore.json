@@ -2,32 +2,94 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
-        "id": "tpl_ai_discovery",
-        "name": "ai_it_discovery",
-        "displayName": "AI & IT Discovery",
-        "badge": "Recommended",
+        "id": "1441572108101708",
+        "name": "dhigrowth_welcome_lead",
         "category": "MARKETING",
         "language": "en_US",
-        "status": "APPROVED",
+        "status": "PENDING",
         "header_type": "TEXT",
         "header_content": "DhiGrowth IT Services",
-        "body_text": "Hello {{name}}! 👋 Welcome to DhiGrowth IT Services.\n\nAre you looking to scale your business with custom App Development, AI Auto-Pilot Bots, or WhatsApp CRM Automation?\n\nTap below to connect with our team! 🚀",
-        "footer_text": "hi, hello, discovery, app, ai, crm, start",
+        "body_text": "Hello! 👋 Welcome to DhiGrowth IT Services. We help businesses scale with App Development, AI Business Bots, and WhatsApp CRM Automation. Tap below to connect with us! 🚀",
+        "footer_text": "DhiGrowth Business Solutions",
         "buttons": [
           {
             "type": "QUICK_REPLY",
-            "text": "Yes, I'm interested"
+            "text": "Yes im interested"
           },
           {
             "type": "QUICK_REPLY",
-            "text": "Tell me more"
+            "text": "Tell more"
+          }
+        ],
+        "variables": [],
+        "syncedWithMeta": true,
+        "createdAt": "2026-09-29T06:49:47.984Z",
+        "updatedAt": "2026-09-29T06:49:47.984Z"
+      },
+      {
+        "id": "2950860201937776",
+        "name": "new_client_welcome",
+        "category": "MARKETING",
+        "language": "en",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "{{1}}",
+        "body_text": "\"Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!\"",
+        "footer_text": "",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "\"Thank you!\""
           }
         ],
         "variables": [
-          "name"
+          "var_1",
+          "var_2",
+          "var_3"
         ],
         "syncedWithMeta": true,
-        "updatedAt": "2026-09-29T05:47:03.207Z"
+        "updatedAt": "2026-09-29T06:48:08.417Z"
+      },
+      {
+        "id": "1744607210078710",
+        "name": "hello_world",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "Hello World",
+        "body_text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.",
+        "footer_text": "WhatsApp Business Platform sample message",
+        "buttons": [],
+        "variables": [],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-29T06:48:08.417Z"
+      },
+      {
+        "id": "tpl_ai_discovery",
+        "name": "ai_it_discovery",
+        "displayName": "Primary Customer Welcome Greeting",
+        "badge": "Recommended",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "IMAGE",
+        "header_content": "https://www.dhigrowth.com/logo.png",
+        "body_text": "Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀",
+        "footer_text": "hi, hello, hey, start, menu, help",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Yes im interested"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Tell more"
+          }
+        ],
+        "variables": [],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-09-29T06:40:00.000Z"
       },
       {
         "id": "tpl_free_call",
@@ -110,21 +172,6 @@
         "variables": [
           "name"
         ],
-        "syncedWithMeta": true,
-        "updatedAt": "2026-09-29T05:47:03.208Z"
-      },
-      {
-        "id": "tpl_hello_world",
-        "name": "hello_world",
-        "category": "UTILITY",
-        "language": "en_US",
-        "status": "APPROVED",
-        "header_type": "TEXT",
-        "header_content": "DhiGrowth IT Services",
-        "body_text": "Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.",
-        "footer_text": "Tap an option to respond:",
-        "buttons": [],
-        "variables": [],
         "syncedWithMeta": true,
         "updatedAt": "2026-09-29T05:47:03.208Z"
       }

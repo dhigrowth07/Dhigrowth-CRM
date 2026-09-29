@@ -2,6 +2,41 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
+        "id": "26b27c01-d0d7-468f-91d9-b4c42105d420",
+        "name": "24h Window Opener Test",
+        "channel": "WhatsApp",
+        "templateName": "new_client_welcome",
+        "status": "completed",
+        "audienceType": "All Contacts",
+        "targetCount": 1,
+        "sentCount": 1,
+        "deliveredCount": 1,
+        "readCount": 1,
+        "repliedCount": 0,
+        "failedCount": 0,
+        "recipients": [
+          {
+            "phone": "919791471277",
+            "name": "Sri",
+            "company": "DhiGrowth IT Services"
+          }
+        ],
+        "variableMapping": [],
+        "scheduledAt": null,
+        "createdAt": "2026-09-29T06:52:08.161Z",
+        "completedAt": "2026-09-29T06:52:10.127Z",
+        "logs": [
+          {
+            "phone": "919791471277",
+            "name": "Sri",
+            "status": "sent",
+            "templateUsed": "new_client_welcome",
+            "messageId": "wamid.HBgMOTE5NzkxNDcxMjc3FQIAERgSMDU2NjdDM0JFNEI1QkFCRkQyAA==",
+            "timestamp": "2026-09-29T06:52:10.039Z"
+          }
+        ]
+      },
+      {
         "id": "63970e55-15d6-4cbb-9113-460f976f34df",
         "name": "Validation Broadcast Run",
         "channel": "WhatsApp",

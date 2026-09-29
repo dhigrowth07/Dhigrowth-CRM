@@ -10,6 +10,7 @@ import {
   clearQualificationSession,
 } from './leadQualificationStore.js';
 import { scheduleFollowUps } from './followUpService.js';
+import { getWorkspaceTemplates } from './templateService.js';
 
 import dotenv from 'dotenv';
 import path from 'path';
@@ -599,9 +600,29 @@ async function handleLeadQualificationFlow({
   const isYesClick = lowerMsg.includes("yes, i'm interested") || lowerMsg.includes("yes, interested") || lowerMsg.includes("yes im interested") || lowerMsg.includes("im interested") || lowerMsg === 'btn_yes' || lowerMsg === 'yes';
   const isTellMore = lowerMsg.includes("tell me more") || lowerMsg.includes("tell more") || lowerMsg === 'btn_more';
 
-  // 2. Initial inquiry / greeting: start qualification session
-  if (!session || session.step === 'COMPLETED') {
-    if (isGreeting || isYesClick || isTellMore) {
+  // Check dynamic templates configured in the Templates page
+  let matchedTemplate = null;
+  try {
+    const wsTemplates = getWorkspaceTemplates(effectiveWorkspaceId);
+    if (Array.isArray(wsTemplates)) {
+      matchedTemplate = wsTemplates.find((t) => {
+        if (!t.footer_text) return false;
+        const triggers = t.footer_text.toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
+        return triggers.some((tr) => lowerMsg === tr || lowerMsg.includes(tr));
+      });
+      if (!matchedTemplate && isGreeting) {
+        matchedTemplate = wsTemplates.find(
+          (t) => t.name === 'ai_it_discovery' || t.name === 'hi' || (t.footer_text && t.footer_text.includes('hi'))
+        ) || wsTemplates[0];
+      }
+    }
+  } catch (tErr) {
+    console.warn('[LeadQualification] Template lookup note:', tErr.message);
+  }
+
+  // 2. Initial inquiry / greeting: start qualification session or send triggered template
+  if (!session || session.step === 'COMPLETED' || matchedTemplate) {
+    if (isGreeting || isYesClick || isTellMore || matchedTemplate) {
       const knownName = customerName && !customerName.startsWith('Customer') && !customerName.startsWith('Instagram') ? customerName : null;
       updateQualificationSession(senderIdentifier, {
         step: 'AWAITING_SERVICE',
@@ -610,26 +631,42 @@ async function handleLeadQualificationFlow({
         name: knownName,
       });
 
-      const welcomeMsg = `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`;
+      // Prepare dynamic template content
+      let welcomeMsg = matchedTemplate?.body_text || `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`;
+      if (knownName) {
+        welcomeMsg = welcomeMsg.replace(/\{\{name\}\}/gi, knownName);
+      } else {
+        welcomeMsg = welcomeMsg.replace(/\{\{name\}\}/gi, 'there');
+      }
+
+      const imageUrl = (matchedTemplate?.header_type === 'IMAGE' && matchedTemplate?.header_content) ||
+        (matchedTemplate?.header_content && matchedTemplate.header_content.startsWith('http') ? matchedTemplate.header_content : 'https://www.dhigrowth.com/logo.png');
+
+      const templateButtons = Array.isArray(matchedTemplate?.buttons) && matchedTemplate.buttons.length > 0
+        ? matchedTemplate.buttons.slice(0, 3).map((b, idx) => ({
+            id: b.id || `btn_${idx + 1}`,
+            title: String(b.text || b.title || 'Select').slice(0, 20),
+          }))
+        : [
+            { id: 'btn_yes', title: 'Yes im interested' },
+            { id: 'btn_more', title: 'Tell more' },
+          ];
 
       // Try sending interactive button message first on WhatsApp
-      if (channelType === 'whatsapp' && phoneNumberId && accessToken) {
+      if (channelType === 'whatsapp' && phoneNumberId && accessToken && templateButtons.length > 0) {
         try {
           const interactiveRes = await sendWhatsAppInteractiveButtons({
             phoneNumberId,
             accessToken,
             recipientPhone: cleanPhone,
-            imageUrl: 'https://www.dhigrowth.com/logo.png',
+            imageUrl,
             bodyText: welcomeMsg,
             footerText: 'Tap an option to respond:',
-            buttons: [
-              { id: 'btn_yes', title: 'Yes im interested' },
-              { id: 'btn_more', title: 'Tell more' },
-            ],
+            buttons: templateButtons,
           });
           if (interactiveRes?.messages?.[0]?.id) {
             const wamid = interactiveRes.messages[0].id;
-            console.log(`✅ [LeadQualification] Delivered interactive greeting with buttons to ${cleanPhone}`);
+            console.log(`✅ [LeadQualification] Delivered interactive template "${matchedTemplate?.name || 'welcome'}" with buttons to ${cleanPhone}`);
             if (supabase) {
               try {
                 await supabase.from('messages').insert([{
@@ -640,7 +677,7 @@ async function handleLeadQualificationFlow({
                   ai_generated: true,
                   type: 'text',
                   content: welcomeMsg,
-                  media_url: 'https://www.dhigrowth.com/logo.png',
+                  media_url: imageUrl,
                   status: 'sent',
                   external_message_id: wamid,
                 }]);

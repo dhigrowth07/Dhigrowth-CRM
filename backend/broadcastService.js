@@ -1090,3 +1090,71 @@ export async function broadcastTemplateToAll({
     results,
   };
 }
+
+/**
+ * Send a single template message to open the 24-hour context window for new or cold customers
+ */
+export async function sendDirectTemplateMessage({
+  workspaceId = 'b0000000-0000-0000-0000-000000000001',
+  recipientPhone,
+  templateName = 'new_client_welcome',
+  contactName = 'Valued Customer',
+  company = 'DhiGrowth IT Services',
+  conversationId = null,
+}) {
+  if (!recipientPhone) {
+    throw new Error('recipientPhone is required to send template message');
+  }
+
+  const cleanPhone = recipientPhone.replace(/[^0-9]/g, '');
+  const campaignRes = await sendCampaignMessages({
+    workspaceId,
+    name: `Direct Template: ${templateName}`,
+    templateName,
+    recipients: [{ phone: cleanPhone, name: contactName, company }],
+  });
+
+  const firstLog = campaignRes.logs?.[0];
+  const isSuccess = campaignRes.sentCount > 0;
+  const messageId = firstLog?.messageId || null;
+
+  // Log to Supabase messages if conversationId is provided
+  if (isSuccess && conversationId) {
+    try {
+      const supabase = getSupabase();
+      if (supabase) {
+        const textContent = `📢 [Template Message: ${templateName}]\nSent to open 24h WhatsApp conversation window.`;
+        await supabase.from('messages').insert([
+          {
+            workspace_id: workspaceId,
+            conversation_id: conversationId,
+            direction: 'outbound',
+            ai_generated: false,
+            type: 'template',
+            content: textContent,
+            status: 'delivered',
+            external_message_id: messageId,
+          },
+        ]);
+        await supabase
+          .from('conversations')
+          .update({
+            last_message_text: `Template: ${templateName}`,
+            last_message_at: new Date().toISOString(),
+          })
+          .eq('id', conversationId);
+      }
+    } catch (dbErr) {
+      console.warn('[sendDirectTemplateMessage] Supabase message log note:', dbErr.message);
+    }
+  }
+
+  return {
+    success: isSuccess,
+    messageId,
+    templateUsed: firstLog?.templateUsed || templateName,
+    status: firstLog?.status || (isSuccess ? 'sent' : 'failed'),
+    error: firstLog?.error || null,
+  };
+}
+

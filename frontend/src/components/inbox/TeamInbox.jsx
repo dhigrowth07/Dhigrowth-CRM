@@ -575,28 +575,31 @@ export const TeamInbox = () => {
 
   const [isTemplateSendModalOpen, setIsTemplateSendModalOpen] = useState(false);
   const [isSendingTemplate, setIsSendingTemplate] = useState(false);
-  const [selectedTemplateName, setSelectedTemplateName] = useState('hello_world');
+  const [selectedTemplateName, setSelectedTemplateName] = useState('new_client_welcome');
   const [templateOptions, setTemplateOptions] = useState([
     {
-      name: 'hello_world',
-      title: 'hello_world (Meta Verified Sample - Ready to Send)',
-      category: 'utility',
-      status: 'approved',
-      body_text: `Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.`,
-    },
-    {
-      name: 'hi',
-      title: 'hi (Official Starter Greeting)',
-      category: 'utility',
-      status: 'approved',
-      body_text: `👋 *Hello {{1}}!*\n\nWelcome to *DhiGrowth IT Services* 🚀\n\nWe help businesses grow with powerful digital solutions:\n• WhatsApp Business API & AI Auto-Reply 💬\n• Custom Mobile & Web App Development 📱\n• Billing & Automated Invoicing CRM 🧾\n• SEO & Performance Marketing 📈\n\n👉 Let us know your requirement or reply with *YES* to talk with our team!\n\nReply to this message to start chatting with us.`,
-    },
-    {
-      name: 'service_inquiry_starter',
-      title: 'service_inquiry_starter (Business Solutions Starter)',
+      name: 'new_client_welcome',
+      title: 'new_client_welcome (⭐ Meta-Approved 24h Window Opener with Quick Reply)',
       category: 'marketing',
       status: 'approved',
-      body_text: `Hi {{1}}! Thanks for connecting with DhiGrowth. We specialize in {{2}}. Explore our portfolio at {{3}} or reply to this message to connect directly!`,
+      language: 'en',
+      body_text: `Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!`,
+    },
+    {
+      name: 'dhigrowth_welcome_lead',
+      title: 'dhigrowth_welcome_lead (DhiGrowth Business Concierge & Buttons)',
+      category: 'marketing',
+      status: 'approved',
+      language: 'en_US',
+      body_text: `Hello! 👋 Welcome to DhiGrowth IT Services. We help businesses scale with App Development, AI Business Bots, and WhatsApp CRM Automation. Tap below to connect with us! 🚀`,
+    },
+    {
+      name: 'hello_world',
+      title: 'hello_world (Meta Official Utility Sample)',
+      category: 'utility',
+      status: 'approved',
+      language: 'en_US',
+      body_text: `Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.`,
     },
   ]);
 
@@ -2123,16 +2126,16 @@ export const TeamInbox = () => {
 
             {/* Quick Actions & AI Suggestions */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-              {/* Sri Exclusive: First Template Send Button */}
-              {isSriUser && isNewContact && (
+              {/* Open 24h Context Window Template Button */}
+              {isNewContact && (
                 <button
                   type="button"
                   onClick={() => setIsTemplateSendModalOpen(true)}
                   className="px-2.5 py-1 rounded-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white text-[11px] font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1 shadow-xs ring-2 ring-sky-300 animate-pulse"
-                  title="Sri Exclusive: Send template to new contact to get first reply"
+                  title="Send Meta-approved template message to open 24-hour conversation window"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>✨ Send First Template</span>
+                  <span>✨ Open 24h Window (Template)</span>
                 </button>
               )}
 
@@ -3172,13 +3175,13 @@ export const TeamInbox = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-[#101828]">Send First Template</h3>
+                    <h3 className="text-sm font-bold text-[#101828]">Open 24h Window (Template Message)</h3>
                     <span className="text-[10px] font-mono bg-sky-100 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-200">
-                      Sri User Exclusive
+                      24h Window Opener
                     </span>
                   </div>
                   <p className="text-xs text-[#667085] mt-0.5">
-                    Meta WhatsApp outreach to initiate chat with new contact
+                    Meta-approved template outreach to initiate chat and unlock the 24-hour context window
                   </p>
                 </div>
               </div>
