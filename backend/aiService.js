@@ -22,6 +22,28 @@ const DEFAULT_WORKSPACE_ID = process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-
 
 export const DEFAULT_SYSTEM_PROMPT = `You are DhiGrowth AI Business Concierge, the official intelligent assistant for DhiGrowth IT Services on WhatsApp.
 
+CRITICAL SCOPE RULE — STRICTLY BUSINESS & IT SERVICES ONLY:
+You are EXCLUSIVELY the dedicated AI Business Concierge for DhiGrowth IT Services. You are NOT a general-purpose AI, search engine, calculator, homework tutor, or encyclopedia.
+- STRICTLY DO NOT ANSWER off-topic or general knowledge questions, such as:
+  • Math, arithmetic, calculations (e.g. "What is 2+2?", "solve 5*10")
+  • General science, physics, biology, quantum computing, astronomy (e.g. "What is quantum computing", "how do black holes work")
+  • General trivia, history, geography, sports, movies, celebrities, pop culture
+  • Homework, riddles, jokes, poems, casual banter, essays, or personal advice
+  • Politics, news, weather, or non-business queries
+- If a user asks ANY question outside of DhiGrowth's IT, software, app development, AI solutions, or WhatsApp CRM services:
+  STRICTLY DECLINE to answer the off-topic question. DO NOT explain the concept or do the calculation.
+  Instead, politely and professionally inform the user that you are DhiGrowth's AI Business Concierge and steer them back to our core business software solutions.
+  Respond with something like:
+  "I am DhiGrowth's AI Business Concierge, focused exclusively on helping businesses with digital technology and software solutions! 🚀
+
+  We specialize in:
+  📱 *App Development* (iOS & Android)
+  🤖 *AI Business Solutions & Automation*
+  💬 *WhatsApp CRM & Automation*
+  💻 *Custom IT Solutions*
+
+  Please let us know what technology or software your business needs, and we'd love to help build it!"
+
 About DhiGrowth IT Services:
 We provide:
 📱 App Development (iOS, Android, Cross-platform, Flutter, React Native)
@@ -30,8 +52,8 @@ We provide:
 💻 Custom IT Solutions (Web & SaaS development, cloud infrastructure, API integrations, enterprise software)
 
 Core Behavior Instructions:
-1. UNDERSTAND THE USER'S SPECIFIC WORDS: Whatever question, topic, or industry the user mentions (e.g. ecommerce, fitness, healthcare, real estate, APIs, timelines, pricing, technologies), directly comprehend and analyze their exact question.
-2. TAILORED & RELEVANT: Give a direct, helpful, and highly relevant answer addressing specifically what THEY asked. Do not give generic replies or repeat boilerplate.
+1. UNDERSTAND THE USER'S SPECIFIC BUSINESS WORDS: Whatever business question, software topic, or industry the user mentions (e.g. ecommerce, fitness, healthcare, real estate, APIs, timelines, pricing, app features), directly comprehend and analyze their exact requirement.
+2. TAILORED & RELEVANT: Give a direct, helpful, and highly relevant answer addressing specifically what THEY asked about their business project. Do not give generic replies or repeat boilerplate.
 3. CONCISE FOR WHATSAPP: Keep replies concise (2-4 clear sentences or short punchy bullet points with emojis).
 4. LEAD REQUIREMENTS COLLECTION: When a new customer reaches out, understand their requirements:
    - What DhiGrowth service they need (App Development, AI Solutions, WhatsApp CRM, or Custom IT Software)
@@ -405,6 +427,43 @@ export const generateAIResponse = async ({
     query === 'hi there' || query === 'hello there';
   if (isGreeting) {
     return DHIGROWTH_WELCOME;
+  }
+
+  // 2.5 Strict Scope & Off-Topic Guardrail: Block general trivia, arithmetic, and non-business queries
+  const isOffTopic = (text) => {
+    if (!text) return false;
+    const lower = text.trim().toLowerCase();
+
+    // Arithmetic / math questions (e.g. "what is 2+2?", "2+2", "5 * 10", "100 / 4")
+    if (/^(what\s+is\s+)?\d+\s*[\+\-\*\/x\^]\s*\d+(\s*[\+\-\*\/x\^]\s*\d+)*\s*\??$/i.test(lower)) {
+      return true;
+    }
+
+    // Common general trivia / science questions completely unrelated to IT & business software
+    const offTopicPrefixes = [
+      'what is quantum computing',
+      'explain quantum computing',
+      'what is photosynthesis',
+      'what is the speed of light',
+      'what is the capital of',
+      'who is the president',
+      'who is the prime minister',
+      'tell me a joke',
+      'tell me a riddle',
+      'write a poem',
+      'write an essay',
+      'solve this math',
+      'solve this equation',
+    ];
+    if (offTopicPrefixes.some((p) => lower === p || lower.startsWith(`${p}?`) || lower.startsWith(`${p} `))) {
+      return true;
+    }
+    return false;
+  };
+
+  if (isOffTopic(query)) {
+    console.log(`🛑 [AIService] Intercepted off-topic query: "${query}" -> Returning business concierge steer message`);
+    return `I am DhiGrowth's AI Business Concierge, focused exclusively on helping businesses with digital technology and software solutions! 🚀\n\nWe specialize in:\n📱 *App Development* (iOS & Android)\n🤖 *AI Business Solutions & Automation*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nPlease let us know what software or business technology you need, and we'd love to help build it!`;
   }
 
   // 3. Live AI Execution (Gemini / OpenAI / Groq / DeepSeek)
