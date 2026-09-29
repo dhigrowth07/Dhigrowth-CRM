@@ -1315,58 +1315,6 @@ export const TeamInbox = () => {
 
   return (
     <div className="h-full flex-1 flex flex-col overflow-hidden bg-[#F8F9FC] font-sans">
-      {/* Mobile Top Contact Quick Switch Bar (Thumb Carousel) - only shown during active chat so user can switch without leaving */}
-      <div className={`md:hidden bg-white border-b border-[#EAECF0] px-3 py-2 shrink-0 z-20 shadow-2xs ${!activeChat ? 'hidden' : 'block'}`}>
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-[#0284C7]" />
-            <span className="text-[11px] font-bold text-[#101828]">Switch User / Contact ({chats.length})</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsAddContactModalOpen(true)}
-            className="text-[11px] font-bold text-[#0284C7] hover:underline cursor-pointer flex items-center gap-1"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New</span>
-          </button>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
-          {chats.map((chat) => {
-            const isSelected = activeChat?.id === chat.id;
-            return (
-              <button
-                key={chat.id}
-                type="button"
-                onClick={() => {
-                  if (openChat) openChat(chat.id);
-                  else setActiveChatId(chat.id);
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shrink-0 transition-all cursor-pointer border active:scale-95 text-left ${
-                  isSelected
-                    ? 'bg-[#F0F9FF] border-[#0284C7] text-[#0284C7] font-bold shadow-xs ring-2 ring-[#0284C7]/20'
-                    : 'bg-[#F9FAFB] border-[#EAECF0] text-[#344054] hover:bg-[#F2F4F7]'
-                }`}
-              >
-                <div className="relative shrink-0">
-                  <ContactAvatar name={chat.contactName} size="xs" />
-                  {chat.unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#EF4444] border-2 border-white" />
-                  )}
-                </div>
-                <span className="text-xs truncate max-w-[90px]">
-                  {chat.contactName}
-                </span>
-                {chat.tag && (
-                  <span className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold ${tagColors[chat.tag]}`}>
-                    {chat.tag[0]}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* 1. Left: Conversation List */}

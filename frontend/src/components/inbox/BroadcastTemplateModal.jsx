@@ -474,37 +474,37 @@ export const BroadcastTemplateModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-2xl border border-[#EAECF0] w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white rounded-2xl shadow-2xl border border-[#EAECF0] w-full max-w-4xl max-h-[96vh] sm:max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#EAECF0] flex items-center justify-between bg-linear-to-r from-[#F0F9FF] to-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#0284C7]/10 flex items-center justify-center text-[#0284C7] border border-[#BAE6FD]">
-              <Sparkles className="w-5 h-5 text-[#0284C7]" />
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-[#EAECF0] flex items-center justify-between bg-linear-to-r from-[#F0F9FF] to-white shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0284C7]/10 flex items-center justify-center text-[#0284C7] border border-[#BAE6FD] shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#0284C7]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-[#101828]">Broadcast Template with "Yes" Reply Button</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E0F2FE] text-[#0369A1] border border-[#BAE6FD]">
-                  Interactive Quick Reply
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base font-bold text-[#101828] truncate">Broadcast Template ("Yes" Reply)</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E0F2FE] text-[#0369A1] border border-[#BAE6FD] shrink-0">
+                  Quick Reply
                 </span>
               </div>
-              <p className="text-xs text-[#475467]">
-                Send WhatsApp messages with 1-click interactive response buttons. When contacts tap "Yes", AI Auto-Pilot replies automatically!
+              <p className="text-[11px] sm:text-xs text-[#475467] truncate sm:whitespace-normal">
+                Send WhatsApp messages with 1-click interactive response buttons.
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#667085] hover:text-[#101828] hover:bg-[#F2F4F7] transition-all cursor-pointer"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#667085] hover:text-[#101828] hover:bg-[#F2F4F7] transition-all cursor-pointer shrink-0 ml-2"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
+        <div className="p-3.5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 flex-1 custom-scrollbar">
           {/* Preset Selector */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -970,10 +970,10 @@ export const BroadcastTemplateModal = ({ onClose }) => {
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-[#EAECF0] bg-[#F9FAFB] flex items-center justify-between shrink-0">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-[#EAECF0] bg-[#F9FAFB] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
           <div className="text-xs text-[#667085]">
             {broadcastSummary ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-[#101828]">Status:</span>
                 <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -993,20 +993,20 @@ export const BroadcastTemplateModal = ({ onClose }) => {
             )}
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5 justify-end">
             {broadcastSummary ? (
               <>
                 <button
                   type="button"
                   onClick={() => setBroadcastSummary(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#344054] hover:bg-[#EAECF0] border border-[#D0D5DD] transition-all cursor-pointer"
+                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold text-[#344054] hover:bg-[#EAECF0] border border-[#D0D5DD] transition-all cursor-pointer text-center"
                 >
                   Send Another
                 </button>
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md transition-all cursor-pointer"
+                  className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md transition-all cursor-pointer text-center"
                 >
                   Done
                 </button>
@@ -1025,7 +1025,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                   type="button"
                   onClick={handleBroadcast}
                   disabled={isBroadcasting || selectedContacts.length === 0}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 text-white shadow-md transition-all cursor-pointer ${
+                  className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 text-white shadow-md transition-all cursor-pointer ${
                     isBroadcasting || selectedContacts.length === 0
                       ? 'bg-gray-300 cursor-not-allowed shadow-none'
                       : 'bg-[#0284C7] hover:bg-[#0369A1] shadow-sky-500/20 active:scale-95'

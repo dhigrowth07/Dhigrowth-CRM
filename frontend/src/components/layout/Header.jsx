@@ -83,7 +83,7 @@ export const Header = () => {
   );
 
   return (
-    <header className={`h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans ${activeTab === 'inbox' && activeChatId ? 'hidden md:flex' : 'flex'}`}>
+    <header className={`h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans ${(activeTab === 'inbox' || activeTab === 'instagram-inbox') && activeChatId ? 'hidden md:flex' : 'flex'}`}>
       {/* Left: Mobile Hamburger & Page Title */}
       <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
         <button
@@ -102,15 +102,15 @@ export const Header = () => {
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-        {/* Search Bar with Ctrl+K trigger */}
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Search Bar with Ctrl+K trigger - shown on tablet and desktop */}
         <button
           onClick={() => setIsSearchOpen(true)}
-          className="flex items-center justify-center sm:justify-start bg-[#F9FAFB] hover:bg-[#F2F4F7] border border-[#EAECF0] rounded-xl px-2 sm:px-3.5 py-1.5 w-9 sm:w-48 md:w-60 text-left cursor-pointer transition-colors"
+          className="hidden sm:flex items-center justify-start bg-[#F9FAFB] hover:bg-[#F2F4F7] border border-[#EAECF0] rounded-xl px-3.5 py-1.5 w-44 md:w-60 text-left cursor-pointer transition-colors"
           title="Search dashboard"
         >
-          <Search className="w-4 h-4 text-[#98A2B3] sm:mr-2 shrink-0" />
-          <span className="hidden sm:inline w-full text-xs text-[#98A2B3] truncate">Search...</span>
+          <Search className="w-4 h-4 text-[#98A2B3] mr-2 shrink-0" />
+          <span className="w-full text-xs text-[#98A2B3] truncate">Search...</span>
           <span className="text-[11px] font-mono text-[#98A2B3] bg-white border border-[#EAECF0] px-1.5 py-0.5 rounded shadow-2xs shrink-0 hidden md:inline">
             ctrl K
           </span>
