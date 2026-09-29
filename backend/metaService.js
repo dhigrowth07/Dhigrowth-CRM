@@ -124,11 +124,12 @@ export const sendWhatsAppInteractiveButtons = async ({
   accessToken,
   recipientPhone,
   headerText = 'DhiGrowth IT Services',
+  imageUrl = null,
   bodyText,
   footerText = 'Tap an option to respond:',
   buttons = [
-    { id: 'btn_yes', title: "Yes, I'm interested" },
-    { id: 'btn_more', title: 'Tell me more' },
+    { id: 'btn_yes', title: 'Yes im interested' },
+    { id: 'btn_more', title: 'Tell more' },
   ],
 }) => {
   const token = accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
@@ -141,12 +142,19 @@ export const sendWhatsAppInteractiveButtons = async ({
       recipient: recipientPhone,
       bodyText,
       buttons,
+      imageUrl,
       timestamp: new Date().toISOString(),
     };
   }
 
   let cleanPhone = recipientPhone.replace(/[^0-9]/g, '');
   if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+
+  const headerObj = imageUrl
+    ? { type: 'image', image: { link: imageUrl } }
+    : headerText
+    ? { type: 'text', text: headerText }
+    : undefined;
 
   const payload = {
     messaging_product: 'whatsapp',
@@ -155,7 +163,7 @@ export const sendWhatsAppInteractiveButtons = async ({
     type: 'interactive',
     interactive: {
       type: 'button',
-      header: headerText ? { type: 'text', text: headerText } : undefined,
+      header: headerObj,
       body: { text: bodyText },
       footer: footerText ? { text: footerText } : undefined,
       action: {

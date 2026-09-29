@@ -455,9 +455,31 @@ async function processIncomingChatMessage({
       try {
         // Allow customer to see "typing..." animation on WhatsApp for ~1.2s before the message arrives
         await new Promise((resolve) => setTimeout(resolve, 1200));
-        const sendResult = await sendReply(aiResponseText, aiImageUrl);
-        aiWamid = sendResult?.messages?.[0]?.id || null;
-        console.log(`📤 Outbound reply dispatched via Meta ${channelType.toUpperCase()} API. (WAMID: ${aiWamid})`);
+
+        const aiButtons = (typeof aiResult === 'object' && Array.isArray(aiResult.buttons)) ? aiResult.buttons : null;
+
+        if (channelType === 'whatsapp' && aiButtons && aiButtons.length > 0 && phoneNumberId && accessToken) {
+          try {
+            const btnRes = await sendWhatsAppInteractiveButtons({
+              phoneNumberId,
+              accessToken,
+              recipientPhone: recipientPhone || senderIdentifier,
+              imageUrl: aiImageUrl,
+              bodyText: aiResponseText,
+              buttons: aiButtons,
+            });
+            aiWamid = btnRes?.messages?.[0]?.id || null;
+            console.log(`📤 Outbound interactive reply with buttons dispatched via Meta. (WAMID: ${aiWamid})`);
+          } catch (btnErr) {
+            console.warn('[WebhookHandler] Interactive button send fallback to standard send:', btnErr.message);
+            const sendResult = await sendReply(aiResponseText, aiImageUrl);
+            aiWamid = sendResult?.messages?.[0]?.id || null;
+          }
+        } else {
+          const sendResult = await sendReply(aiResponseText, aiImageUrl);
+          aiWamid = sendResult?.messages?.[0]?.id || null;
+          console.log(`📤 Outbound reply dispatched via Meta ${channelType.toUpperCase()} API. (WAMID: ${aiWamid})`);
+        }
       } catch (err) {
         console.warn(`[WebhookHandler] Could not dispatch live outbound reply with media:`, err.message);
         if (aiImageUrl) {
@@ -574,8 +596,8 @@ async function handleLeadQualificationFlow({
   }
 
   const isGreeting = ['hi', 'hello', 'hey', 'start', 'hlo', 'hai', 'hola', 'hi!'].includes(lowerMsg);
-  const isYesClick = lowerMsg.includes("yes, i'm interested") || lowerMsg.includes("yes, interested") || lowerMsg === 'btn_yes' || lowerMsg === 'yes';
-  const isTellMore = lowerMsg.includes("tell me more") || lowerMsg === 'btn_more';
+  const isYesClick = lowerMsg.includes("yes, i'm interested") || lowerMsg.includes("yes, interested") || lowerMsg.includes("yes im interested") || lowerMsg.includes("im interested") || lowerMsg === 'btn_yes' || lowerMsg === 'yes';
+  const isTellMore = lowerMsg.includes("tell me more") || lowerMsg.includes("tell more") || lowerMsg === 'btn_more';
 
   // 2. Initial inquiry / greeting: start qualification session
   if (!session || session.step === 'COMPLETED') {
@@ -588,6 +610,8 @@ async function handleLeadQualificationFlow({
         name: knownName,
       });
 
+      const welcomeMsg = `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`;
+
       // Try sending interactive button message first on WhatsApp
       if (channelType === 'whatsapp' && phoneNumberId && accessToken) {
         try {
@@ -595,17 +619,40 @@ async function handleLeadQualificationFlow({
             phoneNumberId,
             accessToken,
             recipientPhone: cleanPhone,
-            headerText: 'DhiGrowth IT Services',
-            bodyText: `Hello! 👋 Welcome to DhiGrowth IT Services.\n\nTo help us understand your requirements and connect you with the right specialist, which service do you need?\n\n1️⃣ Mobile App or Web Platform\n2️⃣ AI Business Solutions & Bots\n3️⃣ WhatsApp CRM & Automation\n4️⃣ Custom IT Software`,
-            footerText: 'Reply with 1, 2, 3, 4 or tap below:',
+            imageUrl: 'https://www.dhigrowth.com/logo.png',
+            bodyText: welcomeMsg,
+            footerText: 'Tap an option to respond:',
             buttons: [
-              { id: 'btn_yes', title: "Yes, I'm interested" },
-              { id: 'btn_more', title: 'Tell me more' },
+              { id: 'btn_yes', title: 'Yes im interested' },
+              { id: 'btn_more', title: 'Tell more' },
             ],
           });
           if (interactiveRes?.messages?.[0]?.id) {
             const wamid = interactiveRes.messages[0].id;
-            console.log(`✅ [LeadQualification] Delivered interactive greeting to ${cleanPhone}`);
+            console.log(`✅ [LeadQualification] Delivered interactive greeting with buttons to ${cleanPhone}`);
+            if (supabase) {
+              try {
+                await supabase.from('messages').insert([{
+                  workspace_id: effectiveWorkspaceId,
+                  conversation_id: conversationId,
+                  channel_id: channelId,
+                  direction: 'outbound',
+                  ai_generated: true,
+                  type: 'text',
+                  content: welcomeMsg,
+                  media_url: 'https://www.dhigrowth.com/logo.png',
+                  status: 'sent',
+                  external_message_id: wamid,
+                }]);
+                await supabase.from('conversations').update({
+                  last_message_text: welcomeMsg,
+                  last_message_at: new Date().toISOString(),
+                  unread_count: 0,
+                }).eq('id', conversationId);
+              } catch (dbErr) {
+                console.warn('[LeadQualification] DB record note:', dbErr.message);
+              }
+            }
             return true;
           }
         } catch (iErr) {
@@ -614,7 +661,6 @@ async function handleLeadQualificationFlow({
       }
 
       // Plain text fallback
-      const welcomeMsg = `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nTo help us assist you with the right solution, which service do you need?\n\n1️⃣ *Mobile App or Web Platform Development*\n2️⃣ *AI Business Solutions & Auto-Pilot Bots*\n3️⃣ *WhatsApp CRM & Marketing Automation*\n4️⃣ *Custom IT Software & Enterprise Systems*\n\n👉 *Reply with 1, 2, 3, or 4 (or describe what you need):*`;
       await dispatchBotReply(welcomeMsg);
       return true;
     }

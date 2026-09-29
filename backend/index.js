@@ -64,6 +64,7 @@ import {
   updateCampaign,
   deleteCampaign,
   executeBroadcast,
+  sendCampaignMessages,
   sendTestBroadcast,
   cancelScheduledCampaign,
   broadcastTemplateToAll,
@@ -1829,6 +1830,16 @@ app.post('/api/broadcasts/:id/cancel', (req, res) => {
 app.post('/api/broadcasts/test-send', async (req, res) => {
   try {
     const result = await sendTestBroadcast(req.body || {});
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Dedicated working campaign messages sending endpoints
+app.post(['/api/campaigns/send', '/api/broadcasts/send-messages'], async (req, res) => {
+  try {
+    const result = await sendCampaignMessages(req.body || {});
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

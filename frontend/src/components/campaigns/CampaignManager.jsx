@@ -31,6 +31,18 @@ import { BACKEND_URL } from '../../services/apiConfig';
 
 export const FALLBACK_BROADCAST_TEMPLATES = [
   {
+    id: 'tpl_new_client_welcome',
+    name: 'new_client_welcome',
+    displayName: 'Client Welcome & Festive Greeting (Meta Approved)',
+    category: 'MARKETING',
+    language: 'en',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: '{{1}}',
+    body_text: '"Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!"',
+    footer_text: 'DhiGrowth CRM • Meta WhatsApp Cloud API',
+  },
+  {
     id: 'tpl_hello_world',
     name: 'hello_world',
     category: 'UTILITY',
@@ -114,7 +126,7 @@ export const CampaignManager = () => {
   // Form State
   const [formName, setFormName] = useState('');
   const [formChannel, setFormChannel] = useState('WhatsApp');
-  const [formTemplateName, setFormTemplateName] = useState('');
+  const [formTemplateName, setFormTemplateName] = useState('new_client_welcome');
   const [formAudience, setFormAudience] = useState('VIP Customers & Hot Leads');
   const [isInstantSend, setIsInstantSend] = useState(true);
   const [scheduleDateTime, setScheduleDateTime] = useState('');
@@ -125,7 +137,7 @@ export const CampaignManager = () => {
   ]);
 
   // Test Send State
-  const [testPhone, setTestPhone] = useState('+919876543210');
+  const [testPhone, setTestPhone] = useState('+919791471277');
   const [isTestSending, setIsTestSending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

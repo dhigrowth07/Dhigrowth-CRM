@@ -806,24 +806,6 @@ export const WalletPage = () => {
                 </div>
               </div>
 
-              {/* Razorpay Test Mode Card */}
-              <div className="p-3 bg-[#F8F9FC] rounded-2xl border border-[#E2E8F0] space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-bold text-[#0C2340]">
-                    <CreditCard className="w-4 h-4 text-[#3395FF]" />
-                    <span>Razorpay Sandbox</span>
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0284C7] font-bold border border-[#BAE6FD]">
-                    TEST MODE
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#475467] leading-relaxed">
-                  Test payment via <strong>UPI, Google Pay, PhonePe, Cards, or NetBanking</strong> using test credentials. No real funds are debited.
-                </p>
-                <div className="text-[10px] font-mono text-[#64748B] bg-white p-1.5 rounded-lg border border-[#E2E8F0]">
-                  Key ID: <code className="text-[#0C2340] font-bold">rzp_test_TcdoZxzN0dIYoP</code>
-                </div>
-              </div>
 
               {/* Action Buttons */}
               <div className="space-y-2 pt-1">

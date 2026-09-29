@@ -1,9 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import { getTenantMetaConfig } from './tenantMetaManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const TEMPLATES_STORE_FILE = path.resolve(__dirname, 'templatesStore.json');
 const META_GRAPH_VERSION = 'v20.0';
@@ -93,6 +96,22 @@ export const DHI_PRESET_TEMPLATES = [
 ];
 
 export const STARTER_TEMPLATES = [
+  {
+    id: '2950860201937776',
+    name: 'new_client_welcome',
+    displayName: 'Client Welcome & Festive Greeting',
+    category: 'MARKETING',
+    language: 'en',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: '{{1}}',
+    body_text: '"Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!"',
+    footer_text: '',
+    buttons: [{ type: 'QUICK_REPLY', text: '"Thank you!"' }],
+    variables: ['name', 'occasion', 'company'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
   ...DHI_PRESET_TEMPLATES,
   {
     id: 'tpl_hello_world',
@@ -137,6 +156,9 @@ export function initTemplateStore() {
     console.warn('[TemplateService] Init error:', err.message);
   }
 }
+
+// Auto-initialize store on load
+initTemplateStore();
 
 function saveTemplatesToDisk() {
   try {
@@ -187,8 +209,9 @@ export function getWorkspaceTemplates(workspaceId = 'b0000000-0000-0000-0000-000
  * Sync templates from official Meta Graph API (WABA)
  */
 export async function syncMetaTemplates({ workspaceId, wabaId, accessToken }) {
-  const targetWabaId = wabaId || process.env.META_WHATSAPP_WABA_ID;
-  const token = accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
+  const tenantMeta = getTenantMetaConfig({ workspaceId });
+  const targetWabaId = wabaId || tenantMeta?.wabaId || process.env.META_WHATSAPP_WABA_ID;
+  const token = accessToken || tenantMeta?.accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
 
   const currentLocal = getWorkspaceTemplates(workspaceId);
 

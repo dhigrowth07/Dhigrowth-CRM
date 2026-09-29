@@ -2,230 +2,10 @@
   "workspaces": {
     "b0000000-0000-0000-0000-000000000001": [
       {
-        "id": "dd31da29-6e3a-4877-a84f-0c96c4c7ea94",
-        "name": "AI Automation Launch 2026",
+        "id": "63970e55-15d6-4cbb-9113-460f976f34df",
+        "name": "Validation Broadcast Run",
         "channel": "WhatsApp",
-        "templateName": "hi",
-        "status": "scheduled",
-        "audienceType": "All Contacts",
-        "targetCount": 150,
-        "sentCount": 0,
-        "deliveredCount": 0,
-        "readCount": 0,
-        "repliedCount": 0,
-        "failedCount": 0,
-        "recipients": [],
-        "variableMapping": [],
-        "scheduledAt": null,
-        "createdAt": "2026-09-21T04:51:43.650Z",
-        "completedAt": null,
-        "logs": []
-      },
-      {
-        "id": "camp_1789800884516_trt7",
-        "name": "test",
-        "channel": "WhatsApp",
-        "templateName": "hello_world",
-        "status": "completed",
-        "audienceType": "VIP Customers & Hot Leads",
-        "targetCount": 5,
-        "sentCount": 5,
-        "deliveredCount": 5,
-        "readCount": 4,
-        "repliedCount": 1,
-        "failedCount": 0,
-        "recipients": [],
-        "variableMapping": [
-          {
-            "index": 1,
-            "field": "first_name",
-            "fallback": "Valued Customer"
-          },
-          {
-            "index": 2,
-            "field": "city",
-            "fallback": "your city"
-          },
-          {
-            "index": 3,
-            "field": "product",
-            "fallback": "Special Offer"
-          }
-        ],
-        "scheduledAt": null,
-        "createdAt": "2026-09-19T06:54:44.516Z",
-        "completedAt": "2026-09-19T06:54:49.811Z",
-        "logs": [
-          {
-            "phone": "919876543210",
-            "name": "Srijith R",
-            "status": "sent",
-            "messageId": "wamid.HBgMOTE5ODc2NTQzMjEwFQIAERgSRjhERDE3MkFFN0NCMUI3RTFFAA==",
-            "timestamp": "2026-09-19T06:54:46.051Z"
-          },
-          {
-            "phone": "919876543211",
-            "name": "Maddy S",
-            "status": "sent",
-            "messageId": "wamid.HBgMOTE5ODc2NTQzMjExFQIAERgSMUUwRUU5QzU4NjREMjE1REVGAA==",
-            "timestamp": "2026-09-19T06:54:46.927Z"
-          },
-          {
-            "phone": "919876543212",
-            "name": "Vikram Mehta",
-            "status": "sent",
-            "messageId": "wamid.HBgMOTE5ODc2NTQzMjEyFQIAERgSNzMxRTU5QUVCMTA1MEQ5RTBGAA==",
-            "timestamp": "2026-09-19T06:54:47.991Z"
-          },
-          {
-            "phone": "919876543213",
-            "name": "Ananya Sharma",
-            "status": "sent",
-            "messageId": "wamid.HBgMOTE5ODc2NTQzMjEzFQIAERgSRTNENDU3Nzk4MkQyM0JDMzc1AA==",
-            "timestamp": "2026-09-19T06:54:48.808Z"
-          },
-          {
-            "phone": "919876543214",
-            "name": "Karthik Raja",
-            "status": "sent",
-            "messageId": "wamid.HBgMOTE5ODc2NTQzMjE0FQIAERgSMzMwNEVBN0YxQkRGMjBGNDU3AA==",
-            "timestamp": "2026-09-19T06:54:49.749Z"
-          }
-        ]
-      },
-      {
-        "id": "camp_1789626607841_1x6b",
-        "name": "promotion",
-        "channel": "WhatsApp",
-        "templateName": "hi",
-        "status": "completed",
-        "audienceType": "Demo VIP Test List",
-        "targetCount": 5,
-        "sentCount": 0,
-        "deliveredCount": 0,
-        "readCount": 0,
-        "repliedCount": 0,
-        "failedCount": 5,
-        "recipients": [],
-        "variableMapping": [
-          {
-            "index": 1,
-            "field": "first_name",
-            "fallback": "Valued Customer"
-          },
-          {
-            "index": 2,
-            "field": "city",
-            "fallback": "your city"
-          },
-          {
-            "index": 3,
-            "field": "product",
-            "fallback": "Special Offer"
-          }
-        ],
-        "scheduledAt": null,
-        "createdAt": "2026-09-17T06:30:07.841Z",
-        "completedAt": "2026-09-17T06:30:13.826Z",
-        "logs": [
-          {
-            "phone": "919876543210",
-            "name": "Srijith R",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:30:09.471Z"
-          },
-          {
-            "phone": "919876543211",
-            "name": "Maddy S",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:30:10.466Z"
-          },
-          {
-            "phone": "919876543212",
-            "name": "Vikram Mehta",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:30:11.560Z"
-          },
-          {
-            "phone": "919876543213",
-            "name": "Ananya Sharma",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:30:12.696Z"
-          },
-          {
-            "phone": "919876543214",
-            "name": "Karthik Raja",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:30:13.764Z"
-          }
-        ]
-      },
-      {
-        "id": "camp_1789625960568_5u81",
-        "name": "Test Broadcast Launch",
-        "channel": "WhatsApp",
-        "templateName": "welcome_greeting_v2",
-        "status": "completed",
-        "audienceType": "Demo VIP Test List",
-        "targetCount": 5,
-        "sentCount": 0,
-        "deliveredCount": 0,
-        "readCount": 0,
-        "repliedCount": 0,
-        "failedCount": 5,
-        "recipients": [],
-        "variableMapping": [],
-        "scheduledAt": null,
-        "createdAt": "2026-09-17T06:19:20.569Z",
-        "completedAt": "2026-09-17T06:19:25.860Z",
-        "logs": [
-          {
-            "phone": "919876543210",
-            "name": "Srijith R",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:19:21.955Z"
-          },
-          {
-            "phone": "919876543211",
-            "name": "Maddy S",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:19:22.867Z"
-          },
-          {
-            "phone": "919876543212",
-            "name": "Vikram Mehta",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:19:24.000Z"
-          },
-          {
-            "phone": "919876543213",
-            "name": "Ananya Sharma",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:19:24.904Z"
-          },
-          {
-            "phone": "919876543214",
-            "name": "Karthik Raja",
-            "status": "failed",
-            "error": "(#131030) Recipient phone number not in allowed list",
-            "timestamp": "2026-09-17T06:19:25.801Z"
-          }
-        ]
-      },
-      {
-        "id": "camp_1789562884027_8qzd",
-        "name": "Automated 2-Second Scheduler Test",
-        "channel": "WhatsApp",
-        "templateName": "welcome_greeting_v2",
+        "templateName": "new_client_welcome",
         "status": "completed",
         "audienceType": "All Contacts",
         "targetCount": 1,
@@ -236,76 +16,22 @@
         "failedCount": 0,
         "recipients": [
           {
-            "name": "Test User",
-            "phone": "+919876543210"
+            "phone": "919791471277",
+            "name": "Sri"
           }
         ],
         "variableMapping": [],
-        "scheduledAt": "2026-09-16T12:48:06.011Z",
-        "createdAt": "2026-09-16T12:48:04.027Z",
-        "completedAt": "2026-09-16T12:48:15.357Z",
-        "logs": [
-          {
-            "phone": "919876543210",
-            "name": "Test User",
-            "status": "sent_fallback",
-            "note": "Delivered as direct personalized message",
-            "timestamp": "2026-09-16T12:48:15.304Z"
-          }
-        ]
-      },
-      {
-        "id": "camp_1789562723860_cyk3",
-        "name": "Launch Notification Broadcast",
-        "channel": "WhatsApp",
-        "templateName": "test_product_launch",
-        "status": "completed",
-        "audienceType": "All Contacts",
-        "targetCount": 2,
-        "sentCount": 2,
-        "deliveredCount": 2,
-        "readCount": 2,
-        "repliedCount": 1,
-        "failedCount": 0,
-        "recipients": [
-          {
-            "name": "Srijith Test",
-            "phone": "+919876543210",
-            "city": "Bangalore"
-          },
-          {
-            "name": "Maddy Test",
-            "phone": "+919876543211",
-            "city": "Chennai"
-          }
-        ],
-        "variableMapping": [
-          {
-            "index": 1,
-            "field": "name"
-          },
-          {
-            "index": 2,
-            "field": "city"
-          }
-        ],
         "scheduledAt": null,
-        "createdAt": "2026-09-16T12:45:23.860Z",
-        "completedAt": "2026-09-16T12:45:27.821Z",
+        "createdAt": "2026-09-29T05:58:58.653Z",
+        "completedAt": "2026-09-29T05:59:00.556Z",
         "logs": [
           {
-            "phone": "919876543210",
-            "name": "Srijith Test",
-            "status": "sent_fallback",
-            "note": "Delivered as direct personalized message",
-            "timestamp": "2026-09-16T12:45:26.353Z"
-          },
-          {
-            "phone": "919876543211",
-            "name": "Maddy Test",
-            "status": "sent_fallback",
-            "note": "Delivered as direct personalized message",
-            "timestamp": "2026-09-16T12:45:27.761Z"
+            "phone": "919791471277",
+            "name": "Sri",
+            "status": "sent",
+            "templateUsed": "new_client_welcome",
+            "messageId": "wamid.HBgMOTE5NzkxNDcxMjc3FQIAERgSMzU3NERDRUU4QUFERkFCQ0NDAA==",
+            "timestamp": "2026-09-29T05:59:00.465Z"
           }
         ]
       },
@@ -323,8 +49,8 @@
         "repliedCount": 840,
         "failedCount": 40,
         "scheduledAt": null,
-        "createdAt": "2026-09-11T12:38:43.091Z",
-        "completedAt": "2026-09-11T12:40:43.091Z",
+        "createdAt": "2026-09-24T05:58:58.649Z",
+        "completedAt": "2026-09-24T06:00:58.649Z",
         "variableMapping": [
           {
             "index": 1,
@@ -359,82 +85,8 @@
         "repliedCount": 312,
         "failedCount": 16,
         "scheduledAt": null,
-        "createdAt": "2026-09-14T12:38:43.091Z",
-        "completedAt": "2026-09-14T12:39:43.091Z",
-        "variableMapping": [
-          {
-            "index": 1,
-            "field": "first_name",
-            "fallback": "Founder"
-          },
-          {
-            "index": 2,
-            "field": "topic",
-            "fallback": "WhatsApp AI Automation"
-          },
-          {
-            "index": 3,
-            "field": "minutes",
-            "fallback": "60"
-          }
-        ],
-        "sampleRevenue": "₹84,000",
-        "roas": "11.2x"
-      }
-    ],
-    "a0000000-0000-0000-0000-000000000001": [
-      {
-        "id": "camp_diwali_vip_2026",
-        "name": "Diwali Festive VIP Flash Sale",
-        "channel": "WhatsApp",
-        "templateName": "flash_sale_promo_2026",
-        "status": "completed",
-        "audienceType": "VIP Customers & High Value Leads",
-        "targetCount": 2450,
-        "sentCount": 2450,
-        "deliveredCount": 2410,
-        "readCount": 2310,
-        "repliedCount": 840,
-        "failedCount": 40,
-        "scheduledAt": null,
-        "createdAt": "2026-09-17T04:38:42.133Z",
-        "completedAt": "2026-09-17T04:40:42.133Z",
-        "variableMapping": [
-          {
-            "index": 1,
-            "field": "name",
-            "fallback": "Valued Customer"
-          },
-          {
-            "index": 2,
-            "field": "tier",
-            "fallback": "VIP Club"
-          },
-          {
-            "index": 3,
-            "field": "discount",
-            "fallback": "30%"
-          }
-        ],
-        "sampleRevenue": "₹2,48,000",
-        "roas": "18.4x"
-      },
-      {
-        "id": "camp_webinar_drip_reminder",
-        "name": "AI Agent Masterclass 1-Hour Reminder",
-        "channel": "WhatsApp",
-        "templateName": "vip_webinar_reminder_2026",
-        "status": "completed",
-        "audienceType": "Registered Attendees",
-        "targetCount": 1200,
-        "sentCount": 1200,
-        "deliveredCount": 1184,
-        "readCount": 1090,
-        "repliedCount": 312,
-        "failedCount": 16,
-        "scheduledAt": null,
-        "createdAt": "2026-09-20T04:38:42.133Z",
-        "completedAt": "2026-09-20T04:39:42.133Z",
+        "createdAt": "2026-09-27T05:58:58.649Z",
+        "completedAt": "2026-09-27T05:59:58.649Z",
         "variableMapping": [
           {
             "index": 1,

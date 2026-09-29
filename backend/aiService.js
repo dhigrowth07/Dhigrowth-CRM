@@ -51,8 +51,12 @@ Core Behavior Instructions:
    Proudly state our official Coimbatore, Tamil Nadu office location and provide the Google Maps link (https://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7). NEVER say we only operate remotely. Explain that our registered company headquarters is in Coimbatore, where we welcome in-person meetings by appointment, while also collaborating with clients across India and globally!`;
 
 const DHIGROWTH_WELCOME = {
-  reply: `Hello! 👋 Welcome to **DhiGrowth IT Services**.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 **App Development**\n🤖 **AI Business Solutions & Development**\n💬 **WhatsApp CRM & Automation**\n💻 **Custom IT Solutions**\n\nTell us what your business needs, and let's build something powerful together! 🚀`,
+  reply: `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`,
   imageUrl: 'https://www.dhigrowth.com/logo.png',
+  buttons: [
+    { id: 'btn_yes', title: 'Yes im interested' },
+    { id: 'btn_more', title: 'Tell more' },
+  ],
   toString: function () {
     return this.reply;
   },

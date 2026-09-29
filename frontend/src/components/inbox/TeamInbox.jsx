@@ -1990,15 +1990,42 @@ export const TeamInbox = () => {
                       </div>
                     )}
 
-                    {text === '[interactive attachment]' || text === "Yes, I'm interested" ? (
+                    {text === '[interactive attachment]' || text === "Yes, I'm interested" || text === "Yes im interested" || text === "Tell more" ? (
                       <div className="flex items-center gap-2 py-0.5">
-                        <span className="whitespace-pre-line font-medium text-xs">Yes, I'm interested</span>
+                        <span className="whitespace-pre-line font-medium text-xs">
+                          {text === '[interactive attachment]' ? "Yes im interested" : text}
+                        </span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold border border-emerald-200 shrink-0">
                           🔘 Button Tap
                         </span>
                       </div>
                     ) : (
                       <p className="whitespace-pre-line">{text}</p>
+                    )}
+
+                    {/* Quick-Reply Buttons Display */}
+                    {((Array.isArray(msg.buttons) && msg.buttons.length > 0) || (text && text.includes('How can our AI Business Concierge help you today?'))) && (
+                      <div className="mt-3 pt-2.5 border-t border-[#BAE6FD]/60">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-[#0284C7] font-bold mb-1.5">
+                          QUICK-REPLY BUTTONS (2):
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] shadow-2xs hover:bg-[#D1FAE5] transition-colors cursor-pointer"
+                          >
+                            <span className="text-[11px]">✓</span>
+                            <span>Yes im interested</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] shadow-2xs hover:bg-[#D1FAE5] transition-colors cursor-pointer"
+                          >
+                            <span className="text-[11px]">✓</span>
+                            <span>Tell more</span>
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
