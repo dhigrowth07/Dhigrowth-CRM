@@ -494,8 +494,8 @@ export const TeamInbox = () => {
   // On desktop: if activeChatId is null, default to first chat so middle pane isn't blank
   // On mobile: if activeChatId is null, user is viewing the contact list!
   const activeChat = isMobileView
-    ? (activeChatId ? chats.find((c) => c.id === activeChatId) : null)
-    : (chats.find((c) => c.id === activeChatId) || (chats.length > 0 ? chats[0] : null));
+    ? (activeChatId ? chats.find((c) => c.id === activeChatId || c.conversationId === activeChatId) : null)
+    : (activeChatId ? chats.find((c) => c.id === activeChatId || c.conversationId === activeChatId) : (chats.length > 0 ? chats[0] : null));
 
   const isAiTyping = Boolean(typingChatIds && activeChat && typingChatIds[activeChat.id]);
 

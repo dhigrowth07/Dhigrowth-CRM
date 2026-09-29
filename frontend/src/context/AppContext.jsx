@@ -2412,6 +2412,10 @@ export const AppProvider = ({ children }) => {
   });
 
   const [activeChatId, setActiveChatId] = useState(() => {
+    // On mobile devices, start with null so the user sees the thread list instead of being forced into a chat
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return null;
+    }
     const initialChats = isSuperAdmin
       ? (selectedClientWorkspace === 'all' ? getAllClientWorkspacesChats() : getChatsForSingleWorkspace(selectedClientWorkspace))
       : getChatsForSingleWorkspace(currentWorkspaceId);
@@ -2426,15 +2430,17 @@ export const AppProvider = ({ children }) => {
         : getChatsForSingleWorkspace(selectedClientWorkspace);
       setChats(updated);
       setActiveChatId((prev) => {
-        if (prev && updated.some((c) => c.id === prev)) return prev;
-        return updated.length > 0 ? updated[0].id : null;
+        if (!prev) return null;
+        if (updated.some((c) => c.id === prev || c.conversationId === prev)) return prev;
+        return null;
       });
     } else {
       const updated = getChatsForSingleWorkspace(currentWorkspaceId);
       setChats(updated);
       setActiveChatId((prev) => {
-        if (prev && updated.some((c) => c.id === prev)) return prev;
-        return updated.length > 0 ? updated[0].id : null;
+        if (!prev) return null;
+        if (updated.some((c) => c.id === prev || c.conversationId === prev)) return prev;
+        return null;
       });
     }
   }, [currentWorkspaceId, isSuperAdmin, selectedClientWorkspace]);
@@ -2456,7 +2462,10 @@ export const AppProvider = ({ children }) => {
       showToast(`Filtered inbox to ${matched?.name || 'client'} profile`, 'info');
     }
     setChats(nextChats);
-    setActiveChatId(nextChats.length > 0 ? nextChats[0].id : null);
+    setActiveChatId((prev) => {
+      if (!prev) return null;
+      return nextChats.some((c) => c.id === prev || c.conversationId === prev) ? prev : null;
+    });
   };
 
   // Campaigns List
@@ -2722,8 +2731,9 @@ export const AppProvider = ({ children }) => {
           });
 
           setActiveChatId((prev) => {
-            if (prev && dbChats.some((d) => d.id === prev)) return prev;
-            return dbChats.length > 0 ? dbChats[0].id : null;
+            if (!prev) return null;
+            if (dbChats.some((d) => d.id === prev || d.conversationId === prev)) return prev;
+            return null;
           });
         }
       } catch (err) {

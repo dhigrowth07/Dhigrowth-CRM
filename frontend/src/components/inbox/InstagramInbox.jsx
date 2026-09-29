@@ -145,9 +145,10 @@ export const InstagramInbox = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeChat?.messages?.length, activeChat?.id]);
 
-  // Ensure activeChatId is set to an Instagram chat when this inbox is loaded
+  // Ensure activeChatId is set to an Instagram chat when loaded on desktop only
   useEffect(() => {
-    if (filteredChats.length > 0) {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
+    if (filteredChats.length > 0 && !activeChatId) {
       const isCurrentInList = filteredChats.some((c) => c.id === activeChatId);
       if (!isCurrentInList) {
         if (openChat) openChat(filteredChats[0].id);
