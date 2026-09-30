@@ -2734,11 +2734,36 @@ export const AppProvider = ({ children }) => {
               const oldChat = prev.find((p) => p.id === newChat.id);
               if (!oldChat) return newChat;
 
-              // Merge messages so optimistic / local messages are never wiped out by cloud polling
-              const mergedMessages = [...(newChat.messages || [])];
+              // 1. Deduplicate newChat.messages from database if duplicate rows exist
+              const cleanDbMessages = [];
+              const seenDbKeys = new Set();
+              (newChat.messages || []).forEach((m) => {
+                const key = m.id || `${m.sender}_${(m.text || '').trim()}_${Math.floor((m.timestamp || 0) / 10000)}`;
+                const contentKey = `${m.sender}_${(m.text || '').trim()}_${Math.floor((m.timestamp || 0) / 10000)}`;
+                if (!seenDbKeys.has(key) && !seenDbKeys.has(contentKey)) {
+                  seenDbKeys.add(key);
+                  seenDbKeys.add(contentKey);
+                  cleanDbMessages.push(m);
+                }
+              });
+
+              // 2. Merge with optimistic messages from oldChat without creating duplicates
+              const mergedMessages = [...cleanDbMessages];
               const seenMsgIds = new Set(mergedMessages.map((m) => m.id));
+
               (oldChat.messages || []).forEach((m) => {
-                if (!seenMsgIds.has(m.id)) {
+                if (seenMsgIds.has(m.id)) return;
+
+                // Check if this optimistic message has already been synced to the database
+                const isAlreadyInDb = mergedMessages.some((dbMsg) => {
+                  if (dbMsg.id === m.id) return true;
+                  const sameSender = dbMsg.sender === m.sender;
+                  const sameText = (dbMsg.text || '').trim() === (m.text || '').trim();
+                  const timeDiff = Math.abs((dbMsg.timestamp || 0) - (m.timestamp || 0));
+                  return sameSender && sameText && timeDiff < 60000;
+                });
+
+                if (!isAlreadyInDb) {
                   seenMsgIds.add(m.id);
                   mergedMessages.push(m);
                 }
@@ -2971,8 +2996,8 @@ export const AppProvider = ({ children }) => {
       messagesHandled: prev.messagesHandled + 1,
     }));
 
-    // Persist message to Supabase so it lives in the cloud database
-    if (isSupabaseConfigured && supabase) {
+    // Persist message to Supabase for simulated user messages (outbound agent messages are persisted by backend endpoints)
+    if (isSupabaseConfigured && supabase && sender === 'user') {
       (async () => {
         try {
           const chatObj = (chats || []).find((c) => c.id === targetChatId);

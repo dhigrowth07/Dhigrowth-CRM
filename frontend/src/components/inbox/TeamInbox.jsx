@@ -864,8 +864,8 @@ export const TeamInbox = () => {
         } catch {}
       }
 
-      // If remote Render failed or didn't deliver to WhatsApp, fallback to local backend if reachable
-      if (!res || !res.ok || (data && !data.deliveredToWhatsApp)) {
+      // Only fallback to local backend if the primary remote backend failed to connect/respond and is not already localhost
+      if ((!res || !res.ok) && BACKEND_URL !== 'http://localhost:4000') {
         try {
           const controllerLocal = new AbortController();
           const timeoutLocal = setTimeout(() => controllerLocal.abort(), 6000);
@@ -1180,7 +1180,7 @@ export const TeamInbox = () => {
         });
       } catch {}
 
-      if (!res || !res.ok) {
+      if ((!res || !res.ok) && BACKEND_URL !== 'http://localhost:4000') {
         try {
           res = await fetch('http://localhost:4000/api/send-manual-message', {
             method: 'POST',
