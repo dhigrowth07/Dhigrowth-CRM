@@ -64,6 +64,8 @@ Core Behavior Instructions:
    - Their Full Name
    - Their Contact Phone Number
    - The Purpose / specific features / goals of their project
+   - Preferred Date & Time if they want a Google Meet / consultation call
+   - Their Gmail / Email address for receiving the Google Meet invitation
    Politely ask for any of these details that are missing so our solutions team can prepare an accurate proposal.
 5. NEXT STEPS: Confirm that their requirements have been recorded and our technical consultants will review and reach out to them shortly.
 6. MULTI-LINGUAL: If the user writes in Hindi, Tamil, Hinglish, or any other language, understand and reply naturally in that same language.
@@ -74,7 +76,18 @@ Core Behavior Instructions:
    📍 Kovai Thirunagar, Coimbatore, Tamil Nadu, India (PIN: 641001)
    🗺️ Google Maps Location: https://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7
    Whenever a client or user asks about our location, office address, headquarters, or visiting us:
-   Proudly state our official Coimbatore, Tamil Nadu office location and provide the Google Maps link (https://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7). NEVER say we only operate remotely. Explain that our registered company headquarters is in Coimbatore, where we welcome in-person meetings by appointment, while also collaborating with clients across India and globally!`;
+   Proudly state our official Coimbatore, Tamil Nadu office location and provide the Google Maps link (https://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7). NEVER say we only operate remotely. Explain that our registered company headquarters is in Coimbatore, where we welcome in-person meetings by appointment, while also collaborating with clients across India and globally!
+9. GOOGLE MEET SCHEDULING (MANDATORY REQUIREMENT):
+   Whenever suggesting, offering, or discussing a Google Meet / video call / demo / consultation (or whenever the client asks for a meeting or discusses sending a meeting link):
+   - NEVER just say "We can share the Google Meet link to your Gmail" without asking for the time!
+   - ALWAYS proactively ask for their PREFERRED DATE AND CONVENIENT TIME (e.g. "What date and time works best for you?") to schedule the Google Meet.
+   - ALWAYS ask for their GMAIL / EMAIL ADDRESS so the Google Meet calendar invite and link can be sent directly to them.
+   - Example response:
+     "We would love to connect over Google Meet! 📅
+     Could you please let us know:
+     1. What date and time works best for you?
+     2. Your Gmail / email address
+     We will schedule the call and send the Google Meet invitation directly to your inbox! 🚀"`;
 
 const DHIGROWTH_WELCOME = {
   reply: `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`,
@@ -621,6 +634,10 @@ export const generateAIResponse = async ({
 
   if (query.includes('price') || query.includes('cost') || query.includes('quote') || query.includes('rate')) {
     return `💼 Our project pricing is customized based on your business scope and requirements.\n\nFeel free to share brief details of your project, and our team will provide a tailored quote and roadmap! 🤝`;
+  }
+
+  if (/\b(meet|gmeet|google meet|g meet|zoom|video call|schedule call|consultation call)\b/i.test(query) || (query.includes('meet') && (query.includes('google') || query.includes('link') || query.includes('schedule') || query.includes('time')))) {
+    return `We would be delighted to schedule a Google Meet consultation with our technical solutions team! 📅\n\nCould you please let us know:\n1️⃣ What date and convenient time works best for you?\n2️⃣ Your Gmail / email address\n\nWe will schedule the call and send the Google Meet calendar invite and link directly to your inbox! 🚀`;
   }
 
   if (/\b(location|office|address|where are you|where is your office|based|headquarters|coimbatore|visit|map)\b/i.test(query)) {
