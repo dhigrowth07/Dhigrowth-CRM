@@ -275,9 +275,9 @@ async function callAiProvider({ provider, apiKey, model, systemPrompt, userMessa
   const startTime = Date.now();
 
   if (provider === 'gemini') {
-    // Google Gemini API
-    const targetModel = model || 'gemini-2.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+    // Google Gemini API with automatic candidate model failover
+    const requestedModel = model && model !== 'gemini-1.5-flash' && model !== 'gemini-2.5-flash' ? model : 'gemini-3.5-flash-lite';
+    const candidateModels = [...new Set([requestedModel, 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.5-flash'])];
 
     // Build rich multi-turn conversation contents for Gemini
     const geminiContents = [];
@@ -300,13 +300,12 @@ async function callAiProvider({ provider, apiKey, model, systemPrompt, userMessa
       });
     }
 
-    let res;
-    let data;
-    const maxAttempts = 2;
+    let lastError = null;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    for (const targetModel of candidateModels) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
       try {
-        res = await fetch(url, {
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -321,38 +320,27 @@ async function callAiProvider({ provider, apiKey, model, systemPrompt, userMessa
           }),
         });
 
-        data = await res.json();
-        if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          break;
+        const data = await res.json();
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (res.ok && reply) {
+          return {
+            reply: reply.trim(),
+            latencyMs: Date.now() - startTime,
+            provider: 'gemini',
+            model: targetModel,
+          };
         }
 
-        // If high demand or rate limit, wait and retry once
-        if (attempt < maxAttempts && (res.status === 503 || res.status === 429 || data.error?.message?.includes('high demand'))) {
-          console.log(`[AIService] Gemini experiencing high demand, retrying in 1.2s (attempt ${attempt}/${maxAttempts})...`);
-          await new Promise((resolve) => setTimeout(resolve, 1200));
-        }
-      } catch (networkErr) {
-        if (attempt < maxAttempts) {
-          await new Promise((resolve) => setTimeout(resolve, 800));
-        } else {
-          throw networkErr;
-        }
+        const errMsg = data?.error?.message || `HTTP ${res.status}`;
+        lastError = new Error(`Gemini (${targetModel}): ${errMsg}`);
+        console.warn(`[AIService] Model ${targetModel} notice: "${errMsg}". Failing over to next candidate model...`);
+      } catch (err) {
+        lastError = err;
+        console.warn(`[AIService] Network error with ${targetModel}: ${err.message}, trying next...`);
       }
     }
 
-    if (!res || !res.ok) {
-      throw new Error(data?.error?.message || `Gemini API error (${res?.status || 'network'})`);
-    }
-
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!reply) throw new Error('Gemini returned an empty response.');
-
-    return {
-      reply: reply.trim(),
-      latencyMs: Date.now() - startTime,
-      provider: 'gemini',
-      model: targetModel,
-    };
+    throw lastError || new Error('All Gemini candidate models failed to return a response.');
   }
 
   if (provider === 'openai' || provider === 'groq' || provider === 'deepseek') {
@@ -644,10 +632,15 @@ export const generateAIResponse = async ({
     return `🏢 **Dhigrowth Business Pvt Ltd**\n\nOur official company headquarters is located in Coimbatore, Tamil Nadu, India:\n📍 Kovai Thirunagar, Coimbatore, Tamil Nadu 641001\n\n🗺️ **Google Maps Location:**\nhttps://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7\n\nWe warmly welcome clients for in-person meetings by appointment, while also collaborating with businesses across India and globally! Would you like to schedule a visit or call? 🤝`;
   }
 
-  if (channelType === 'instagram') {
-    return `Hey ${customerName?.split(' ')[0] || 'there'}! 👋 Thanks for reaching out via Instagram DM.\n\nRegarding "${customerMessage}": our team would love to help you build and scale this! Would you like to schedule a quick consultation or see a demo? 🚀`;
+  // 4.3 Inquiries about updates, project status, or follow-ups
+  if (/\b(update|updates|status|progress|news|what happened|following up|any update|any updates|what's the update|whats the update)\b/i.test(query) || (query.includes('update') && (query.includes('any') || query.includes('my') || query.includes('the')))) {
+    return `Hello ${customerName || 'there'}! 👋 Our solutions and technical team are actively reviewing your project details. We will share a full update and proposal with you shortly! If you have any specific feature or timeline you'd like us to prioritize, please let us know. 🚀`;
   }
 
-  // Conversational fallback
-  return `Hello ${customerName || 'there'}! 👋 Welcome to **DhiGrowth IT Services**.\n\nRegarding your inquiry about "${customerMessage}": our team would be thrilled to help you build and scale this! Would you like to schedule a quick 15-minute consultation, or tell us a bit more about your requirements? 🚀`;
+  if (channelType === 'instagram') {
+    return `Hey ${customerName?.split(' ')[0] || 'there'}! 👋 Thanks for reaching out via Instagram DM.\n\nOur team would love to help you build and scale your project! Could you share a few details about what you need? 🚀`;
+  }
+
+  // Conversational fallback (natural concierge, no robotic template regurgitation)
+  return `Hello ${customerName || 'there'}! 👋 Welcome to **DhiGrowth IT Services**.\n\nOur solutions specialists are here to help you with App Development, AI Business Automations, WhatsApp CRM, and Custom IT software.\n\nCould you please share a few details about what you'd like to build or automate? We would love to prepare a custom plan for you! 🚀`;
 };
