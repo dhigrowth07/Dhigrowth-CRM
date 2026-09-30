@@ -604,6 +604,14 @@ export const generateAIResponse = async ({
     return `💻 **Custom IT Software & Enterprise Systems**\n\nRobust custom portals, internal dashboards, and enterprise cloud software.\n\nCould you tell us about the software or system you need built?`;
   }
 
+  if (/\b(about\s+dhigrowth|about\s+company|about\s+us|who\s+are\s+you|what\s+is\s+dhigrowth)\b/i.test(query) || query === 'about' || query === 'about dhigrowth') {
+    return `🏢 **About DhiGrowth IT Services**\n\nDhiGrowth is an innovative technology company helping businesses scale through custom software, AI automations, and modern CRM systems.\n\n📍 **Headquarters:** Coimbatore, Tamil Nadu, India (📍 [Google Maps](https://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7))\n\n🚀 **What We Specialize In:**\n📱 *Mobile App & Web Development* (iOS, Android, Flutter, React Native)\n🤖 *AI Business Solutions* (Custom AI Agents, LLM Integrations, Auto-Pilot Bots)\n💬 *WhatsApp CRM & Automation* (Meta Official Cloud API, Broadcasts, Team Inboxes)\n💻 *Custom IT Solutions* (Cloud Systems, Client Portals, Enterprise Software)\n\nCould you share what project or software solution you are looking for? We'd love to help! ✨`;
+  }
+
+  if (/\b(services|your\s+services|our\s+services|what\s+services|tell\s+about\s+services|tell\s+services|tell\s+about\s+your\s+services)\b/i.test(query) || query.includes('tell about') && query.includes('service')) {
+    return `🚀 **DhiGrowth Core IT Services & Solutions**\n\nWe provide end-to-end digital technology solutions for growing businesses:\n\n1️⃣ 📱 *App & Web Development*: Sleek, high-performance iOS, Android, and Web platforms engineered for scale.\n2️⃣ 🤖 *AI Solutions & Auto-Pilot Bots*: Custom autonomous 24/7 AI concierges, workflow automations, and LLM integrations.\n3️⃣ 📈 *WhatsApp CRM & Marketing*: Official Meta WhatsApp Cloud API integration, broadcast campaigns, catalog bots, and instant lead capture.\n4️⃣ 💻 *Custom IT & Enterprise Software*: Cloud backends, custom dashboards, client portals, and secure API integrations.\n\nWhich of these solutions are you interested in exploring for your business? 💡`;
+  }
+
   if (/\b(whatsapp|crm|marketing|broadcast|catalog|lead|inbox)\b/i.test(query)) {
     return `💬 **WhatsApp CRM & Automation**\n\nSupercharge your sales with official Meta WhatsApp Cloud API integration, broadcast campaigns, catalog bots, and AI auto-pilot replies.\n\nReady to convert leads faster on WhatsApp? Let's connect! 📈`;
   }

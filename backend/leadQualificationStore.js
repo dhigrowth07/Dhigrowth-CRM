@@ -37,7 +37,17 @@ function persist() {
 
 export const getQualificationSession = (identifier) => {
   const cleanId = String(identifier || '').toLowerCase().trim();
-  return memoryStore.get(cleanId) || null;
+  const session = memoryStore.get(cleanId) || null;
+  if (session && session.updatedAt) {
+    const ageMs = Date.now() - new Date(session.updatedAt).getTime();
+    if (ageMs > 30 * 60 * 1000) {
+      // Expire session after 30 minutes of inactivity
+      memoryStore.delete(cleanId);
+      persist();
+      return null;
+    }
+  }
+  return session;
 };
 
 export const updateQualificationSession = (identifier, data) => {

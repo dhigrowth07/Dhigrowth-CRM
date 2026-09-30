@@ -592,14 +592,39 @@ async function handleLeadQualificationFlow({
     return outWamid;
   };
 
+  // Helper to detect conversational questions, informational queries, or support requests
+  const isQuestionOrInquiry = (text) => {
+    if (!text) return false;
+    const lower = text.toLowerCase().trim();
+    if (lower.includes('?')) return true;
+    const inquiryKeywords = [
+      'about', 'who', 'where', 'how', 'why', 'what', 'whats', "what's",
+      'tell', 'explain', 'detail', 'details', 'info', 'information',
+      'services', 'service', 'pricing', 'price', 'cost', 'charge', 'charges', 'fee', 'quote', 'rate',
+      'founder', 'ceo', 'owner', 'team', 'company', 'dhigrowth', 'office', 'address', 'location',
+      'can you', 'could you', 'will you', 'do you', 'may i', 'help', 'assist',
+      'meet', 'meeting', 'gmeet', 'google meet', 'zoom', 'call', 'schedule',
+      'human', 'agent', 'person', 'stop', 'dont reply', "don't reply", 'understand'
+    ];
+    return inquiryKeywords.some((kw) => lower.includes(kw));
+  };
+
   // 1. Reset / restart commands
   if (['reset', 'restart', 'start over', 'menu'].includes(lowerMsg)) {
     clearQualificationSession(senderIdentifier);
   }
 
-  const isGreeting = ['hi', 'hello', 'hey', 'start', 'hlo', 'hai', 'hola', 'hi!'].includes(lowerMsg);
+  const isGreetingOnly = ['hi', 'hello', 'hey', 'start', 'hlo', 'hai', 'hola', 'hi!'].includes(lowerMsg);
   const isYesClick = lowerMsg.includes("yes, i'm interested") || lowerMsg.includes("yes, interested") || lowerMsg.includes("yes im interested") || lowerMsg.includes("im interested") || lowerMsg === 'btn_yes' || lowerMsg === 'yes';
   const isTellMore = lowerMsg.includes("tell me more") || lowerMsg.includes("tell more") || lowerMsg === 'btn_more';
+  const isUserAskingQuestion = isQuestionOrInquiry(cleanMsg);
+
+  // If the user's message is an informational question or inquiry (e.g. "About dhigrowth", "Tell about your services"),
+  // DO NOT intercept it with qualification form steps — allow the AI Concierge to reply intelligently!
+  if (isUserAskingQuestion && !isYesClick) {
+    console.log(`🧠 [LeadQualification] Message "${cleanMsg}" detected as conversational question/inquiry. Passing to AI Concierge.`);
+    return false;
+  }
 
   // Check dynamic templates configured in the Templates page
   let matchedTemplate = null;
@@ -611,7 +636,7 @@ async function handleLeadQualificationFlow({
         const triggers = t.footer_text.toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
         return triggers.some((tr) => lowerMsg === tr || lowerMsg.includes(tr));
       });
-      if (!matchedTemplate && isGreeting) {
+      if (!matchedTemplate && isGreetingOnly) {
         matchedTemplate = wsTemplates.find(
           (t) => t.name === 'ai_it_discovery' || t.name === 'hi' || (t.footer_text && t.footer_text.includes('hi'))
         ) || wsTemplates[0];
@@ -623,7 +648,7 @@ async function handleLeadQualificationFlow({
 
   // 2. Initial inquiry / greeting: start qualification session or send triggered template
   if (!session || session.step === 'COMPLETED' || matchedTemplate) {
-    if (isGreeting || isYesClick || isTellMore || matchedTemplate) {
+    if ((isGreetingOnly && !isUserAskingQuestion) || isYesClick || isTellMore || matchedTemplate) {
       const knownName = customerName && !customerName.startsWith('Customer') && !customerName.startsWith('Instagram') ? customerName : null;
       updateQualificationSession(senderIdentifier, {
         step: 'AWAITING_SERVICE',
@@ -729,16 +754,20 @@ async function handleLeadQualificationFlow({
       }
 
       let selectedService = null;
-      if (lowerMsg === '1' || lowerMsg === '1️⃣' || lowerMsg.includes('mobile app') || lowerMsg.includes('app') || lowerMsg.includes('flutter') || lowerMsg.includes('react native') || lowerMsg.includes('ios') || lowerMsg.includes('android')) {
+      if (lowerMsg === '1' || lowerMsg === '1️⃣' || /^(mobile\s+app|app\s+development|flutter|react\s+native|ios|android)$/i.test(lowerMsg) || (lowerMsg.includes('app') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
         selectedService = 'Mobile App & Web Development';
-      } else if (lowerMsg === '2' || lowerMsg === '2️⃣' || lowerMsg.includes('ai') || lowerMsg.includes('bot') || lowerMsg.includes('concierge') || lowerMsg.includes('auto-pilot') || lowerMsg.includes('agent')) {
+      } else if (lowerMsg === '2' || lowerMsg === '2️⃣' || /^(ai|ai\s+solutions|ai\s+bot|auto-pilot|custom\s+ai|agent)$/i.test(lowerMsg) || (lowerMsg.includes('ai') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
         selectedService = 'AI Business Solutions & Auto-Pilot Bots';
-      } else if (lowerMsg === '3' || lowerMsg === '3️⃣' || lowerMsg.includes('whatsapp') || lowerMsg.includes('crm') || lowerMsg.includes('broadcast') || lowerMsg.includes('marketing') || lowerMsg.includes('meta')) {
+      } else if (lowerMsg === '3' || lowerMsg === '3️⃣' || /^(whatsapp|whatsapp\s+crm|marketing\s+automation)$/i.test(lowerMsg) || (lowerMsg.includes('whatsapp') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
         selectedService = 'WhatsApp CRM & Marketing Automation';
-      } else if (lowerMsg === '4' || lowerMsg === '4️⃣' || lowerMsg.includes('software') || lowerMsg.includes('custom') || lowerMsg.includes('enterprise') || lowerMsg.includes('portal') || lowerMsg.includes('it')) {
+      } else if (lowerMsg === '4' || lowerMsg === '4️⃣' || /^(custom\s+software|enterprise|custom\s+it)$/i.test(lowerMsg) || (lowerMsg.includes('software') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
         selectedService = 'Custom IT Software & Enterprise Systems';
-      } else if (cleanMsg.length >= 3 && !isGreeting && !isYesClick && !isTellMore) {
-        selectedService = cleanMsg;
+      }
+
+      // If user did not pick a valid numbered service or recognized service keyword,
+      // DO NOT blindly capture the message as a service! Allow the AI to answer.
+      if (!selectedService) {
+        return false;
       }
 
       if (selectedService) {
@@ -766,6 +795,11 @@ async function handleLeadQualificationFlow({
 
     // STEP 2: Awaiting Customer Name
     else if (session.step === 'AWAITING_NAME') {
+      // If customer asks a question or sends a sentence longer than 6 words, do not treat as a name
+      if (isUserAskingQuestion || cleanMsg.split(/\s+/).length > 6) {
+        return false;
+      }
+
       const extractedName = cleanMsg
         .replace(/^(my name is|i am|this is|myself|i'm|im)\s+/i, '')
         .replace(/[.,!]/g, '')
@@ -784,6 +818,11 @@ async function handleLeadQualificationFlow({
 
     // STEP 3: Awaiting Purpose / Requirements
     else if (session.step === 'AWAITING_PURPOSE') {
+      // If customer is asking an informational question (e.g. "Tell about your services"), do not treat it as project purpose!
+      if (isUserAskingQuestion) {
+        return false;
+      }
+
       const purpose = cleanMsg;
       const finalName = session.name || customerName || 'Valued Customer';
       const finalService = session.service || 'DhiGrowth IT Services';
