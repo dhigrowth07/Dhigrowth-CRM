@@ -83,7 +83,7 @@ export const Header = () => {
   );
 
   return (
-    <header className={`h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans ${(activeTab === 'inbox' || activeTab === 'instagram-inbox') && activeChatId ? 'hidden md:flex' : 'flex'}`}>
+    <header className="h-14 md:h-16 bg-white border-b border-[#EAECF0] px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 font-sans">
       {/* Left: Mobile Hamburger & Page Title */}
       <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
         <button
