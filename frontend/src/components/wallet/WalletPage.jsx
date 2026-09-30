@@ -305,7 +305,7 @@ export const WalletPage = () => {
   };
 
   return (
-    <div className="p-6 lg:p-10 space-y-6 max-w-[1300px] mx-auto font-sans">
+    <div className="p-3.5 sm:p-6 lg:p-10 space-y-4 sm:space-y-6 max-w-[1300px] mx-auto font-sans">
       {/* 1. Header */}
       <div>
         <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
@@ -315,13 +315,13 @@ export const WalletPage = () => {
           <span>&gt;</span>
           <span className="text-[#101828] font-semibold">Wallet</span>
         </div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-[#101828] tracking-tight mt-1">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#101828] tracking-tight mt-1">
           Wallet
         </h1>
       </div>
 
       {/* 2. Purple Top AI Credits Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#8B5CF6] via-[#7C3AED] to-[#6D28D9] p-8 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-purple-600/15">
+      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#8B5CF6] via-[#7C3AED] to-[#6D28D9] p-5 sm:p-8 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-purple-600/15">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-white/80 uppercase tracking-wider font-mono">
@@ -332,17 +332,17 @@ export const WalletPage = () => {
               Profile: {profileDisplayName}
             </span>
           </div>
-          <div className="text-4xl lg:text-5xl font-extrabold tracking-tight">
+          <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
             ${credits.toFixed(2)}
           </div>
-          <p className="text-xs text-white/80 font-medium">
+          <p className="text-xs text-white/80 font-medium leading-relaxed">
             Powers ~{Math.floor(credits / 0.002).toLocaleString()} AI Assistant replies on WhatsApp, Instagram &amp; Messenger (~$0.002 / reply)
           </p>
         </div>
 
         <button
           onClick={() => setIsAddFundsModalOpen(true)}
-          className="px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white backdrop-blur-md rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-white/20 shadow-sm shrink-0 w-fit hover:scale-105 active:scale-95"
+          className="px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white backdrop-blur-md rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-white/20 shadow-sm shrink-0 w-full sm:w-fit hover:scale-105 active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>Recharge AI Credits</span>
@@ -350,7 +350,7 @@ export const WalletPage = () => {
       </div>
 
       {/* 3. Billing Info Alert Banner */}
-      <div className="p-4 rounded-2xl bg-[#FFFDF5] border border-[#FEF0C7] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-[#FFFDF5] border border-[#FEF0C7] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-[#D97706] shrink-0" />
           <div className="text-xs text-[#475467]">
@@ -361,14 +361,14 @@ export const WalletPage = () => {
 
         <button
           onClick={() => setIsBillingModalOpen(true)}
-          className="px-4 py-2 bg-[#FAF5EE] hover:bg-[#F2ECE2] border border-[#E8DFC8] text-[#475467] rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 shadow-2xs"
+          className="px-4 py-2 bg-[#FAF5EE] hover:bg-[#F2ECE2] border border-[#E8DFC8] text-[#475467] rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 shadow-2xs self-start sm:self-auto"
         >
           Add Billing Info
         </button>
       </div>
 
       {/* 4. Subscription Card */}
-      <div className="sendiee-card p-6 space-y-6">
+      <div className="sendiee-card p-4 sm:p-6 space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-lg font-bold text-[#101828]">Subscription</h2>
@@ -473,27 +473,27 @@ export const WalletPage = () => {
       </div>
 
       {/* Transparent SaaS 3-Pillar Billing Breakdown */}
-      <div className="bg-white border border-[#EAECF0] rounded-3xl p-6 shadow-sm space-y-4">
+      <div className="bg-white border border-[#EAECF0] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F2F4F7] pb-3">
           <div>
             <h3 className="text-sm font-extrabold text-[#101828] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#7C3AED]" />
               <span>Transparent Billing Model: How Your Charges Work</span>
             </h3>
-            <p className="text-xs text-[#667085]">
+            <p className="text-xs text-[#667085] mt-0.5">
               You only pay WAPPPILOT a flat monthly platform subscription. Infrastructure costs (Meta WhatsApp fees &amp; AI tokens) are billed directly to providers with zero markup.
             </p>
           </div>
-          <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-[#F4F0FD] text-[#7C3AED] rounded-full self-start sm:self-auto border border-[#E9D8FD]">
+          <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-[#F4F0FD] text-[#7C3AED] rounded-full self-start sm:self-auto border border-[#E9D8FD] shrink-0">
             0% MARKUP ON META &amp; AI
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 text-xs">
           {/* Pillar 1: Platform Subscription */}
-          <div className="p-4 rounded-2xl bg-[#FAF8FF] border border-[#E9D8FD] space-y-2">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#FAF8FF] border border-[#E9D8FD] space-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#7C3AED] text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-lg bg-[#7C3AED] text-white flex items-center justify-center font-bold text-xs shrink-0">
                 1
               </div>
               <div className="font-bold text-[#101828]">What You Pay Us</div>
@@ -507,9 +507,9 @@ export const WalletPage = () => {
           </div>
 
           {/* Pillar 2: Meta WhatsApp Cloud API */}
-          <div className="p-4 rounded-2xl bg-[#F0FDF4] border border-[#DCFCE7] space-y-2">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#F0FDF4] border border-[#DCFCE7] space-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#16A34A] text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-lg bg-[#16A34A] text-white flex items-center justify-center font-bold text-xs shrink-0">
                 2
               </div>
               <div className="font-bold text-[#101828]">What You Pay Meta</div>
@@ -523,9 +523,9 @@ export const WalletPage = () => {
           </div>
 
           {/* Pillar 3: AI Assistant (BYOK) */}
-          <div className="p-4 rounded-2xl bg-[#FFFDF5] border border-[#FEF0C7] space-y-2">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#FFFDF5] border border-[#FEF0C7] space-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#D97706] text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-lg bg-[#D97706] text-white flex items-center justify-center font-bold text-xs shrink-0">
                 3
               </div>
               <div className="font-bold text-[#101828]">What You Pay AI Provider</div>
@@ -541,10 +541,10 @@ export const WalletPage = () => {
       </div>
 
       {/* 5. Sub-Tabs Bar: Payment History | Subscription History */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
         <button
           onClick={() => setActiveSubTab('payment-history')}
-          className={`px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
             activeSubTab === 'payment-history'
               ? 'bg-white border-[#EAECF0] text-[#101828] shadow-2xs'
               : 'bg-transparent border-transparent text-[#667085] hover:text-[#101828]'
@@ -556,7 +556,7 @@ export const WalletPage = () => {
 
         <button
           onClick={() => setActiveSubTab('subscription-history')}
-          className={`px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
             activeSubTab === 'subscription-history'
               ? 'bg-white border-[#EAECF0] text-[#101828] shadow-2xs'
               : 'bg-transparent border-transparent text-[#667085] hover:text-[#101828]'
@@ -569,34 +569,34 @@ export const WalletPage = () => {
 
       {/* 6. Wallet Logs Table Card OR Subscription Invoices Card */}
       {activeSubTab === 'payment-history' ? (
-        <div className="sendiee-card p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="sendiee-card p-3.5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#7C3AED]" />
               <h2 className="text-base font-bold text-[#101828]">Wallet Logs</h2>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
               {/* Filter Dropdown */}
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-initial min-w-[110px]">
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="appearance-none bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-1.5 pr-8 rounded-xl text-xs text-[#344054] font-medium focus:outline-none focus:border-[#7C3AED] cursor-pointer"
+                  className="w-full appearance-none bg-[#F9FAFB] border border-[#EAECF0] pl-3 pr-7 py-1.5 rounded-xl text-xs text-[#344054] font-medium focus:outline-none focus:border-[#7C3AED] cursor-pointer"
                 >
                   <option value="all">All Types</option>
                   <option value="topup">Top Up</option>
                   <option value="usage">AI Usage Deductions</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#98A2B3] absolute right-2.5 top-2.5 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#98A2B3] absolute right-2 top-2 pointer-events-none" />
               </div>
 
               {/* Date Range */}
-              <div className="flex items-center gap-2 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-1.5 rounded-xl text-xs font-mono text-[#667085]">
+              <div className="flex items-center gap-1.5 bg-[#F9FAFB] border border-[#EAECF0] px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-mono text-[#667085] whitespace-nowrap shrink-0">
                 <span>19-08-2026</span>
-                <span>&rarr;</span>
+                <span className="text-[#98A2B3]">&rarr;</span>
                 <span>03-09-2026</span>
-                <CalendarIcon className="w-3.5 h-3.5 text-[#98A2B3]" />
+                <CalendarIcon className="w-3.5 h-3.5 text-[#98A2B3] shrink-0" />
               </div>
 
               <button
@@ -604,7 +604,7 @@ export const WalletPage = () => {
                   if (refreshSubscription) refreshSubscription();
                   showToast('Wallet transactions refreshed', 'success');
                 }}
-                className="p-1.5 rounded-xl border border-[#EAECF0] bg-white text-[#667085] hover:text-[#101828] cursor-pointer"
+                className="p-1.5 rounded-xl border border-[#EAECF0] bg-white text-[#667085] hover:text-[#101828] cursor-pointer shrink-0"
                 title="Refresh logs"
               >
                 <RotateCw className="w-3.5 h-3.5" />
@@ -613,14 +613,14 @@ export const WalletPage = () => {
           </div>
 
           {/* Table Header & Rows */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto -mx-3.5 sm:mx-0 px-3.5 sm:px-0 no-scrollbar">
+            <table className="w-full min-w-[560px] text-left text-xs">
               <thead className="bg-[#FAF8F5] border-y border-[#EAECF0] text-[#667085] font-mono text-[10px] uppercase">
                 <tr>
-                  <th className="p-3">DATE</th>
-                  <th className="p-3">TYPE</th>
-                  <th className="p-3">AMOUNT (USD / INR)</th>
-                  <th className="p-3">GATEWAY / REF ID</th>
+                  <th className="p-3 whitespace-nowrap">DATE</th>
+                  <th className="p-3 whitespace-nowrap">TYPE</th>
+                  <th className="p-3 whitespace-nowrap">AMOUNT (USD / INR)</th>
+                  <th className="p-3 whitespace-nowrap">GATEWAY / REF ID</th>
                   <th className="p-3">DESCRIPTION</th>
                 </tr>
               </thead>
@@ -628,7 +628,7 @@ export const WalletPage = () => {
                 {walletLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-[#F9FAFB] transition-colors">
                     <td className="p-3 font-mono text-[#667085] whitespace-nowrap">{log.date}</td>
-                    <td className="p-3">
+                    <td className="p-3 whitespace-nowrap">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FAF5FF] text-[#7C3AED] border border-[#E9D8FD]">
                         {log.type}
                       </span>
@@ -640,7 +640,7 @@ export const WalletPage = () => {
                       <div className="font-semibold text-[#101828]">{log.provider || 'Razorpay (Test)'}</div>
                       {log.paymentId && <div className="text-[10px] text-[#667085]">{log.paymentId}</div>}
                     </td>
-                    <td className="p-3 text-[#344054] max-w-xs truncate">{log.description}</td>
+                    <td className="p-3 text-[#344054] max-w-xs">{log.description}</td>
                   </tr>
                 ))}
               </tbody>
@@ -649,8 +649,8 @@ export const WalletPage = () => {
         </div>
       ) : (
         /* Subscription Invoices Tab */
-        <div className="sendiee-card p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="sendiee-card p-3.5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#7C3AED]" />
               <h2 className="text-base font-bold text-[#101828]">Subscription Invoices</h2>
@@ -661,7 +661,7 @@ export const WalletPage = () => {
                 if (refreshSubscription) refreshSubscription();
                 showToast('Invoices refreshed', 'success');
               }}
-              className="p-1.5 rounded-xl border border-[#EAECF0] bg-white text-[#667085] hover:text-[#101828] cursor-pointer"
+              className="p-1.5 rounded-xl border border-[#EAECF0] bg-white text-[#667085] hover:text-[#101828] cursor-pointer shrink-0"
               title="Refresh invoices"
             >
               <RotateCw className="w-3.5 h-3.5" />
@@ -669,7 +669,7 @@ export const WalletPage = () => {
           </div>
 
           {invoices.length === 0 ? (
-            <div className="py-12 text-center space-y-3">
+            <div className="py-10 text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-center text-[#7C3AED] mx-auto">
                 <FileText className="w-6 h-6 text-[#7C3AED]" />
               </div>
@@ -685,28 +685,28 @@ export const WalletPage = () => {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto -mx-3.5 sm:mx-0 px-3.5 sm:px-0 no-scrollbar">
+              <table className="w-full min-w-[620px] text-left text-xs">
                 <thead className="bg-[#FAF8F5] border-y border-[#EAECF0] text-[#667085] font-mono text-[10px] uppercase">
                   <tr>
-                    <th className="p-3">INVOICE ID</th>
-                    <th className="p-3">DATE</th>
-                    <th className="p-3">PLAN &amp; CYCLE</th>
-                    <th className="p-3">GATEWAY</th>
-                    <th className="p-3">AMOUNT</th>
-                    <th className="p-3">STATUS</th>
-                    <th className="p-3 text-right">ACTION</th>
+                    <th className="p-3 whitespace-nowrap">INVOICE ID</th>
+                    <th className="p-3 whitespace-nowrap">DATE</th>
+                    <th className="p-3 whitespace-nowrap">PLAN &amp; CYCLE</th>
+                    <th className="p-3 whitespace-nowrap">GATEWAY</th>
+                    <th className="p-3 whitespace-nowrap">AMOUNT</th>
+                    <th className="p-3 whitespace-nowrap">STATUS</th>
+                    <th className="p-3 text-right whitespace-nowrap">ACTION</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EAECF0]">
                   {invoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-[#F9FAFB] transition-colors">
-                      <td className="p-3 font-mono font-bold text-[#101828]">{inv.id}</td>
-                      <td className="p-3 font-mono text-[#667085]">{new Date(inv.date).toLocaleDateString()}</td>
-                      <td className="p-3 text-[#344054] font-medium">
+                      <td className="p-3 font-mono font-bold text-[#101828] whitespace-nowrap">{inv.id}</td>
+                      <td className="p-3 font-mono text-[#667085] whitespace-nowrap">{new Date(inv.date).toLocaleDateString()}</td>
+                      <td className="p-3 text-[#344054] font-medium whitespace-nowrap">
                         {inv.planName} · <span className="capitalize">{inv.interval}</span>
                       </td>
-                      <td className="p-3">
+                      <td className="p-3 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
                           inv.provider === 'stripe'
                             ? 'bg-[#635BFF]/10 text-[#635BFF] border border-[#635BFF]/30'
@@ -715,15 +715,15 @@ export const WalletPage = () => {
                           {inv.provider === 'stripe' ? 'Stripe' : 'Razorpay'}
                         </span>
                       </td>
-                      <td className="p-3 font-mono font-bold text-[#101828]">
+                      <td className="p-3 font-mono font-bold text-[#101828] whitespace-nowrap">
                         {inv.currency === 'INR' ? '₹' : '$'}{inv.amount.toLocaleString()}
                       </td>
-                      <td className="p-3">
+                      <td className="p-3 whitespace-nowrap">
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ECFDF3] text-[#027A48] border border-[#ABEFC6]">
                           {inv.status}
                         </span>
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="p-3 text-right whitespace-nowrap">
                         <button
                           onClick={() => showToast(`Invoice ${inv.id} downloaded`, 'success')}
                           className="inline-flex items-center gap-1 text-[#7C3AED] hover:text-[#6D28D9] font-medium text-xs p-1 hover:bg-[#F4F0FD] rounded-lg transition-colors cursor-pointer"

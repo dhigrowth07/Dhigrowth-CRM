@@ -96,7 +96,9 @@ export const Header = () => {
         </button>
 
         <h1 className="text-base sm:text-lg md:text-xl font-bold text-[#101828] font-sans truncate">
-          <span className="sm:hidden">{activeTab === 'inbox' ? 'Inbox' : activeTab === 'instagram-inbox' ? 'Instagram' : getTitle()}</span>
+          <span className="sm:hidden">
+            {activeTab === 'wallet' ? 'Wallet' : activeTab === 'inbox' ? 'Inbox' : activeTab === 'instagram-inbox' ? 'Instagram' : activeTab === 'broadcasts' ? 'Broadcasts' : activeTab === 'templates' ? 'Templates' : activeTab === 'contacts' ? 'Contacts' : getTitle()}
+          </span>
           <span className="hidden sm:inline">{getTitle()}</span>
         </h1>
       </div>
