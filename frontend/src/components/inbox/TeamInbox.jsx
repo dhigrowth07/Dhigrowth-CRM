@@ -2030,100 +2030,97 @@ export const TeamInbox = () => {
 
         {/* Message Composer & Multi-Channel Action Bar */}
         <div className="p-3 lg:p-4 border-t border-[#EAECF0] bg-white shrink-0 space-y-2.5">
-          {/* Top Bar: Mode Selector & Quick AI Chips */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              {/* Manual vs AI Mode Toggle */}
-              <div className="inline-flex p-0.5 bg-[#F2F4F7] rounded-lg border border-[#EAECF0] shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setAiForChat(activeChat.id, false)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    !isAiAutoPilot
-                      ? 'bg-white text-[#16A34A] border border-[#BBF7D0] shadow-xs'
-                      : 'text-[#667085] hover:text-[#101828]'
-                  }`}
-                  title="Manual Agent: You reply manually. AI auto-reply is turned OFF."
-                >
-                  <User className="w-3 h-3 text-[#16A34A]" />
-                  <span>Manual Agent</span>
-                  {!isAiAutoPilot && <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAiForChat(activeChat.id, true)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    isAiAutoPilot
-                      ? 'bg-white text-[#0284C7] border border-[#BAE6FD] shadow-xs'
-                      : 'text-[#667085] hover:text-[#101828]'
-                  }`}
-                  title="AI Auto-Pilot: AI automatically answers incoming questions."
-                >
-                  <Bot className="w-3 h-3 text-[#0284C7]" />
-                  <span>AI Auto-Pilot</span>
-                  {isAiAutoPilot && <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />}
-                </button>
-              </div>
-
-              {/* Active Channel & Recipient Badge */}
-              <div className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#DCFCE7]/70 border border-[#BBF7D0] text-[#16A34A] text-[11px] font-medium font-mono truncate">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse shrink-0"></span>
-                <span className="truncate">WhatsApp Live · {activeChat.phone}</span>
-              </div>
-            </div>
-
-            {/* Quick Actions & AI Suggestions */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-              {/* Open 24h Context Window Template Button */}
-              {isNewContact && (
-                <button
-                  type="button"
-                  onClick={() => setIsTemplateSendModalOpen(true)}
-                  className="px-2.5 py-1 rounded-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white text-[11px] font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1 shadow-xs ring-2 ring-sky-300 animate-pulse"
-                  title="Send Meta-approved template message to open 24-hour conversation window"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>✨ Open 24h Window (Template)</span>
-                </button>
-              )}
-
+          {/* Top Bar: Mode Selector & Quick Actions - Horizontally Scrollable & Perfectly Aligned */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 w-full touch-pan-x select-none">
+            {/* Manual vs AI Mode Toggle */}
+            <div className="inline-flex p-0.5 bg-[#F2F4F7] rounded-lg border border-[#EAECF0] shrink-0 items-center">
               <button
                 type="button"
-                onClick={handleOpenInvoiceModal}
-                className="px-2.5 py-1 rounded-full bg-[#0284C7] hover:bg-[#0369A1] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
-                title="Create and send official Payment Due PDF with payment link to WhatsApp"
+                onClick={() => setAiForChat(activeChat.id, false)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                  !isAiAutoPilot
+                    ? 'bg-white text-[#16A34A] border border-[#BBF7D0] shadow-xs'
+                    : 'text-[#667085] hover:text-[#101828]'
+                }`}
+                title="Manual Agent: You reply manually. AI auto-reply is turned OFF."
               >
-                <FileText className="w-3 h-3" />
-                <span>Send Invoice PDF</span>
+                <User className="w-3 h-3 text-[#16A34A]" />
+                <span className="whitespace-nowrap">Manual Agent</span>
+                {!isAiAutoPilot && <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />}
               </button>
-
               <button
                 type="button"
-                onClick={handleGenerateAiReply}
-                disabled={isGeneratingAi}
-                className="px-2.5 py-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] hover:border-[#0284C7] text-[#0284C7] text-[11px] font-bold shrink-0 transition-colors cursor-pointer flex items-center gap-1"
-                title="Auto-draft response with AI"
+                onClick={() => setAiForChat(activeChat.id, true)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isAiAutoPilot
+                    ? 'bg-white text-[#0284C7] border border-[#BAE6FD] shadow-xs'
+                    : 'text-[#667085] hover:text-[#101828]'
+                }`}
+                title="AI Auto-Pilot: AI automatically answers incoming questions."
               >
-                <Sparkles className="w-3 h-3 text-[#0284C7]" />
-                <span>{isGeneratingAi ? 'Drafting...' : 'AI Draft'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setInputMessage('Yes please, confirmed COD order for Bandra West.')}
-                className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#0284C7] text-[#475467] hover:text-[#0284C7] text-[11px] shrink-0 transition-colors cursor-pointer hidden sm:inline-flex"
-              >
-                📦 COD Confirm
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setInputMessage('Use promo code LAUNCH10 for an extra 10% off today!')}
-                className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#0284C7] text-[#475467] hover:text-[#0284C7] text-[11px] shrink-0 transition-colors cursor-pointer hidden md:inline-flex"
-              >
-                🎟️ Promo
+                <Bot className="w-3 h-3 text-[#0284C7]" />
+                <span className="whitespace-nowrap">AI Auto-Pilot</span>
+                {isAiAutoPilot && <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />}
               </button>
             </div>
+
+            {/* Active Channel & Recipient Badge */}
+            <div className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#DCFCE7]/70 border border-[#BBF7D0] text-[#16A34A] text-[11px] font-medium font-mono whitespace-nowrap shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse shrink-0"></span>
+              <span className="whitespace-nowrap">WhatsApp Live · {activeChat.phone}</span>
+            </div>
+
+            <div className="h-4 w-px bg-[#EAECF0] shrink-0" />
+
+            {/* Open 24h Context Window Template Button */}
+            {isNewContact && (
+              <button
+                type="button"
+                onClick={() => setIsTemplateSendModalOpen(true)}
+                className="px-2.5 py-1 rounded-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white text-[11px] font-bold shrink-0 whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 shadow-xs ring-1 ring-sky-300 animate-pulse"
+                title="Send Meta-approved template message to open 24-hour conversation window"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="whitespace-nowrap">✨ Open 24h Window (Template)</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleOpenInvoiceModal}
+              className="px-2.5 py-1 rounded-full bg-[#0284C7] hover:bg-[#0369A1] text-white text-[11px] font-bold shrink-0 whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+              title="Create and send official Payment Due PDF with payment link to WhatsApp"
+            >
+              <FileText className="w-3 h-3" />
+              <span className="whitespace-nowrap">Send Invoice PDF</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGenerateAiReply}
+              disabled={isGeneratingAi}
+              className="px-2.5 py-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] hover:border-[#0284C7] text-[#0284C7] text-[11px] font-bold shrink-0 whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+              title="Auto-draft response with AI"
+            >
+              <Sparkles className="w-3 h-3 text-[#0284C7]" />
+              <span className="whitespace-nowrap">{isGeneratingAi ? 'Drafting...' : 'AI Draft'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInputMessage('Yes please, confirmed COD order for Bandra West.')}
+              className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#0284C7] text-[#475467] hover:text-[#0284C7] text-[11px] font-medium shrink-0 whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+            >
+              📦 COD Confirm
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInputMessage('Use promo code LAUNCH10 for an extra 10% off today!')}
+              className="px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#EAECF0] hover:border-[#0284C7] text-[#475467] hover:text-[#0284C7] text-[11px] font-medium shrink-0 whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+            >
+              🎟️ Promo
+            </button>
           </div>
 
           {/* Dedicated Full-Width Multi-Line Textarea */}
