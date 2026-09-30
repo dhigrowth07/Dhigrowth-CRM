@@ -1629,6 +1629,10 @@ export const AppProvider = ({ children }) => {
     role = 'CRM User',
     plan = 'Business',
     permissions = {},
+    aiProvider = 'gemini',
+    aiApiKey = '',
+    aiModel = 'gemini-1.5-flash',
+    systemInstruction = '',
   }) => {
     const cleanUser = String(username || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     const cleanEmail = String(email || '').trim().toLowerCase();
@@ -1679,6 +1683,10 @@ export const AppProvider = ({ children }) => {
       password, // Saved for quick Super Admin retrieval
       permissions: defaultPerms,
       status: 'active',
+      aiProvider: aiProvider || 'gemini',
+      aiApiKey: aiApiKey ? String(aiApiKey).trim() : '',
+      aiModel: aiModel || 'gemini-1.5-flash',
+      systemInstruction: systemInstruction ? String(systemInstruction).trim() : '',
       createdAt: new Date().toISOString(),
     };
 
@@ -1727,6 +1735,48 @@ export const AppProvider = ({ children }) => {
 
     showToast(`🎉 Tenant "${newTenant.name}" (${newTenant.companyName}) created successfully!`, 'success');
     return newTenant;
+  };
+
+  // Update Tenant Dedicated AI Configuration
+  const updateTenantAiConfig = async (tenantId, { aiProvider, aiApiKey, aiModel, systemInstruction }) => {
+    let targetTenant = null;
+    const updated = tenants.map((t) => {
+      if (t.id === tenantId || t.workspaceId === tenantId || t.username === tenantId) {
+        targetTenant = {
+          ...t,
+          aiProvider: aiProvider !== undefined ? aiProvider : (t.aiProvider || 'gemini'),
+          aiApiKey: aiApiKey !== undefined ? String(aiApiKey).trim() : (t.aiApiKey || ''),
+          aiModel: aiModel !== undefined ? aiModel : (t.aiModel || 'gemini-1.5-flash'),
+          systemInstruction: systemInstruction !== undefined ? String(systemInstruction).trim() : (t.systemInstruction || ''),
+        };
+        return targetTenant;
+      }
+      return t;
+    });
+    setTenants(updated);
+    try {
+      localStorage.setItem('dhigrowth_tenants', JSON.stringify(updated));
+    } catch {}
+
+    if (targetTenant) {
+      try {
+        await fetch(`${BACKEND_URL}/api/tenants`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(targetTenant),
+        });
+      } catch {
+        try {
+          await fetch('http://localhost:4000/api/tenants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(targetTenant),
+          });
+        } catch {}
+      }
+    }
+    showToast(`Saved AI configuration for "${targetTenant?.name || 'tenant'}"!`, 'success');
+    return targetTenant;
   };
 
   // Delete Tenant User
@@ -3568,6 +3618,7 @@ export const AppProvider = ({ children }) => {
         tenants,
         currentTenant,
         createTenantUser,
+        updateTenantAiConfig,
         deleteTenantUser,
         updateTenantUser,
         toggleTenantPermission,

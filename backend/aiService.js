@@ -159,6 +159,55 @@ export const getActiveAiConfig = () => {
   };
 };
 
+const TENANTS_FILE = path.resolve(__dirname, 'tenants.json');
+
+// Read AI configuration for a specific workspace/tenant, falling back to global
+export const getAiConfigForWorkspace = (workspaceIdOrUsername) => {
+  const globalConfig = getActiveAiConfig();
+  if (!workspaceIdOrUsername) return globalConfig;
+
+  try {
+    if (fs.existsSync(TENANTS_FILE)) {
+      const tenants = JSON.parse(fs.readFileSync(TENANTS_FILE, 'utf-8'));
+      if (Array.isArray(tenants)) {
+        const cleanTarget = String(workspaceIdOrUsername).trim().toLowerCase();
+        const tenant = tenants.find(
+          (t) =>
+            t.workspaceId === workspaceIdOrUsername ||
+            t.id === workspaceIdOrUsername ||
+            t.username?.toLowerCase() === cleanTarget ||
+            t.slug?.toLowerCase() === cleanTarget
+        );
+
+        if (tenant) {
+          const tenantKey = tenant.aiApiKey ? String(tenant.aiApiKey).trim() : '';
+          const tenantPrompt = tenant.systemInstruction ? String(tenant.systemInstruction).trim() : '';
+          const tenantProvider = tenant.aiProvider || globalConfig.provider || 'gemini';
+          const tenantModel = tenant.aiModel || globalConfig.model || 'gemini-1.5-flash';
+
+          if (tenantKey || tenantPrompt) {
+            const effKey = tenantKey || globalConfig.apiKey;
+            return {
+              provider: tenantProvider,
+              apiKey: effKey,
+              model: tenantModel,
+              systemPrompt: tenantPrompt || globalConfig.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+              hasKey: Boolean(effKey),
+              maskedKey: effKey ? `${effKey.slice(0, 7)}...${effKey.slice(-4)}` : '',
+              isTenantSpecific: true,
+              tenantName: tenant.name || tenant.companyName || tenant.username,
+            };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[AIService] Note reading tenant AI config:', err.message);
+  }
+
+  return globalConfig;
+};
+
 export const saveActiveAiConfig = async (newConfig) => {
   const existing = getActiveAiConfig();
   const merged = {
@@ -380,6 +429,7 @@ export const generateAIResponse = async ({
   customerMessage,
   channelType = 'whatsapp',
   conversationHistory = [],
+  workspaceId,
 }) => {
   const query = customerMessage?.trim().toLowerCase() || '';
 
@@ -506,7 +556,7 @@ export const generateAIResponse = async ({
   if (!cachedRemoteConfig) {
     await loadRemoteAiConfig();
   }
-  const activeAi = getActiveAiConfig();
+  const activeAi = getAiConfigForWorkspace(workspaceId);
   if (activeAi.hasKey) {
     try {
       let effectiveSystemPrompt = activeAi.systemPrompt || DEFAULT_SYSTEM_PROMPT;

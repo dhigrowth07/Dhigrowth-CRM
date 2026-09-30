@@ -131,6 +131,7 @@ export const SuperAdminTenantsPage = () => {
   const {
     tenants,
     createTenantUser,
+    updateTenantAiConfig,
     deleteTenantUser,
     toggleTenantPermission,
     batchUpdateTenantPermissions,
@@ -150,6 +151,16 @@ export const SuperAdminTenantsPage = () => {
 
   // Promocodes & Plan Discounts State
   const [primaryView, setPrimaryView] = useState('tenants'); // 'tenants' | 'promocodes'
+  const [editingAiTenant, setEditingAiTenant] = useState(null);
+  const [showAddAiKey, setShowAddAiKey] = useState(false);
+  const [showEditAiKey, setShowEditAiKey] = useState(false);
+  const [isSavingTenantAi, setIsSavingTenantAi] = useState(false);
+  const [editAiForm, setEditAiForm] = useState({
+    aiProvider: 'gemini',
+    aiApiKey: '',
+    aiModel: 'gemini-1.5-flash',
+    systemInstruction: '',
+  });
   const [promocodes, setPromocodes] = useState(DEFAULT_PROMOCODES);
   const [promoFilter, setPromoFilter] = useState('all'); // 'all' | 'active' | 'used' | 'expired'
   const [promoSearch, setPromoSearch] = useState('');
@@ -471,6 +482,10 @@ export const SuperAdminTenantsPage = () => {
     companyName: '',
     plan: 'Pro Plan',
     credits: 500,
+    aiProvider: 'gemini',
+    aiApiKey: '',
+    aiModel: 'gemini-1.5-flash',
+    systemInstruction: '',
     permissions: getInitialPermissions(),
   });
 
@@ -658,8 +673,24 @@ export const SuperAdminTenantsPage = () => {
         companyName: '',
         plan: 'Pro Plan',
         credits: 500,
+        aiProvider: 'gemini',
+        aiApiKey: '',
+        aiModel: 'gemini-1.5-flash',
+        systemInstruction: '',
         permissions: getInitialPermissions(),
       });
+    }
+  };
+
+  const handleSaveTenantAi = async (e) => {
+    e.preventDefault();
+    if (!editingAiTenant) return;
+    setIsSavingTenantAi(true);
+    try {
+      await updateTenantAiConfig(editingAiTenant.id, editAiForm);
+      setEditingAiTenant(null);
+    } finally {
+      setIsSavingTenantAi(false);
     }
   };
 
@@ -989,6 +1020,19 @@ export const SuperAdminTenantsPage = () => {
                             )}
                           </button>
                         </div>
+
+                        {/* Dedicated AI Assistant status badge */}
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-[11px] ${
+                          tenant.aiApiKey || tenant.systemInstruction
+                            ? 'bg-purple-50 border border-purple-200 text-purple-700'
+                            : 'bg-gray-50 border border-gray-200 text-gray-600'
+                        }`}>
+                          <Bot className="w-3 h-3 text-purple-600" />
+                          <span className="font-semibold">AI Assistant:</span>
+                          <span className="font-bold">
+                            {tenant.aiApiKey ? `${(tenant.aiProvider || 'gemini').toUpperCase()} (Custom Key)` : 'Inherited Global'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1041,6 +1085,26 @@ export const SuperAdminTenantsPage = () => {
                           <span>Copy Login</span>
                         </>
                       )}
+                    </button>
+
+                    {/* Configure AI Assistant for this Tenant */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingAiTenant(tenant);
+                        setShowEditAiKey(false);
+                        setEditAiForm({
+                          aiProvider: tenant.aiProvider || 'gemini',
+                          aiApiKey: tenant.aiApiKey || '',
+                          aiModel: tenant.aiModel || 'gemini-1.5-flash',
+                          systemInstruction: tenant.systemInstruction || '',
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
+                      title="Configure dedicated AI API key & System Instruction for this tenant"
+                    >
+                      <Bot className="w-3.5 h-3.5 text-purple-600" />
+                      <span>{tenant.aiApiKey || tenant.systemInstruction ? 'Custom AI' : 'Set AI Key'}</span>
                     </button>
 
                     {/* Copy Workspace URL */}
@@ -1722,6 +1786,103 @@ export const SuperAdminTenantsPage = () => {
                 </div>
               </div>
 
+              {/* Dedicated Tenant AI Assistant Configuration Section */}
+              <div className="p-4 bg-gradient-to-r from-purple-50/70 via-indigo-50/50 to-purple-50/70 border border-purple-200/80 rounded-2xl space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#101828]">Dedicated AI Assistant (Custom Key & Instruction)</h4>
+                      <p className="text-[11px] text-[#667085]">
+                        Assign this tenant their own Google AI Studio key and custom business prompt
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-300">
+                    Optional
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#344054] mb-1">
+                      AI Provider
+                    </label>
+                    <select
+                      value={formData.aiProvider}
+                      onChange={(e) => setFormData({ ...formData, aiProvider: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-[#D0D5DD] rounded-lg text-xs text-[#101828] focus:outline-none focus:border-purple-600"
+                    >
+                      <option value="gemini">Google Gemini (Google AI Studio)</option>
+                      <option value="openai">OpenAI (ChatGPT)</option>
+                      <option value="groq">Groq (Ultra-Fast Llama)</option>
+                      <option value="deepseek">DeepSeek AI</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#344054] mb-1">
+                      AI Model
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.aiModel}
+                      onChange={(e) => setFormData({ ...formData, aiModel: e.target.value })}
+                      placeholder="e.g. gemini-1.5-flash"
+                      className="w-full px-3 py-2 bg-white border border-[#D0D5DD] rounded-lg text-xs font-mono text-[#101828] focus:outline-none focus:border-purple-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-[#344054]">
+                      Google AI Studio API Key (or Provider Key)
+                    </label>
+                    <span className="text-[10px] text-purple-700 font-medium">
+                      Starts with AIzaSy...
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showAddAiKey ? 'text' : 'password'}
+                      value={formData.aiApiKey}
+                      onChange={(e) => setFormData({ ...formData, aiApiKey: e.target.value })}
+                      placeholder="Paste Google AI Studio API key (AIzaSy...)"
+                      className="w-full pl-3 pr-10 py-2 bg-white border border-[#D0D5DD] rounded-lg text-xs font-mono text-[#101828] focus:outline-none focus:border-purple-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAddAiKey(!showAddAiKey)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      {showAddAiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#667085] mt-1">
+                    If left blank, this tenant will automatically inherit the master server Gemini configuration.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#344054] mb-1">
+                    Custom System Instruction (AI Business Persona)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formData.systemInstruction}
+                    onChange={(e) => setFormData({ ...formData, systemInstruction: e.target.value })}
+                    placeholder={`You are the official AI Assistant for ${formData.companyName || formData.name || 'this business'}.\nHelp customers learn about our products, answer questions, provide quotes, and guide them to book appointments.`}
+                    className="w-full p-2.5 bg-white border border-[#D0D5DD] rounded-lg text-xs text-[#101828] focus:outline-none focus:border-purple-600 leading-relaxed font-sans"
+                  />
+                  <p className="text-[10px] text-[#667085] mt-1">
+                    Defines the exact personality, business knowledge, and rules for this tenant's WhatsApp auto-replies.
+                  </p>
+                </div>
+              </div>
+
               {/* Granular Feature & Navigation Permissions Checklist */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-2">
@@ -2169,6 +2330,135 @@ export const SuperAdminTenantsPage = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Tenant AI Assistant Modal */}
+      {editingAiTenant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="p-6 border-b border-[#EAECF0] flex items-center justify-between bg-gradient-to-r from-purple-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center border border-purple-200">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#101828]">
+                    Configure AI Assistant: {editingAiTenant.name || editingAiTenant.username}
+                  </h3>
+                  <p className="text-xs text-[#667085]">
+                    Workspace: <span className="font-mono font-bold text-purple-700">{editingAiTenant.workspaceId}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingAiTenant(null)}
+                className="text-[#98A2B3] hover:text-[#101828] text-lg p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveTenantAi} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#344054] mb-1">
+                    AI Provider
+                  </label>
+                  <select
+                    value={editAiForm.aiProvider}
+                    onChange={(e) => setEditAiForm({ ...editAiForm, aiProvider: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-[#D0D5DD] rounded-lg text-xs text-[#101828] focus:outline-none focus:border-purple-600"
+                  >
+                    <option value="gemini">Google Gemini (Google AI Studio)</option>
+                    <option value="openai">OpenAI (ChatGPT)</option>
+                    <option value="groq">Groq (Ultra-Fast Llama)</option>
+                    <option value="deepseek">DeepSeek AI</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#344054] mb-1">
+                    AI Model
+                  </label>
+                  <input
+                    type="text"
+                    value={editAiForm.aiModel}
+                    onChange={(e) => setEditAiForm({ ...editAiForm, aiModel: e.target.value })}
+                    placeholder="e.g. gemini-1.5-flash"
+                    className="w-full px-3 py-2 bg-white border border-[#D0D5DD] rounded-lg text-xs font-mono text-[#101828] focus:outline-none focus:border-purple-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-[#344054]">
+                    AI Studio API Key
+                  </label>
+                  <span className="text-[10px] text-purple-700 font-medium">
+                    Google AI Studio Key (AIzaSy...)
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showEditAiKey ? 'text' : 'password'}
+                    value={editAiForm.aiApiKey}
+                    onChange={(e) => setEditAiForm({ ...editAiForm, aiApiKey: e.target.value })}
+                    placeholder="Enter Google AI Studio key (AIzaSy...)"
+                    className="w-full pl-3 pr-10 py-2 bg-white border border-[#D0D5DD] rounded-lg text-xs font-mono text-[#101828] focus:outline-none focus:border-purple-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditAiKey(!showEditAiKey)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  >
+                    {showEditAiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#667085] mt-1">
+                  Leave empty to inherit the default master server Gemini key.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#344054] mb-1">
+                  Custom System Instruction (AI Business Persona)
+                </label>
+                <textarea
+                  rows={6}
+                  value={editAiForm.systemInstruction}
+                  onChange={(e) => setEditAiForm({ ...editAiForm, systemInstruction: e.target.value })}
+                  placeholder={`You are the official AI Assistant for ${editingAiTenant.companyName || editingAiTenant.name}.\nHelp customers learn about our products, answer questions, provide quotes, and guide them to book appointments.`}
+                  className="w-full p-2.5 bg-white border border-[#D0D5DD] rounded-lg text-xs text-[#101828] focus:outline-none focus:border-purple-600 leading-relaxed font-sans"
+                />
+                <p className="text-[10px] text-[#667085] mt-1">
+                  Incoming WhatsApp messages for this tenant will use this exact instruction.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#EAECF0]">
+                <button
+                  type="button"
+                  onClick={() => setEditingAiTenant(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#344054] hover:bg-[#EAECF0] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingTenantAi}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Bot className="w-3.5 h-3.5" />
+                  <span>{isSavingTenantAi ? 'Saving AI Config...' : 'Save AI Configuration'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

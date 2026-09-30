@@ -443,6 +443,7 @@ async function processIncomingChatMessage({
       customerMessage: messageText,
       channelType,
       conversationHistory,
+      workspaceId,
     });
 
     const aiResponseText = typeof aiResult === 'object' && aiResult.reply ? aiResult.reply : String(aiResult);
