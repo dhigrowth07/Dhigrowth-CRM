@@ -647,8 +647,8 @@ async function handleLeadQualificationFlow({
     phoneNumberId === '1399911839867541' ||
     String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc');
 
-  // 1. Reset / restart commands
-  if (['reset', 'restart', 'start over', 'menu'].includes(lowerMsg)) {
+  // 1. Reset / restart commands (or fresh greeting)
+  if (['reset', 'restart', 'start over', 'menu', 'hi', 'hello', 'hey', 'start', 'hi!', 'hello!'].includes(lowerMsg)) {
     clearQualificationSession(senderIdentifier);
   }
 
