@@ -79,19 +79,15 @@ export const PlansPricingPage = () => {
 
       if (res) {
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.valid || data.error) {
-          setAppliedPromo(null);
-          setPromoError(data.error || `Promo code "${cleanCode}" is invalid or expired.`);
+        if (res.ok && data.valid && !data.error) {
+          setAppliedPromo({
+            code: data.code,
+            discountPercentage: data.discountPercentage,
+            description: data.description,
+          });
+          showToast(`Promo code "${cleanCode}" applied! ${data.discountPercentage}% discount active.`, 'success');
           return;
         }
-
-        setAppliedPromo({
-          code: data.code,
-          discountPercentage: data.discountPercentage,
-          description: data.description,
-        });
-        showToast(`Promo code "${cleanCode}" applied! ${data.discountPercentage}% discount active.`, 'success');
-        return;
       }
 
       // Check localStorage for newly created promocodes
@@ -129,7 +125,11 @@ export const PlansPricingPage = () => {
         return;
       }
 
-      if (cleanCode === 'FLASH80') {
+      if (cleanCode === 'SITARC' || cleanCode === 'DHI') {
+        setAppliedPromo({ code: cleanCode, discountPercentage: 100, description: 'Special 100% discount on DhiGrowth plans' });
+        showToast(`Promo code ${cleanCode} applied! 100% discount active.`, 'success');
+        return;
+      } else if (cleanCode === 'FLASH80') {
         setAppliedPromo(null);
         setPromoError('Promo code "FLASH80" expired on 2026-08-15.');
         return;

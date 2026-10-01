@@ -61,6 +61,17 @@ import { BACKEND_URL } from '../../services/apiConfig';
 
 const DEFAULT_PROMOCODES = [
   {
+    id: 'promo_sitarc_100',
+    code: 'SITARC',
+    discountPercentage: 100,
+    expiryDate: '2026-12-31',
+    maxUses: null,
+    usedCount: 0,
+    isActive: true,
+    description: 'Special 100% discount on DhiGrowth plans',
+    usedBy: [],
+  },
+  {
     id: 'promo_launch50',
     code: 'LAUNCH50',
     discountPercentage: 50,
@@ -414,18 +425,50 @@ export const SuperAdminTenantsPage = () => {
 
   const handleTogglePromoActive = async (promo) => {
     const nextActive = !promo.isActive;
+    const targetIdentifier = promo.id || promo.code;
     try {
-      await fetch(`${BACKEND_URL}/api/promocodes/${promo.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: nextActive }),
-      });
+      let res;
+      try {
+        res = await fetch(`${BACKEND_URL}/api/promocodes/${targetIdentifier}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: nextActive }),
+        });
+      } catch {}
+      if (!res || !res.ok) {
+        try {
+          res = await fetch(`http://localhost:4000/api/promocodes/${targetIdentifier}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isActive: nextActive }),
+          });
+        } catch {}
+      }
+      if (!res || !res.ok) {
+        try {
+          res = await fetch(`https://api-wappilot.dhigrowth.com/api/promocodes/${targetIdentifier}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isActive: nextActive }),
+          });
+        } catch {}
+      }
     } catch (e) {
       // Local fallback
     }
-    setPromocodes((prev) =>
-      prev.map((p) => (p.id === promo.id ? { ...p, isActive: nextActive } : p))
-    );
+
+    setPromocodes((prev) => {
+      const next = prev.map((p) =>
+        p.id === promo.id || p.code?.toUpperCase() === promo.code?.toUpperCase()
+          ? { ...p, isActive: nextActive }
+          : p
+      );
+      try {
+        localStorage.setItem('dhigrowth_promocodes', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
     showToast(`Promo code "${promo.code}" is now ${nextActive ? 'Active' : 'Paused'}.`, 'success');
   };
 
@@ -1612,14 +1655,15 @@ export const SuperAdminTenantsPage = () => {
                           <button
                             type="button"
                             onClick={() => handleTogglePromoActive(promo)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                            className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${
                               promo.isActive !== false
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                                : 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
                             }`}
-                            title={promo.isActive !== false ? 'Click to Pause' : 'Click to Activate'}
+                            title={promo.isActive !== false ? 'Click to Pause this promo code' : 'Click to Activate this promo code for checkout'}
                           >
-                            {promo.isActive !== false ? 'Active' : 'Paused'}
+                            <span className={`w-2 h-2 rounded-full ${promo.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                            <span>{promo.isActive !== false ? 'Active (Live)' : 'Paused (Click to Activate)'}</span>
                           </button>
 
                           <button

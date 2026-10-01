@@ -565,7 +565,7 @@ export const generateAIResponse = async ({
         effectiveSystemPrompt += `\n\n[Instagram Direct Messaging Rules]:\nYou are chatting with an Instagram user via Instagram Direct Messages. Keep responses conversational, modern, friendly, concise (2-3 short punchy sentences), with relevant emojis. Help users with product questions, pricing, demo bookings, or IT & AI automation services. When appropriate, offer to connect on WhatsApp or schedule a quick discovery call.`;
       }
 
-      console.log(`🤖 Invoking Live AI (${activeAi.provider.toUpperCase()} / ${activeAi.model}) for [${channelType.toUpperCase()}]: "${customerMessage}"`);
+      console.log(`🤖 Invoking Live AI (${(activeAi?.provider || 'AI').toUpperCase()} / ${activeAi?.model || 'model'}) for [${(channelType || 'channel').toUpperCase()}]: "${customerMessage}"`);
       const result = await callAiProvider({
         provider: activeAi.provider,
         apiKey: activeAi.apiKey,

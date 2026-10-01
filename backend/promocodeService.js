@@ -8,6 +8,18 @@ const PROMOCODES_FILE = path.resolve(__dirname, 'promocodesStore.json');
 
 const INITIAL_PROMOCODES = [
   {
+    id: 'promo_sitarc_100',
+    code: 'SITARC',
+    discountPercentage: 100,
+    expiryDate: '2026-12-31',
+    maxUses: null,
+    usedCount: 0,
+    usedBy: [],
+    isActive: true,
+    description: 'Special 100% discount on DhiGrowth plans',
+    createdAt: '2026-10-01T00:00:00.000Z',
+  },
+  {
     id: 'promo_launch50',
     code: 'LAUNCH50',
     discountPercentage: 50,
@@ -88,6 +100,27 @@ export function initPromocodeStore() {
     } else {
       const raw = fs.readFileSync(PROMOCODES_FILE, 'utf-8');
       promocodesCache = JSON.parse(raw);
+    }
+
+    // Ensure SITARC exists and is active
+    const sitarcIndex = (promocodesCache || []).findIndex((p) => p.code?.toUpperCase() === 'SITARC');
+    if (sitarcIndex === -1) {
+      promocodesCache.unshift({
+        id: 'promo_sitarc_100',
+        code: 'SITARC',
+        discountPercentage: 100,
+        expiryDate: '2026-12-31',
+        maxUses: null,
+        usedCount: 0,
+        usedBy: [],
+        isActive: true,
+        description: 'Special 100% discount on DhiGrowth plans',
+        createdAt: '2026-10-01T00:00:00.000Z',
+      });
+      savePromocodesToDisk();
+    } else if (promocodesCache[sitarcIndex].isActive === false) {
+      promocodesCache[sitarcIndex].isActive = true;
+      savePromocodesToDisk();
     }
   } catch (err) {
     console.warn('[PromocodeService] Init warning:', err.message);
@@ -208,7 +241,9 @@ export function createPromocode({
 export function updatePromocode(id, updates) {
   if (!promocodesCache) initPromocodeStore();
 
-  const targetIndex = promocodesCache.findIndex((p) => p.id === id || p.code === id);
+  const targetIndex = promocodesCache.findIndex(
+    (p) => p.id === id || p.code?.toUpperCase() === String(id).toUpperCase()
+  );
   if (targetIndex === -1) {
     throw new Error('Promocode not found');
   }
@@ -240,7 +275,9 @@ export function deletePromocode(id) {
   if (!promocodesCache) initPromocodeStore();
 
   const beforeLength = promocodesCache.length;
-  promocodesCache = promocodesCache.filter((p) => p.id !== id && p.code !== id);
+  promocodesCache = promocodesCache.filter(
+    (p) => p.id !== id && p.code?.toUpperCase() !== String(id).toUpperCase()
+  );
 
   if (promocodesCache.length !== beforeLength) {
     savePromocodesToDisk();

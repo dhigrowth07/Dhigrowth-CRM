@@ -1307,20 +1307,22 @@ app.get('/api/ai-config', (req, res) => {
   }
 });
 
-app.post('/api/ai-config', (req, res) => {
+app.post('/api/ai-config', async (req, res) => {
   try {
     const { provider, apiKey, model, systemPrompt, updatedBy = 'user' } = req.body || {};
-    const saved = saveActiveAiConfig({ provider, apiKey, model, systemPrompt, updatedBy });
+    const saved = await saveActiveAiConfig({ provider, apiKey, model, systemPrompt, updatedBy });
+    const provName = saved?.provider || provider || 'gemini';
+    const modelName = saved?.model || model || 'gemini-1.5-flash';
     res.json({
       success: true,
-      message: `AI Engine updated successfully to ${saved.provider.toUpperCase()} (${saved.model})!`,
+      message: `AI Engine updated successfully to ${String(provName).toUpperCase()} (${modelName})!`,
       config: {
-        provider: saved.provider,
-        model: saved.model,
-        hasKey: Boolean(saved.apiKey),
-        maskedKey: saved.apiKey ? `${saved.apiKey.slice(0, 7)}...${saved.apiKey.slice(-4)}` : '',
-        systemPrompt: saved.systemPrompt,
-        updatedAt: saved.updatedAt,
+        provider: provName,
+        model: modelName,
+        hasKey: Boolean(saved?.apiKey),
+        maskedKey: saved?.apiKey ? `${saved.apiKey.slice(0, 7)}...${saved.apiKey.slice(-4)}` : '',
+        systemPrompt: saved?.systemPrompt || systemPrompt || '',
+        updatedAt: saved?.updatedAt || new Date().toISOString(),
       },
     });
   } catch (err) {
@@ -1335,7 +1337,7 @@ app.post('/api/ai-config/test', async (req, res) => {
     res.json({
       success: true,
       data: result,
-      message: `Connected successfully to ${result.provider.toUpperCase()} (${result.model}) in ${result.latencyMs}ms!`,
+      message: `Connected successfully to ${(result?.provider || 'AI').toUpperCase()} (${result?.model || 'model'}) in ${result?.latencyMs || 0}ms!`,
     });
   } catch (err) {
     console.error('[AI Test Error]:', err.message);

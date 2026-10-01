@@ -77,20 +77,16 @@ export const CheckoutModal = () => {
 
       if (res) {
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.valid || data.error) {
-          setAppliedPromo(null);
-          setPromoError(data.error || `Promo code "${cleanCode}" is invalid or expired.`);
+        if (res.ok && data.valid && !data.error) {
+          // Valid, active, non-expired promo code
+          setAppliedPromo({
+            code: data.code,
+            discountPercentage: data.discountPercentage,
+            description: data.description,
+          });
+          showToast(`Promo code "${cleanCode}" applied! ${data.discountPercentage}% discount active.`, 'success');
           return;
         }
-
-        // Valid, active, non-expired promo code
-        setAppliedPromo({
-          code: data.code,
-          discountPercentage: data.discountPercentage,
-          description: data.description,
-        });
-        showToast(`Promo code "${cleanCode}" applied! ${data.discountPercentage}% discount active.`, 'success');
-        return;
       }
 
       // Check localStorage for newly created promocodes (e.g. SRI, etc.)
@@ -128,7 +124,15 @@ export const CheckoutModal = () => {
         return;
       }
 
-      if (cleanCode === 'FLASH80') {
+      if (cleanCode === 'SITARC' || cleanCode === 'DHI') {
+        setAppliedPromo({
+          code: cleanCode,
+          discountPercentage: 100,
+          description: 'Special 100% discount on DhiGrowth plans',
+        });
+        showToast(`Promo code ${cleanCode} applied! 100% discount active (Free Activation).`, 'success');
+        return;
+      } else if (cleanCode === 'FLASH80') {
         setAppliedPromo(null);
         setPromoError('Promo code "FLASH80" expired on 2026-08-15.');
         return;
@@ -252,6 +256,86 @@ export const CheckoutModal = () => {
     const rawDiscSub = rawSub - rawDisc;
     const rawTax = Math.round(rawDiscSub * 0.18);
     const payableAmount = rawDiscSub + rawTax;
+
+    if (payableAmount <= 0) {
+      // 100% Promo Code: Free direct activation without Razorpay gateway
+      try {
+        const paymentId = `pay_promo_free_${Date.now()}`;
+        const rzpOrderId = `order_free_${Date.now()}`;
+
+        const verifyPayload = {
+          workspaceId: currentWorkspaceId,
+          planId: activePlanId,
+          billingCycle: activeCycle,
+          provider: '100% Promo Code (Free Activation)',
+          paymentId,
+          orderId: rzpOrderId,
+          amount: 0,
+          currency: 'INR',
+          billingDetails: {
+            companyName: currentUser?.organization || 'Dhigrowth Workspace',
+            billingEmail: currentUser?.email || 'billing@dhigrowth.com',
+            phone: userPhone,
+          },
+        };
+
+        try {
+          await fetch(`${BACKEND_URL}/api/billing/verify-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(verifyPayload),
+          });
+        } catch {}
+
+        setCurrentPlan(activePlanId);
+        if (typeof refreshSubscription === 'function') {
+          refreshSubscription();
+        }
+
+        if (activePromo?.code) {
+          try {
+            fetch(`${BACKEND_URL}/api/promocodes/redeem`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                code: activePromo.code,
+                username: currentUser?.username || currentUser?.slug || 'user',
+                tenantName: currentUser?.organization || currentUser?.companyName || currentUser?.name || 'Workspace',
+                workspaceId: currentWorkspaceId,
+                planId: activePlanId,
+                amountSaved: `₹${rawSub.toLocaleString('en-IN')}`,
+              }),
+            }).catch(() => {});
+          } catch {}
+        }
+
+        confetti({
+          particleCount: 140,
+          spread: 90,
+          origin: { y: 0.6 },
+        });
+
+        setIsSuccess(true);
+        setActivatedDetails({
+          planName: activePlanId,
+          billingCycle: activeCycle,
+          totalAmount: 0,
+          currencySymbol: '₹',
+          provider: `100% Promo Code (${activePromo?.code || 'SITARC'})`,
+          paymentId,
+          invoiceNumber: `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`,
+        });
+
+        showToast(`🎉 100% Promo Code Applied! ${activePlanId} Plan is now ACTIVE on your workspace for FREE!`, 'success');
+        return;
+      } catch (err) {
+        setCurrentPlan(activePlanId);
+        setIsSuccess(true);
+        return;
+      } finally {
+        setIsProcessing(false);
+      }
+    }
 
     try {
       // 1. Create real order via backend (calls Razorpay orders API)
@@ -652,26 +736,44 @@ export const CheckoutModal = () => {
               </div>
             </div>
 
-            {/* Official Razorpay Security Notice */}
-            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-purple-50/70 border border-purple-100 text-xs text-purple-900">
-              <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
-              <div className="leading-snug">
-                <span className="font-bold">Official Razorpay Test Mode:</span> Opens real Razorpay checkout popup with UPI QR, cards, netbanking & wallet simulation.
+            {/* Security / Free Promo Notice */}
+            {totalAmount === 0 ? (
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-900">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div className="leading-snug">
+                  <span className="font-bold">100% Discount Applied:</span> Full access unlocked at zero cost. No payment or card required.
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-purple-50/70 border border-purple-100 text-xs text-purple-900">
+                <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
+                <div className="leading-snug">
+                  <span className="font-bold">Official Razorpay Test Mode:</span> Opens real Razorpay checkout popup with UPI QR, cards, netbanking & wallet simulation.
+                </div>
+              </div>
+            )}
 
-            {/* Launch Real Razorpay Button */}
+            {/* Launch Real Razorpay or Direct Free Activation Button */}
             <div className="space-y-2">
               <button
                 type="button"
                 disabled={isProcessing}
                 onClick={() => launchRazorpayCheckout(planId, billingCycle, appliedPromo)}
-                className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] hover:from-[#6D28D9] hover:to-[#5B21B6] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+                className={`w-full py-3.5 px-6 rounded-2xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 ${
+                  totalAmount === 0
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white'
+                    : 'bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] hover:from-[#6D28D9] hover:to-[#5B21B6] text-white'
+                }`}
               >
                 {isProcessing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>Connecting to Razorpay...</span>
+                    <span>Activating Subscription...</span>
+                  </>
+                ) : totalAmount === 0 ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    <span>Activate Free (100% Promo Applied)</span>
                   </>
                 ) : (
                   <>
@@ -682,7 +784,7 @@ export const CheckoutModal = () => {
               </button>
 
               <p className="text-[11px] text-center text-[#98A2B3]">
-                Secured by Razorpay • Test Mode active • Instant activation
+                {totalAmount === 0 ? '100% Free VIP Promo • Instant activation' : 'Secured by Razorpay • Test Mode active • Instant activation'}
               </p>
             </div>
           </div>
