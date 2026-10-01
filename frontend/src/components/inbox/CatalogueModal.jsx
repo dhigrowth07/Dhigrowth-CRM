@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useApp } from '../../context/AppContext';
 import {
   X,
   Store,
@@ -19,6 +20,49 @@ import {
   ArrowLeft,
   AlertTriangle,
 } from 'lucide-react';
+
+const DEFAULT_SITARC_CATALOGUE_ITEMS = [
+  {
+    id: 'cat_sitarc_pump_testing',
+    title: 'Pump & Motor Performance Testing',
+    category: 'Testing',
+    price: 'Standard NABL Rates',
+    badge: 'NABL / BIS',
+    iconType: 'cpu',
+    description: 'Comprehensive testing for Submersible, Monobloc, Centrifugal & Solar pumps up to high HP with complete NABL test reports.',
+    features: ['ISO/IEC 17025 accredited', 'BEE Star labeling & BIS compliance', 'Flow, Head & Efficiency curves', 'Witness testing facility'],
+  },
+  {
+    id: 'cat_sitarc_calibration',
+    title: 'Precision Calibration Services',
+    category: 'Calibration',
+    price: 'Accredited Rates',
+    badge: 'Accredited',
+    iconType: 'layers',
+    description: 'NABL accredited calibration for Thermal, Mechanical, Electro-technical & Pressure instruments with master traceability.',
+    features: ['Pressure gauges & transmitters', 'Digital multimeters & energy meters', 'Temperature controllers & RTDs', 'Fast report turnaround'],
+  },
+  {
+    id: 'cat_sitarc_chemical',
+    title: 'Chemical & Metallurgy Analysis',
+    category: 'Analysis',
+    price: 'Standard Lab Rates',
+    badge: 'Certified',
+    iconType: 'store',
+    description: 'Chemical composition analysis, material spectroscopy, hardness, and corrosion testing for metals, alloys & water.',
+    features: ['Spectrometer elemental analysis', 'Tensile, impact & hardness test', 'RoHS & environmental compliance', 'Certified metallurgists'],
+  },
+  {
+    id: 'cat_sitarc_electrical',
+    title: 'Electrical & Electronic Safety Testing',
+    category: 'Testing',
+    price: 'Standard Rates',
+    badge: 'Popular',
+    iconType: 'bot',
+    description: 'High voltage, insulation resistance, harmonics, and energy efficiency testing for industrial electrical equipment.',
+    features: ['HV & breakdown voltage tests', 'Power quality & harmonics analysis', 'Control panel evaluation', 'Detailed safety certificates'],
+  },
+];
 
 const DEFAULT_CATALOGUE_ITEMS = [
   {
@@ -77,9 +121,22 @@ const getIconConfig = (type) => {
 };
 
 export const CatalogueModal = ({ isOpen, onClose, onSendToChat, contactName, phone }) => {
+  const { currentUser, currentWorkspaceId } = useApp();
+  const isSitarcTenant = Boolean(
+    currentUser?.username?.toLowerCase().includes('sitarc') ||
+    currentUser?.companyName?.toLowerCase().includes('sitarc') ||
+    currentUser?.name?.toLowerCase().includes('sitarc') ||
+    currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002'
+  );
+  const tenantBusinessName = isSitarcTenant
+    ? "Si'Tarc Testing & Calibration Laboratory"
+    : (currentUser?.companyName || 'DhiGrowth IT Services');
+  const defaultItems = isSitarcTenant ? DEFAULT_SITARC_CATALOGUE_ITEMS : DEFAULT_CATALOGUE_ITEMS;
+  const storageKey = `wappilot_catalogue_items_${currentWorkspaceId || 'default'}`;
+
   const [items, setItems] = useState(() => {
     try {
-      const stored = localStorage.getItem('wappilot_catalogue_items');
+      const stored = localStorage.getItem(storageKey) || (!isSitarcTenant ? localStorage.getItem('wappilot_catalogue_items') : null);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -92,7 +149,7 @@ export const CatalogueModal = ({ isOpen, onClose, onSendToChat, contactName, pho
     } catch (e) {
       console.error('Error loading catalogue items from localStorage', e);
     }
-    return DEFAULT_CATALOGUE_ITEMS;
+    return defaultItems;
   });
 
   const [copiedId, setCopiedId] = useState(null);
@@ -106,7 +163,7 @@ export const CatalogueModal = ({ isOpen, onClose, onSendToChat, contactName, pho
   const persistItems = (newItems) => {
     setItems(newItems);
     try {
-      localStorage.setItem('wappilot_catalogue_items', JSON.stringify(newItems));
+      localStorage.setItem(storageKey, JSON.stringify(newItems));
     } catch (e) {
       console.error('Error saving catalogue items to localStorage', e);
     }
@@ -119,8 +176,8 @@ export const CatalogueModal = ({ isOpen, onClose, onSendToChat, contactName, pho
 
   // Reset to default catalogue
   const handleResetToDefaults = () => {
-    if (window.confirm('Reset catalogue to the original DhiGrowth IT Services list? Any custom items will be overwritten.')) {
-      persistItems(DEFAULT_CATALOGUE_ITEMS);
+    if (window.confirm(`Reset catalogue to the original ${tenantBusinessName} list? Any custom items will be overwritten.`)) {
+      persistItems(defaultItems);
       setSelectedFilter('All');
       setItemToDelete(null);
       setEditingItem(null);
@@ -208,7 +265,7 @@ export const CatalogueModal = ({ isOpen, onClose, onSendToChat, contactName, pho
     const featuresList = Array.isArray(item.features)
       ? item.features.map((f) => `• ${f}`).join('\n')
       : '';
-    const msg = `🛍️ *DhiGrowth Catalogue: ${item.title}*\n\n${item.description}\n\n💰 *Price:* ${item.price}\n\n${featuresList ? `✨ *Key Inclusions:*\n${featuresList}\n\n` : ''}👉 Reply with *"Yes, I'm interested"* or let us know your requirements to receive a customized quote! 🚀`;
+    const msg = `🛍️ *${isSitarcTenant ? "Si'Tarc Laboratory" : "DhiGrowth"} Catalogue: ${item.title}*\n\n${item.description}\n\n💰 *Price:* ${item.price}\n\n${featuresList ? `✨ *Key Inclusions:*\n${featuresList}\n\n` : ''}👉 Reply with *"Yes, I'm interested"* or let us know your requirements to receive a customized quote! ${isSitarcTenant ? '🔬' : '🚀'}`;
     if (onSendToChat) {
       onSendToChat(msg);
     }
@@ -220,7 +277,7 @@ export const CatalogueModal = ({ isOpen, onClose, onSendToChat, contactName, pho
     const servicesList = items
       .map((item, idx) => `${idx + 1}️⃣ *${item.title}* (${item.price || 'Custom'})`)
       .join('\n');
-    const msg = `🏪 *DhiGrowth IT Services — Official Business Catalogue*\n\nHello ${contactName || 'there'}! 👋 Here is our active solutions catalogue:\n\n${servicesList}\n\n👉 *Reply with the number (or describe what your business needs) to get a full project proposal!* 🚀`;
+    const msg = `🏪 *${tenantBusinessName} — Official Business Catalogue*\n\nHello ${contactName || 'there'}! 👋 Here is our active solutions catalogue:\n\n${servicesList}\n\n👉 *Reply with the number (or describe what your requirements are) to get a full project proposal!* ${isSitarcTenant ? '🔬' : '🚀'}`;
     if (onSendToChat) {
       onSendToChat(msg);
     }

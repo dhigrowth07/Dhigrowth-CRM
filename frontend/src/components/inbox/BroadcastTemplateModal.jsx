@@ -130,8 +130,22 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     isBroadcastTemplateModalOpen,
     setIsBroadcastTemplateModalOpen,
     currentWorkspaceId,
+    currentUser,
+    currentTenant,
     showToast,
   } = useApp();
+
+  const isSitarcTenant = Boolean(
+    currentUser?.username?.toLowerCase().includes('sitarc') ||
+    currentUser?.companyName?.toLowerCase().includes('sitarc') ||
+    currentUser?.name?.toLowerCase().includes('sitarc') ||
+    currentTenant?.username?.toLowerCase().includes('sitarc') ||
+    currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002'
+  );
+
+  const tenantBusinessName = isSitarcTenant
+    ? "Si'Tarc Testing & Calibration Laboratory"
+    : (currentUser?.companyName || currentTenant?.companyName || 'DhiGrowth IT Services');
 
   const [presets, setPresets] = useState(() => {
     try {
@@ -339,14 +353,14 @@ export const BroadcastTemplateModal = ({ onClose }) => {
   };
 
   // Live preview text with resolved {{name}} and numbered variables
-  const previewSampleName = selectedContacts[0]?.name || 'Sri';
+  const previewSampleName = selectedContacts[0]?.name || (isSitarcTenant ? 'Client' : 'Sri');
   const resolvedPreviewText = (bodyText || '')
     .replaceAll('{{name}}', previewSampleName)
     .replaceAll('{{first_name}}', previewSampleName.split(' ')[0] || previewSampleName)
-    .replaceAll('{{phone}}', selectedContacts[0]?.phone ? `+${selectedContacts[0].phone}` : '+919791471277')
+    .replaceAll('{{phone}}', selectedContacts[0]?.phone ? `+${selectedContacts[0].phone}` : (isSitarcTenant ? '+916369793937' : '+919791471277'))
     .replaceAll('{{1}}', previewSampleName)
-    .replaceAll('{{2}}', 'Diwali & New Year')
-    .replaceAll('{{3}}', 'DhiGrowth IT Services');
+    .replaceAll('{{2}}', isSitarcTenant ? 'NABL Test Reports' : 'Diwali & New Year')
+    .replaceAll('{{3}}', tenantBusinessName);
 
   const resolvedPreviewHeader = (headerText || '')
     .replaceAll('{{name}}', previewSampleName)
@@ -572,7 +586,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                   type="text"
                   value={headerText}
                   onChange={(e) => setHeaderText(e.target.value)}
-                  placeholder="e.g. DhiGrowth IT Services"
+                  placeholder={`e.g. ${tenantBusinessName}`}
                   className="w-full bg-[#F9FAFB] border border-[#EAECF0] px-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-all font-medium"
                 />
               </div>
@@ -727,7 +741,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                   <Bot className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-[#0284C7]">Automated AI Follow-up: </span>
-                    When contacts tap <span className="font-semibold text-emerald-700">"{button1Text}"</span>, Dhigrowth AI Concierge immediately acknowledges their interest and guides them to book a call or share details!
+                    When contacts tap <span className="font-semibold text-emerald-700">"{button1Text}"</span>, {isSitarcTenant ? "Si'Tarc AI Assistant" : "Dhigrowth AI Concierge"} immediately acknowledges their interest and guides them to book a call or share details!
                   </div>
                 </div>
               </div>

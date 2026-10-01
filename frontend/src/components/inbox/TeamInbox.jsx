@@ -90,6 +90,17 @@ export const TeamInbox = () => {
     hasNavPermission,
   } = useApp();
 
+  const isSitarcTenant = Boolean(
+    currentUser?.username?.toLowerCase().includes('sitarc') ||
+    currentUser?.companyName?.toLowerCase().includes('sitarc') ||
+    currentUser?.name?.toLowerCase().includes('sitarc') ||
+    currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002'
+  );
+
+  const tenantBusinessName = isSitarcTenant
+    ? "Si'Tarc Testing & Calibration Laboratory"
+    : (currentUser?.companyName || 'DhiGrowth IT Services');
+
   const canSendDue = typeof hasNavPermission === 'function' ? hasNavPermission('send_due_all') : true;
   const canBroadcastTemplate = typeof hasNavPermission === 'function' ? hasNavPermission('templates') : true;
 
@@ -242,7 +253,7 @@ export const TeamInbox = () => {
   const [invoicePhone, setInvoicePhone] = useState('');
   const [invoiceEmail, setInvoiceEmail] = useState('');
   const [invoiceCity, setInvoiceCity] = useState('');
-  const [invoiceDesc, setInvoiceDesc] = useState('DhiGrowth WhatsApp CRM & AI Concierge');
+  const [invoiceDesc, setInvoiceDesc] = useState(() => isSitarcTenant ? "Si'Tarc Testing & Calibration Services" : 'DhiGrowth WhatsApp CRM & AI Concierge');
   const [invoiceAmount, setInvoiceAmount] = useState('2499');
   const [isSendingInvoice, setIsSendingInvoice] = useState(false);
   const [markingPaidId, setMarkingPaidId] = useState(null);
@@ -250,16 +261,16 @@ export const TeamInbox = () => {
   const handleOpenInvoiceModal = () => {
     if (!activeChat) return;
     setInvoiceName(activeChat.contactName || 'Valued Client');
-    setInvoicePhone(activeChat.phone || '919791471277');
+    setInvoicePhone(activeChat.phone || (isSitarcTenant ? '916369793937' : '919791471277'));
     setInvoiceEmail(activeChat.email || '');
-    setInvoiceCity(activeChat.city || 'Mumbai, IN');
-    setInvoiceDesc(activeChat.interestedIn ? `DhiGrowth Service - ${activeChat.interestedIn}` : 'DhiGrowth WhatsApp CRM & AI Concierge');
+    setInvoiceCity(activeChat.city || (isSitarcTenant ? 'Coimbatore, IN' : 'Mumbai, IN'));
+    setInvoiceDesc(activeChat.interestedIn ? `${isSitarcTenant ? "Si'Tarc" : "DhiGrowth"} Service - ${activeChat.interestedIn}` : (isSitarcTenant ? "Si'Tarc Testing & Calibration Services" : 'DhiGrowth WhatsApp CRM & AI Concierge'));
     setInvoiceAmount(activeChat.dealValue ? activeChat.dealValue.replace(/[^0-9]/g, '') || '2499' : '2499');
     setIsInvoiceModalOpen(true);
   };
 
   // Broadcast Payment Due Invoices to All Contacts State
-  const [broadcastDesc, setBroadcastDesc] = useState('DhiGrowth WhatsApp CRM & AI Business Concierge');
+  const [broadcastDesc, setBroadcastDesc] = useState(() => isSitarcTenant ? "Si'Tarc Testing & Calibration Lab Invoices" : 'DhiGrowth WhatsApp CRM & AI Business Concierge');
   const [broadcastAmount, setBroadcastAmount] = useState('2499');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastSummary, setBroadcastSummary] = useState(null);
@@ -590,12 +601,14 @@ export const TeamInbox = () => {
       body_text: `Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!`,
     },
     {
-      name: 'dhigrowth_welcome_lead',
-      title: 'dhigrowth_welcome_lead (DhiGrowth Business Concierge & Buttons)',
-      category: 'marketing',
+      name: isSitarcTenant ? 'sitarc_testing_inquiry' : 'dhigrowth_welcome_lead',
+      title: isSitarcTenant ? "sitarc_testing_inquiry (Si'Tarc Testing & Calibration Laboratory)" : 'dhigrowth_welcome_lead (DhiGrowth Business Concierge & Buttons)',
+      category: isSitarcTenant ? 'utility' : 'marketing',
       status: 'approved',
       language: 'en_US',
-      body_text: `Hello! 👋 Welcome to DhiGrowth IT Services. We help businesses scale with App Development, AI Business Bots, and WhatsApp CRM Automation. Tap below to connect with us! 🚀`,
+      body_text: isSitarcTenant
+        ? `Hello! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory. How can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Calibration testing services? Tap below to connect with us! 🔬`
+        : `Hello! 👋 Welcome to DhiGrowth IT Services. We help businesses scale with App Development, AI Business Bots, and WhatsApp CRM Automation. Tap below to connect with us! 🚀`,
     },
     {
       name: 'hello_world',
@@ -636,8 +649,8 @@ export const TeamInbox = () => {
     templateOptions.find((t) => t.name === selectedTemplateName) || templateOptions[0];
   const previewBody = (currentSelectedTemplate?.body_text || '')
     .replaceAll('{{1}}', activeChat?.contactName || 'Valued Client')
-    .replaceAll('{{2}}', 'IT & AI Business Solutions')
-    .replaceAll('{{3}}', 'https://dhigrowth.com');
+    .replaceAll('{{2}}', isSitarcTenant ? 'NABL Testing & Calibration' : 'IT & AI Business Solutions')
+    .replaceAll('{{3}}', isSitarcTenant ? 'https://www.sitarc.com' : 'https://dhigrowth.com');
 
   const handleSendFirstTemplate = async () => {
     if (!activeChat) return;
@@ -665,7 +678,9 @@ export const TeamInbox = () => {
       let success = false;
       let sentBody =
         previewBody ||
-        `👋 *Hello ${contactName}!* Welcome to *DhiGrowth IT Services* 🚀\n\nReply to this message to start chatting with us.`;
+        (isSitarcTenant
+          ? `👋 *Hello ${contactName}!* Welcome to *${tenantBusinessName}* 🔬\n\nReply to this message to start chatting with our laboratory team.`
+          : `👋 *Hello ${contactName}!* Welcome to *${tenantBusinessName}* 🚀\n\nReply to this message to start chatting with us.`);
 
       // 1. Primary: Dedicated template endpoint on configured BACKEND_URL
       try {
@@ -1076,7 +1091,9 @@ export const TeamInbox = () => {
       }
 
       // Fallback if offline
-      let aiDraft = `Hi ${activeChat?.contactName || 'there'}! Welcome to DhiGrowth IT Services. How can our AI & IT team assist your business today? 🚀`;
+      let aiDraft = isSitarcTenant
+        ? `Hi ${activeChat?.contactName || 'there'}! Welcome to Si'Tarc Testing & Calibration Laboratory. How can our technical testing and calibration team assist your requirements today? 🔬`
+        : `Hi ${activeChat?.contactName || 'there'}! Welcome to DhiGrowth IT Services. How can our AI & IT team assist your business today? 🚀`;
       setInputMessage(aiDraft);
       showToast('✨ AI response drafted!', 'success');
     } catch (err) {
@@ -3039,7 +3056,7 @@ export const TeamInbox = () => {
                 <input
                   type="text"
                   required
-                  placeholder="DhiGrowth WhatsApp CRM & AI Concierge Setup"
+                  placeholder={isSitarcTenant ? "Si'Tarc Testing & Calibration Services" : "DhiGrowth WhatsApp CRM & AI Concierge Setup"}
                   value={invoiceDesc}
                   onChange={(e) => setInvoiceDesc(e.target.value)}
                   className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
@@ -3068,7 +3085,7 @@ export const TeamInbox = () => {
                   <span>Automated Workflow Highlights:</span>
                 </div>
                 <ul className="list-disc pl-4 space-y-0.5 text-[10px] text-[#0369A1]">
-                  <li>Generates high-resolution vector PDF with DhiGrowth branding & Red "PAYMENT DUE" badge.</li>
+                  <li>Generates high-resolution vector PDF with {isSitarcTenant ? "Si'Tarc Laboratory" : "DhiGrowth"} branding & Red "PAYMENT DUE" badge.</li>
                   <li>Uploads PDF directly to Meta Cloud API and delivers as an attachment to WhatsApp.</li>
                   <li>Includes secure dynamic checkout link with UPI, NetBanking & Cards.</li>
                   <li><strong>Auto-Receipt:</strong> Once paid, the system instantly generates and dispatches the Green "PAID / RECEIPT" PDF to WhatsApp!</li>

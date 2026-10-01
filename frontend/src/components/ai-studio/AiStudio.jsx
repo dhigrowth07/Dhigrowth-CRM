@@ -628,14 +628,16 @@ export const AiStudio = () => {
       });
 
       if (res && res.success && res.data) {
+        const connectedProv = res.data.provider || provider || 'gemini';
+        const lat = res.data.latencyMs ?? 0;
         setTestResult({
           success: true,
           reply: res.data.reply,
-          latencyMs: res.data.latencyMs,
-          model: res.data.model,
-          provider: res.data.provider,
+          latencyMs: lat,
+          model: res.data.model || model || 'gemini-1.5-flash',
+          provider: connectedProv,
         });
-        showToast(`🎉 Connected to ${provider.toUpperCase()} (${res.data.latencyMs}ms)!`, 'success');
+        showToast(`🎉 Connected to ${connectedProv.toUpperCase()} (${lat}ms)!`, 'success');
       } else {
         setTestResult({
           success: false,
@@ -1042,7 +1044,7 @@ export const AiStudio = () => {
                   {testResult.success ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
-                      <span>Connected Successfully! ({testResult.provider.toUpperCase()} · {testResult.latencyMs}ms)</span>
+                      <span>Connected Successfully! ({((testResult.provider || provider || 'AI')).toUpperCase()} · {testResult.latencyMs ?? 0}ms)</span>
                     </>
                   ) : (
                     <>
@@ -1316,7 +1318,7 @@ export const AiStudio = () => {
                 </h3>
               </div>
               <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#F4F0FD] text-[#7C3AED] border border-[#E9D8FD]">
-                {provider.toUpperCase()} · {model.split('-')[0]}
+                {(provider || 'gemini').toUpperCase()} · {(model || 'gemini-1.5-flash').split('-')[0]}
               </span>
             </div>
             <p className="text-[11px] text-[#667085] mt-2">

@@ -138,6 +138,123 @@ Would you like us to schedule a quick call with our lead tech architect?`,
   },
 ];
 
+export const SITARC_PRESET_TEMPLATES = [
+  {
+    id: 'tpl_sitarc_testing_inquiry',
+    name: 'sitarc_testing_inquiry',
+    displayName: "Si'Tarc Testing Inquiry",
+    badge: 'Recommended',
+    category: 'utility',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: "Si'Tarc Testing Laboratory",
+    body_text: `Hello {{name}}! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory.
+
+How can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Mechanical testing and calibration services?
+
+Tap below to connect with our technical testing team! 🔬`,
+    footer_text: 'testing, calibration, pump, motor, sitarc, lab, quote',
+    buttons: [
+      { type: 'QUICK_REPLY', text: "Request Test Quote" },
+      { type: 'QUICK_REPLY', text: "Connect with Engineer" },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
+  {
+    id: 'tpl_sitarc_calibration_booking',
+    name: 'sitarc_calibration_booking',
+    displayName: 'Calibration Booking',
+    badge: 'Popular',
+    category: 'utility',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: "Si'Tarc Calibration Services",
+    body_text: `Hi {{name}}! ⚙️ Looking for NABL / ISO 17025 accredited calibration for your industrial instruments, pressure gauges, or thermal equipment?
+
+We provide comprehensive on-site and laboratory calibration with certified test reports.`,
+    footer_text: 'calibration, nabl, iso17025, instruments, report',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Book Calibration' },
+      { type: 'QUICK_REPLY', text: 'View Accreditation' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
+  {
+    id: 'tpl_sitarc_report_status',
+    name: 'sitarc_report_status',
+    displayName: 'Test Report Status',
+    badge: 'High Conversion',
+    category: 'utility',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: 'Test Report Dispatch',
+    body_text: `Hello {{name}}! Your sample testing / calibration report is being processed by the Si'Tarc laboratory technical team. Would you like a digital copy dispatched via WhatsApp?`,
+    footer_text: 'report, status, certificate, dispatch, sitarc',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Send Test Report' },
+      { type: 'QUICK_REPLY', text: 'Speak to Lab Head' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
+];
+
+export const DEFAULT_SITARC_TEMPLATES = [
+  ...SITARC_PRESET_TEMPLATES,
+  {
+    id: 'tpl_hi_sitarc',
+    name: 'hi',
+    category: 'utility',
+    status: 'approved',
+    header_type: 'NONE',
+    header_content: null,
+    footer_text: 'hi, hello',
+    body_text: `👋 *Hello {{1}}!*
+
+Welcome to *Si'Tarc Testing & Calibration Laboratory* 🔬
+
+We provide accredited testing and calibration services:
+
+🔬 *Pump & Motor Testing Laboratory*
+⚡ *Electrical & Electronics Testing*
+🧪 *Chemical & Metallurgy Analysis*
+📏 *NABL Accredited Calibration Services*
+
+🎯 How can our technical laboratory team assist you?
+
+👉 *Explore our services:* {{3}}
+
+📩 *Test / Calibration Requirement:* {{2}}
+
+*Si'Tarc Testing & Calibration Laboratory* — Coimbatore. 🔬`,
+  },
+  {
+    id: 't-sitarc-welcome',
+    name: "Welcome to Si'Tarc Laboratory",
+    category: 'utility',
+    status: 'approved',
+    header_type: 'IMAGE',
+    header_content: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?w=800&auto=format&fit=crop&q=80',
+    footer_text: 'hi, hello, hey, start, menu, help, sitarc',
+    body_text: `Hello! 👋 Welcome to **Si'Tarc Testing & Calibration Laboratory**.
+
+How can our technical laboratory team assist you today? 🔬
+
+We provide ISO/IEC 17025 accredited services:
+🔬 **Pump & Motor Performance Testing**
+⚡ **Electrical & Safety Testing**
+🧪 **Chemical & Material Analysis**
+📏 **Precision Calibration Laboratory**
+
+Tell us your sample or calibration requirements, and our engineers will guide you!`,
+  },
+];
+
 const DEFAULT_TEMPLATES = [
   ...DHI_PRESET_TEMPLATES,
   {
@@ -276,9 +393,35 @@ We offer transparent milestones and dedicated technical support. Share your proj
 ];
 
 export const TemplatesPage = () => {
-  const { currentWorkspaceId, currentUser, showToast, subscription, openCheckout, isSuperAdmin } = useApp();
+  const { currentWorkspaceId, currentUser, currentTenant, showToast, subscription, openCheckout, isSuperAdmin } = useApp();
 
   const isDefaultWorkspace = currentWorkspaceId === DEFAULT_WORKSPACE_ID;
+
+  const isSitarcTenant = Boolean(
+    currentUser?.username?.toLowerCase().includes('sitarc') ||
+    currentUser?.companyName?.toLowerCase().includes('sitarc') ||
+    currentUser?.name?.toLowerCase().includes('sitarc') ||
+    currentTenant?.username?.toLowerCase().includes('sitarc') ||
+    currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002'
+  );
+
+  const activeBusinessName = isSitarcTenant
+    ? "Si'Tarc"
+    : (currentUser?.companyName || currentTenant?.companyName || currentUser?.name || 'DhiGrowth');
+
+  const activeBusinessInitials = isSitarcTenant
+    ? 'ST'
+    : (activeBusinessName
+        .split(' ')
+        .filter(Boolean)
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase() || 'DG');
+
+  const activePresets = isSitarcTenant ? SITARC_PRESET_TEMPLATES : DHI_PRESET_TEMPLATES;
+  const otherPresetNames = (isSitarcTenant ? DHI_PRESET_TEMPLATES : SITARC_PRESET_TEMPLATES).map((p) => p.name);
+  const defaultTemplates = isSitarcTenant ? DEFAULT_SITARC_TEMPLATES : DEFAULT_TEMPLATES;
 
   const [templates, setTemplates] = useState(() => {
     try {
@@ -296,9 +439,12 @@ export const TemplatesPage = () => {
       };
 
       const ensurePresets = (list) => {
-        const cleaned = filterDeleted(list);
-        for (let i = DHI_PRESET_TEMPLATES.length - 1; i >= 0; i--) {
-          const p = DHI_PRESET_TEMPLATES[i];
+        let cleaned = filterDeleted(list);
+        if (isSitarcTenant) {
+          cleaned = cleaned.filter((t) => !otherPresetNames.includes(t.name) && t.name !== 'ai_it_discovery');
+        }
+        for (let i = activePresets.length - 1; i >= 0; i--) {
+          const p = activePresets[i];
           if (!deletedList.includes(p.name) && !deletedList.includes(String(p.id))) {
             if (!cleaned.some((t) => t.name === p.name || String(t.id) === String(p.id))) {
               cleaned.unshift({ ...p });
@@ -311,7 +457,7 @@ export const TemplatesPage = () => {
       const saved = localStorage.getItem(`dhigrowth_templates_${currentWorkspaceId}`);
       if (saved) return ensurePresets(JSON.parse(saved));
     } catch {}
-    return DEFAULT_TEMPLATES;
+    return defaultTemplates;
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // all | greetings | services | pricing
@@ -336,8 +482,15 @@ export const TemplatesPage = () => {
   const [formBody, setFormBody] = useState('');
   const [formFooter, setFormFooter] = useState('');
   const [actionType, setActionType] = useState('QUICK_REPLY'); // 'NONE' | 'CTA' | 'QUICK_REPLY'
-  const [ctaPhone, setCtaPhone] = useState({ text: 'Call Us', phone: '+919791471277' });
-  const [ctaUrl, setCtaUrl] = useState({ text: 'Visit Website', url: 'https://www.dhigrowth.com', urlType: 'Static' });
+  const [ctaPhone, setCtaPhone] = useState(() => ({
+    text: 'Call Us',
+    phone: isSitarcTenant ? '+916369793937' : '+919791471277',
+  }));
+  const [ctaUrl, setCtaUrl] = useState(() => ({
+    text: 'Visit Website',
+    url: isSitarcTenant ? 'https://www.sitarc.com' : 'https://www.dhigrowth.com',
+    urlType: 'Static',
+  }));
   const [quickReplies, setQuickReplies] = useState([
     { id: 1, text: "Yes, I'm interested" },
     { id: 2, text: 'Tell me more' },
@@ -446,13 +599,13 @@ export const TemplatesPage = () => {
       if (saved) {
         setTemplates(JSON.parse(saved));
       } else {
-        setTemplates(currentWorkspaceId === DEFAULT_WORKSPACE_ID ? DEFAULT_TEMPLATES : []);
+        setTemplates(currentWorkspaceId === DEFAULT_WORKSPACE_ID ? defaultTemplates : []);
       }
     } catch {
-      setTemplates(currentWorkspaceId === DEFAULT_WORKSPACE_ID ? DEFAULT_TEMPLATES : []);
+      setTemplates(currentWorkspaceId === DEFAULT_WORKSPACE_ID ? defaultTemplates : []);
     }
     loadTemplates();
-  }, [currentWorkspaceId]);
+  }, [currentWorkspaceId, isSitarcTenant]);
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('ALL'); // ALL | MARKETING | UTILITY | AUTHENTICATION
@@ -476,9 +629,12 @@ export const TemplatesPage = () => {
       };
 
       const ensurePresets = (list) => {
-        const cleaned = filterDeleted(list);
-        for (let i = DHI_PRESET_TEMPLATES.length - 1; i >= 0; i--) {
-          const p = DHI_PRESET_TEMPLATES[i];
+        let cleaned = filterDeleted(list);
+        if (isSitarcTenant) {
+          cleaned = cleaned.filter((t) => !otherPresetNames.includes(t.name) && t.name !== 'ai_it_discovery');
+        }
+        for (let i = activePresets.length - 1; i >= 0; i--) {
+          const p = activePresets[i];
           if (!deletedList.includes(p.name) && !deletedList.includes(String(p.id))) {
             if (!cleaned.some((t) => t.name === p.name || String(t.id) === String(p.id))) {
               cleaned.unshift({ ...p });
@@ -534,7 +690,7 @@ export const TemplatesPage = () => {
       } else if (parsedLocal !== null) {
         setTemplates(ensurePresets(parsedLocal));
       } else {
-        const cleaned = ensurePresets(DEFAULT_TEMPLATES);
+        const cleaned = ensurePresets(defaultTemplates);
         setTemplates(cleaned);
         try {
           localStorage.setItem(`dhigrowth_templates_${currentWorkspaceId}`, JSON.stringify(cleaned));
@@ -549,7 +705,7 @@ export const TemplatesPage = () => {
           return;
         } catch {}
       }
-      setTemplates(DEFAULT_TEMPLATES);
+      setTemplates(defaultTemplates);
     } finally {
       setIsLoading(false);
     }
@@ -623,8 +779,8 @@ export const TemplatesPage = () => {
     setFormBody('');
     setFormFooter('');
     setActionType('QUICK_REPLY');
-    setCtaPhone({ text: 'Call Us', phone: '+919791471277' });
-    setCtaUrl({ text: 'Visit Website', url: 'https://www.dhigrowth.com', urlType: 'Static' });
+    setCtaPhone({ text: 'Call Us', phone: isSitarcTenant ? '+916369793937' : '+919791471277' });
+    setCtaUrl({ text: 'Visit Website', url: isSitarcTenant ? 'https://www.sitarc.com' : 'https://www.dhigrowth.com', urlType: 'Static' });
     setQuickReplies([
       { id: 1, text: "Yes, I'm interested" },
       { id: 2, text: 'Tell me more' },
@@ -1937,7 +2093,7 @@ export const TemplatesPage = () => {
                       </span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {DHI_PRESET_TEMPLATES.map((preset) => {
+                      {activePresets.map((preset) => {
                         const isSelected = formName.toLowerCase() === preset.displayName.toLowerCase() || formName.toLowerCase() === preset.name.toLowerCase();
                         return (
                           <button
@@ -1958,9 +2114,9 @@ export const TemplatesPage = () => {
                                 if (hasCta) {
                                   setActionType('CTA');
                                   const p = preset.buttons.find((b) => b.type === 'PHONE_NUMBER');
-                                  if (p) setCtaPhone({ text: p.text || 'Call Us', phone: p.phone_number || '+919791471277' });
+                                  if (p) setCtaPhone({ text: p.text || 'Call Us', phone: p.phone_number || (isSitarcTenant ? '+916369793937' : '+919791471277') });
                                   const u = preset.buttons.find((b) => b.type === 'URL');
-                                  if (u) setCtaUrl({ text: u.text || 'Visit Website', url: u.url || 'https://www.dhigrowth.com', urlType: 'Static' });
+                                  if (u) setCtaUrl({ text: u.text || 'Visit Website', url: u.url || (isSitarcTenant ? 'https://www.sitarc.com' : 'https://www.dhigrowth.com'), urlType: 'Static' });
                                 } else {
                                   setActionType('QUICK_REPLY');
                                   setQuickReplies(
@@ -2138,7 +2294,7 @@ export const TemplatesPage = () => {
                         <input
                           type="text"
                           maxLength={60}
-                          placeholder="e.g. Exclusive Offer from DhiGrowth"
+                          placeholder={isSitarcTenant ? "e.g. Si'Tarc Testing & Calibration" : "e.g. Exclusive Offer from DhiGrowth"}
                           value={formHeaderText}
                           onChange={(e) => setFormHeaderText(e.target.value)}
                           className="w-full bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
@@ -2351,7 +2507,7 @@ export const TemplatesPage = () => {
 
                     <textarea
                       rows={6}
-                      placeholder="Write your official WhatsApp message. Example: Hi {{1}}, thank you for contacting DhiGrowth! Here is your exclusive deal: {{2}}."
+                      placeholder={isSitarcTenant ? "Write your official WhatsApp message. Example: Hi {{1}}, thank you for contacting Si'Tarc Laboratory! Here is your test quotation: {{2}}." : "Write your official WhatsApp message. Example: Hi {{1}}, thank you for contacting DhiGrowth! Here is your exclusive deal: {{2}}."}
                       value={formBody}
                       onChange={(e) => setFormBody(e.target.value)}
                       className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-3.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white leading-relaxed resize-none font-sans"
@@ -2418,7 +2574,7 @@ export const TemplatesPage = () => {
                     <input
                       type="text"
                       maxLength={60}
-                      placeholder="e.g. Reply STOP to unsubscribe • Sent via DhiGrowth CRM"
+                      placeholder={isSitarcTenant ? "e.g. Reply STOP to unsubscribe • Sent via Si'Tarc Testing Laboratory" : "e.g. Reply STOP to unsubscribe • Sent via DhiGrowth CRM"}
                       value={formFooter}
                       onChange={(e) => setFormFooter(e.target.value)}
                       className="w-full bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white"
@@ -2520,7 +2676,7 @@ export const TemplatesPage = () => {
                                 type="url"
                                 value={ctaUrl.url}
                                 onChange={(e) => setCtaUrl((prev) => ({ ...prev, url: e.target.value }))}
-                                placeholder="https://www.dhigrowth.com"
+                                placeholder={isSitarcTenant ? "https://www.sitarc.com" : "https://www.dhigrowth.com"}
                                 className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3 py-1.5 rounded-lg text-xs font-mono"
                               />
                             </div>
@@ -2662,11 +2818,13 @@ export const TemplatesPage = () => {
                       <div className="flex items-center gap-2 min-w-0">
                         <ChevronDown className="w-4 h-4 rotate-90 text-white shrink-0" />
                         <div className="w-7 h-7 rounded-full bg-[#128C7E] flex items-center justify-center text-[11px] font-bold text-white shrink-0 border border-white/20">
-                          DG
+                          {activeBusinessInitials}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1">
-                            <span className="text-xs font-bold truncate">DhiGrowth</span>
+                            <span className="text-xs font-bold truncate" title={isSitarcTenant ? "Si'Tarc Testing & Calibration Laboratory" : activeBusinessName}>
+                              {activeBusinessName}
+                            </span>
                             <CheckCircle2 className="w-3 h-3 text-[#25D366] fill-[#25D366] text-white shrink-0" />
                           </div>
                           <p className="text-[9px] text-white/80 leading-none truncate">Official Business Account</p>
