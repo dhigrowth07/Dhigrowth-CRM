@@ -95,6 +95,69 @@ export const DHI_PRESET_TEMPLATES = [
   },
 ];
 
+export const SITARC_PRESET_TEMPLATES = [
+  {
+    id: 'tpl_sitarc_testing_inquiry',
+    name: 'si_tarc_testing_inquiry',
+    displayName: "Si'Tarc Testing Inquiry",
+    badge: 'Recommended',
+    category: 'UTILITY',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: "Si'Tarc Testing Laboratory",
+    body_text: "Hello {{name}}! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory.\n\nHow can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Mechanical testing and calibration services?\n\nTap below to connect with our technical testing team! 🔬",
+    footer_text: 'testing, calibration, pump, motor, sitarc, lab, quote',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Request Test Quote' },
+      { type: 'QUICK_REPLY', text: 'Connect with Engineer' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tpl_sitarc_calibration_booking',
+    name: 'sitarc_calibration_booking',
+    displayName: 'Calibration Booking',
+    badge: 'Popular',
+    category: 'UTILITY',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: "Si'Tarc Calibration Services",
+    body_text: "Hi {{name}}! ⚙️ Looking for NABL / ISO 17025 accredited calibration for your industrial instruments, pressure gauges, or thermal equipment?\n\nWe provide comprehensive on-site and laboratory calibration with certified test reports.",
+    footer_text: 'calibration, nabl, iso17025, instruments, report',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Book Calibration' },
+      { type: 'QUICK_REPLY', text: 'View Accreditation' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tpl_sitarc_report_status',
+    name: 'sitarc_report_status',
+    displayName: 'Test Report Status',
+    badge: 'High Conversion',
+    category: 'UTILITY',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: 'Test Report Dispatch',
+    body_text: "Hello {{name}}! Your sample testing / calibration report is being processed by the Si'Tarc laboratory technical team. Would you like a digital copy dispatched via WhatsApp?",
+    footer_text: 'report, status, certificate, dispatch, sitarc',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Send Test Report' },
+      { type: 'QUICK_REPLY', text: 'Speak to Lab Head' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
+];
+
 export const STARTER_TEMPLATES = [
   {
     id: '2950860201937776',
@@ -113,6 +176,7 @@ export const STARTER_TEMPLATES = [
     updatedAt: new Date().toISOString(),
   },
   ...DHI_PRESET_TEMPLATES,
+  ...SITARC_PRESET_TEMPLATES,
   {
     id: 'tpl_hello_world',
     name: 'hello_world',
@@ -181,14 +245,17 @@ export function getWorkspaceTemplates(workspaceId = 'b0000000-0000-0000-0000-000
     saveTemplatesToDisk();
   }
 
-  // Ensure DHI_PRESET_TEMPLATES exist in the workspace list (unless user explicitly deleted them)
+  // Ensure appropriate preset templates exist in the workspace list (unless user explicitly deleted them)
   const deleted = templatesStore.deletedTemplates || [];
   const currentList = templatesStore.workspaces[workspaceId];
   let changed = false;
 
+  const isSitarc = workspaceId === 'b0000000-0000-0000-0000-000000000002';
+  const targetPresets = isSitarc ? SITARC_PRESET_TEMPLATES : DHI_PRESET_TEMPLATES;
+
   // Walk in reverse so they are unshifted in order [0, 1, 2, 3] at the beginning
-  for (let i = DHI_PRESET_TEMPLATES.length - 1; i >= 0; i--) {
-    const preset = DHI_PRESET_TEMPLATES[i];
+  for (let i = targetPresets.length - 1; i >= 0; i--) {
+    const preset = targetPresets[i];
     if (!deleted.includes(preset.name) && !deleted.includes(String(preset.id))) {
       const exists = currentList.some((t) => t.name === preset.name || String(t.id) === String(preset.id));
       if (!exists) {

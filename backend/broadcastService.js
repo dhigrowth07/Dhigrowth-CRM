@@ -190,7 +190,15 @@ export function buildTemplateParameters(template, contact = {}, variableMapping 
   }
 
   // 3. Official templates with 1 variable (name)
-  if (tplName === 'custom_template' || tplName === 'whatsapp_crm_demo' || tplName === 'free_15_min_call') {
+  if (
+    tplName === 'custom_template' ||
+    tplName === 'whatsapp_crm_demo' ||
+    tplName === 'free_15_min_call' ||
+    tplName === 'si_tarc_testing_inquiry' ||
+    tplName === 'sitarc_testing_inquiry' ||
+    tplName === 'sitarc_calibration_booking' ||
+    tplName === 'sitarc_report_status'
+  ) {
     components.push({
       type: 'body',
       parameters: [

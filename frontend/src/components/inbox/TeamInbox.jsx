@@ -94,12 +94,14 @@ export const TeamInbox = () => {
     currentUser?.username?.toLowerCase().includes('sitarc') ||
     currentUser?.companyName?.toLowerCase().includes('sitarc') ||
     currentUser?.name?.toLowerCase().includes('sitarc') ||
+    currentTenant?.username?.toLowerCase().includes('sitarc') ||
+    currentTenant?.companyName?.toLowerCase().includes('sitarc') ||
     currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002'
   );
 
   const tenantBusinessName = isSitarcTenant
     ? "Si'Tarc Testing & Calibration Laboratory"
-    : (currentUser?.companyName || 'DhiGrowth IT Services');
+    : (currentUser?.companyName || currentTenant?.companyName || 'DhiGrowth IT Services');
 
   const canSendDue = typeof hasNavPermission === 'function' ? hasNavPermission('send_due_all') : true;
   const canBroadcastTemplate = typeof hasNavPermission === 'function' ? hasNavPermission('templates') : true;
@@ -588,37 +590,98 @@ export const TeamInbox = () => {
   );
   const isNewContact = Boolean(activeChat && !hasCustomerReplied);
 
-  const [isTemplateSendModalOpen, setIsTemplateSendModalOpen] = useState(false);
-  const [isSendingTemplate, setIsSendingTemplate] = useState(false);
-  const [selectedTemplateName, setSelectedTemplateName] = useState('new_client_welcome');
-  const [templateOptions, setTemplateOptions] = useState([
+  const SITARC_DEFAULT_OPTIONS = [
     {
-      name: 'new_client_welcome',
-      title: 'new_client_welcome (⭐ Meta-Approved 24h Window Opener with Quick Reply)',
-      category: 'marketing',
-      status: 'approved',
-      language: 'en',
-      body_text: `Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!`,
-    },
-    {
-      name: isSitarcTenant ? 'sitarc_testing_inquiry' : 'dhigrowth_welcome_lead',
-      title: isSitarcTenant ? "sitarc_testing_inquiry (Si'Tarc Testing & Calibration Laboratory)" : 'dhigrowth_welcome_lead (DhiGrowth Business Concierge & Buttons)',
-      category: isSitarcTenant ? 'utility' : 'marketing',
+      name: 'si_tarc_testing_inquiry',
+      rawName: 'si_tarc_testing_inquiry',
+      title: "Si'Tarc Testing Inquiry (Recommended · Pump, Motor, Lab Testing)",
+      category: 'utility',
       status: 'approved',
       language: 'en_US',
-      body_text: isSitarcTenant
-        ? `Hello! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory. How can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Calibration testing services? Tap below to connect with us! 🔬`
-        : `Hello! 👋 Welcome to DhiGrowth IT Services. We help businesses scale with App Development, AI Business Bots, and WhatsApp CRM Automation. Tap below to connect with us! 🚀`,
+      header: "Si'Tarc Testing Laboratory",
+      body_text: "Hello {{name}}! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory. How can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Mechanical testing and calibration services? Tap below to connect with our technical testing team! 🔬",
+      buttons: ['Request Test Quote', 'Connect with Engineer'],
+    },
+    {
+      name: 'sitarc_calibration_booking',
+      rawName: 'sitarc_calibration_booking',
+      title: "Calibration Booking (Popular · NABL / ISO 17025 Accredited Calibration)",
+      category: 'utility',
+      status: 'approved',
+      language: 'en_US',
+      header: "Si'Tarc Calibration Services",
+      body_text: "Hi {{name}}! ⚙️ Looking for NABL / ISO 17025 accredited calibration for your industrial instruments, pressure gauges, or thermal equipment? We provide comprehensive on-site and laboratory calibration with certified test reports.",
+      buttons: ['Book Calibration', 'View Accreditation'],
+    },
+    {
+      name: 'sitarc_report_status',
+      rawName: 'sitarc_report_status',
+      title: "Test Report Status (High Conversion · Dispatch via WhatsApp)",
+      category: 'utility',
+      status: 'approved',
+      language: 'en_US',
+      header: 'Test Report Dispatch',
+      body_text: "Hello {{name}}! Your sample testing / calibration report is being processed by the Si'Tarc laboratory technical team. Would you like a digital copy dispatched via WhatsApp?",
+      buttons: ['Send Test Report', 'Speak to Lab Head'],
     },
     {
       name: 'hello_world',
+      rawName: 'hello_world',
       title: 'hello_world (Meta Official Utility Sample)',
       category: 'utility',
       status: 'approved',
       language: 'en_US',
-      body_text: `Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.`,
+      header: 'Hello World',
+      body_text: 'Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.',
+      buttons: [],
     },
-  ]);
+  ];
+
+  const [isTemplateSendModalOpen, setIsTemplateSendModalOpen] = useState(false);
+  const [isSendingTemplate, setIsSendingTemplate] = useState(false);
+  const [selectedTemplateName, setSelectedTemplateName] = useState(() =>
+    isSitarcTenant ? 'si_tarc_testing_inquiry' : 'new_client_welcome'
+  );
+  const [templateOptions, setTemplateOptions] = useState(() => {
+    if (isSitarcTenant) {
+      return SITARC_DEFAULT_OPTIONS;
+    }
+    return [
+      ...SITARC_DEFAULT_OPTIONS.slice(0, 3),
+      {
+        name: 'new_client_welcome',
+        title: 'new_client_welcome (⭐ Meta-Approved 24h Window Opener with Quick Reply)',
+        category: 'marketing',
+        status: 'approved',
+        language: 'en',
+        body_text: `Hello {{1}}! ✨\nWishing you and your family a very happy and prosperous {{2}} from all of us at {{3}}. May this season bring you joy, peace, and success.\nThank you for being a valued part of our journey!`,
+      },
+      {
+        name: 'dhigrowth_welcome_lead',
+        title: 'dhigrowth_welcome_lead (DhiGrowth Business Concierge & Buttons)',
+        category: 'marketing',
+        status: 'approved',
+        language: 'en_US',
+        body_text: `Hello! 👋 Welcome to DhiGrowth IT Services. We help businesses scale with App Development, AI Business Bots, and WhatsApp CRM Automation. Tap below to connect with us! 🚀`,
+      },
+      {
+        name: 'hello_world',
+        title: 'hello_world (Meta Official Utility Sample)',
+        category: 'utility',
+        status: 'approved',
+        language: 'en_US',
+        body_text: `Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.`,
+      },
+    ];
+  });
+
+  useEffect(() => {
+    if (isSitarcTenant) {
+      setSelectedTemplateName((prev) =>
+        prev === 'new_client_welcome' || prev === 'dhigrowth_welcome_lead' ? 'si_tarc_testing_inquiry' : prev
+      );
+    }
+  }, [isSitarcTenant]);
 
   useEffect(() => {
     const loadTemplates = async () => {
@@ -635,7 +698,18 @@ export const TeamInbox = () => {
         if (res && res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setTemplateOptions(data);
+            setTemplateOptions((prev) => {
+              if (isSitarcTenant) {
+                const merged = [...data];
+                for (const p of SITARC_DEFAULT_OPTIONS) {
+                  if (!merged.some(t => t.name === p.name)) {
+                    merged.unshift(p);
+                  }
+                }
+                return merged;
+              }
+              return data;
+            });
           }
         }
       } catch (err) {
@@ -643,11 +717,13 @@ export const TeamInbox = () => {
       }
     };
     loadTemplates();
-  }, [currentWorkspaceId]);
+  }, [currentWorkspaceId, isSitarcTenant]);
 
   const currentSelectedTemplate =
     templateOptions.find((t) => t.name === selectedTemplateName) || templateOptions[0];
   const previewBody = (currentSelectedTemplate?.body_text || '')
+    .replaceAll('{{name}}', activeChat?.contactName || 'Valued Client')
+    .replaceAll('{{first_name}}', (activeChat?.contactName || 'Valued Client').split(' ')[0])
     .replaceAll('{{1}}', activeChat?.contactName || 'Valued Client')
     .replaceAll('{{2}}', isSitarcTenant ? 'NABL Testing & Calibration' : 'IT & AI Business Solutions')
     .replaceAll('{{3}}', isSitarcTenant ? 'https://www.sitarc.com' : 'https://dhigrowth.com');
@@ -681,6 +757,16 @@ export const TeamInbox = () => {
         (isSitarcTenant
           ? `👋 *Hello ${contactName}!* Welcome to *${tenantBusinessName}* 🔬\n\nReply to this message to start chatting with our laboratory team.`
           : `👋 *Hello ${contactName}!* Welcome to *${tenantBusinessName}* 🚀\n\nReply to this message to start chatting with us.`);
+
+      if (currentSelectedTemplate?.header && !sentBody.includes(currentSelectedTemplate.header)) {
+        sentBody = `*${currentSelectedTemplate.header}*\n\n${sentBody}`;
+      }
+      if (Array.isArray(currentSelectedTemplate?.buttons) && currentSelectedTemplate.buttons.length > 0) {
+        const btnTexts = currentSelectedTemplate.buttons.map(b => `[${typeof b === 'string' ? b : b.title || b.text}]`).join(' ');
+        if (!sentBody.includes(btnTexts)) {
+          sentBody += `\n\n${btnTexts}`;
+        }
+      }
 
       // 1. Primary: Dedicated template endpoint on configured BACKEND_URL
       try {
@@ -1736,13 +1822,13 @@ export const TeamInbox = () => {
 
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
-                {/* Sri Exclusive: Send First Template to New Contact */}
-                {isSriUser && isNewContact && (
+                {/* Send First Template to New Contact (Meta 24h Window Opener) */}
+                {(isSriUser || isSitarcTenant) && isNewContact && (
                   <button
                     type="button"
                     onClick={() => setIsTemplateSendModalOpen(true)}
                     className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all shadow-xs cursor-pointer bg-[#0284C7] hover:bg-[#0369A1] text-white animate-pulse shrink-0"
-                    title="Sri Exclusive: Send approved Meta template to new contact to get their first reply and open 24h window"
+                    title="Send approved Meta template to new contact to get their first reply and open 24h window"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Send First Template</span>
@@ -2155,8 +2241,8 @@ export const TeamInbox = () => {
             <textarea
               rows={2}
               placeholder={
-                isSriUser && isNewContact
-                  ? `✨ New Contact: Sri can click 'Send First Template' to dispatch Meta-approved 'hello_world' template and get their reply!`
+                (isSriUser || isSitarcTenant) && isNewContact
+                  ? `✨ New Contact: Click 'Send First Template' to dispatch Meta-approved template and get customer's reply!`
                   : !isAiAutoPilot
                     ? `👤 Manual Agent Active: Type message to send directly to WhatsApp (${activeChat.phone})... (AI reply is paused)`
                     : `🤖 AI Auto-Pilot Active: Type message to send to ${activeChat.phone}...`
@@ -3198,12 +3284,27 @@ export const TeamInbox = () => {
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-[#344054]">Personalized Message Preview:</span>
                   <span className="text-[10px] font-mono text-[#0284C7] font-bold">
-                    Variable &#123;&#123;1&#125;&#125; = {activeChat.contactName || 'Valued Client'}
+                    Recipient: {activeChat.contactName || 'Valued Client'}
                   </span>
                 </div>
                 <div className="bg-[#EFEAE2] p-3.5 rounded-2xl border border-[#E2D9CF] shadow-inner font-sans">
                   <div className="bg-white rounded-xl p-3 shadow-xs max-w-sm space-y-2 text-xs text-[#111B21] leading-relaxed whitespace-pre-wrap">
-                    {previewBody}
+                    {currentSelectedTemplate?.header && (
+                      <div className="font-bold text-xs text-[#0284C7] pb-1.5 border-b border-gray-100 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+                        <span>Header: {currentSelectedTemplate.header}</span>
+                      </div>
+                    )}
+                    <div>{previewBody}</div>
+                    {Array.isArray(currentSelectedTemplate?.buttons) && currentSelectedTemplate.buttons.length > 0 && (
+                      <div className="pt-2 border-t border-gray-100 flex flex-col gap-1.5">
+                        {currentSelectedTemplate.buttons.map((btn, idx) => (
+                          <div key={idx} className="w-full py-1.5 px-3 bg-[#F0F9FF] border border-[#BAE6FD] text-[#0284C7] rounded-lg text-center text-xs font-bold shadow-2xs">
+                            ✓ {typeof btn === 'string' ? btn : btn.title || btn.text}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="pt-1 flex items-center justify-end gap-1 text-[10px] text-[#667781]">
                       <span>Just now</span>
                       <CheckCheck className="w-3.5 h-3.5 text-[#53BDEB]" />

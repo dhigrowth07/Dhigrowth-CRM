@@ -27,7 +27,62 @@ const normalizePhoneNumber = (raw) => {
   return clean;
 };
 
+export const DEFAULT_SITARC_WORKSPACE_PRESETS = [
+  {
+    id: 'tpl_sitarc_testing_inquiry',
+    rawName: 'si_tarc_testing_inquiry',
+    name: "Si'Tarc Testing Inquiry",
+    displayName: "Si'Tarc Testing Inquiry",
+    badge: 'Recommended',
+    category: 'UTILITY',
+    varsCount: '1 VARS',
+    header: "Si'Tarc Testing Laboratory",
+    body: "Hello {{name}}! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory. How can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Mechanical testing and calibration services? Tap below to connect with our technical testing team! 🔬",
+    footer: 'testing, calibration, pump, motor, sitarc, lab, quote',
+    buttons: [
+      { id: 'btn_quote', title: 'Request Test Quote' },
+      { id: 'btn_engineer', title: 'Connect with Engineer' },
+    ],
+    status: 'APPROVED',
+  },
+  {
+    id: 'tpl_sitarc_calibration_booking',
+    rawName: 'sitarc_calibration_booking',
+    name: 'Calibration Booking',
+    displayName: 'Calibration Booking',
+    badge: 'Popular',
+    category: 'UTILITY',
+    varsCount: '1 VARS',
+    header: "Si'Tarc Calibration Services",
+    body: "Hi {{name}}! ⚙️ Looking for NABL / ISO 17025 accredited calibration for your industrial instruments, pressure gauges, or thermal equipment? We provide comprehensive on-site and laboratory calibration with certified test reports.",
+    footer: 'calibration, nabl, iso17025, instruments, report',
+    buttons: [
+      { id: 'btn_book', title: 'Book Calibration' },
+      { id: 'btn_accreditation', title: 'View Accreditation' },
+    ],
+    status: 'APPROVED',
+  },
+  {
+    id: 'tpl_sitarc_report_status',
+    rawName: 'sitarc_report_status',
+    name: 'Test Report Status',
+    displayName: 'Test Report Status',
+    badge: 'High Conversion',
+    category: 'UTILITY',
+    varsCount: '1 VARS',
+    header: 'Test Report Dispatch',
+    body: "Hello {{name}}! Your sample testing / calibration report is being processed by the Si'Tarc laboratory technical team. Would you like a digital copy dispatched via WhatsApp?",
+    footer: 'report, status, certificate, dispatch, sitarc',
+    buttons: [
+      { id: 'btn_send_report', title: 'Send Test Report' },
+      { id: 'btn_speak_head', title: 'Speak to Lab Head' },
+    ],
+    status: 'APPROVED',
+  },
+];
+
 export const DEFAULT_WORKSPACE_PRESETS = [
+  ...DEFAULT_SITARC_WORKSPACE_PRESETS,
   {
     id: '2950860201937776',
     rawName: 'new_client_welcome',
@@ -74,11 +129,14 @@ export const DEFAULT_WORKSPACE_PRESETS = [
 ];
 
 export const formatTemplatePreset = (tpl) => {
-  const rawName = tpl.name || tpl.displayName || 'template';
+  const rawName = tpl.rawName || tpl.name || tpl.displayName || 'template';
   const displayName = tpl.displayName || (
     tpl.name === 'new_client_welcome' ? 'new_client_welcome' :
     tpl.name === 'hello_world' ? 'hello_world' :
     tpl.name === 'custom_template' ? 'Custom Template' :
+    tpl.name === 'si_tarc_testing_inquiry' || tpl.name === 'sitarc_testing_inquiry' ? "Si'Tarc Testing Inquiry" :
+    tpl.name === 'sitarc_calibration_booking' ? "Calibration Booking" :
+    tpl.name === 'sitarc_report_status' ? "Test Report Status" :
     tpl.name
   );
 
@@ -91,14 +149,22 @@ export const formatTemplatePreset = (tpl) => {
 
   let buttons = [];
   if (Array.isArray(tpl.buttons)) {
-    buttons = tpl.buttons.map((b, idx) => ({
-      id: b.id || `btn_${idx + 1}`,
-      title: (b.text || b.title || '').replace(/^["']|["']$/g, '').trim(),
-    })).filter((b) => b.title);
+    buttons = tpl.buttons.map((b, idx) => {
+      if (typeof b === 'string') return { id: `btn_${idx + 1}`, title: b.trim() };
+      return {
+        id: b.id || `btn_${idx + 1}`,
+        title: (b.text || b.title || '').replace(/^["']|["']$/g, '').trim(),
+      };
+    }).filter((b) => b.title);
   }
 
   const category = (tpl.category || 'MARKETING').toUpperCase();
-  const badge = tpl.badge || (category === 'UTILITY' ? 'Utility' : 'Marketing');
+  const badge = tpl.badge || (
+    tpl.name === 'si_tarc_testing_inquiry' || tpl.name === 'sitarc_testing_inquiry' ? 'Recommended' :
+    tpl.name === 'sitarc_calibration_booking' ? 'Popular' :
+    tpl.name === 'sitarc_report_status' ? 'High Conversion' :
+    (category === 'UTILITY' ? 'Utility' : 'Marketing')
+  );
   const varsCount = Array.isArray(tpl.variables) && tpl.variables.length > 0
     ? `${tpl.variables.length} VARS`
     : (body.match(/\{\{[^}]+\}\}/g)?.length ? `${new Set(body.match(/\{\{[^}]+\}\}/g)).size} VARS` : null);
@@ -114,7 +180,7 @@ export const formatTemplatePreset = (tpl) => {
     body,
     footer,
     buttons,
-    status: tpl.status || 'APPROVED',
+    status: (tpl.status || 'APPROVED').toUpperCase(),
   };
 };
 
@@ -140,6 +206,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     currentUser?.companyName?.toLowerCase().includes('sitarc') ||
     currentUser?.name?.toLowerCase().includes('sitarc') ||
     currentTenant?.username?.toLowerCase().includes('sitarc') ||
+    currentTenant?.companyName?.toLowerCase().includes('sitarc') ||
     currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002'
   );
 
@@ -161,7 +228,15 @@ export const BroadcastTemplateModal = ({ onClose }) => {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const active = parsed.filter(t => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+            let active = parsed.filter(t => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+            if (isSitarcTenant) {
+              for (let i = DEFAULT_SITARC_WORKSPACE_PRESETS.length - 1; i >= 0; i--) {
+                const sp = DEFAULT_SITARC_WORKSPACE_PRESETS[i];
+                if (!active.some(t => t.rawName === sp.rawName || t.name === sp.rawName || t.name === sp.name || String(t.id) === String(sp.id))) {
+                  active.unshift(sp);
+                }
+              }
+            }
             if (active.length > 0) {
               return active.map(formatTemplatePreset);
             }
@@ -169,16 +244,16 @@ export const BroadcastTemplateModal = ({ onClose }) => {
         }
       }
     } catch {}
-    return DEFAULT_WORKSPACE_PRESETS;
+    return isSitarcTenant ? DEFAULT_SITARC_WORKSPACE_PRESETS : DEFAULT_WORKSPACE_PRESETS;
   });
 
-  const initialPreset = presets[0] || DEFAULT_WORKSPACE_PRESETS[0];
+  const initialPreset = presets[0] || (isSitarcTenant ? DEFAULT_SITARC_WORKSPACE_PRESETS[0] : DEFAULT_WORKSPACE_PRESETS[0]);
   const [selectedPresetId, setSelectedPresetId] = useState(initialPreset.id);
   const [headerText, setHeaderText] = useState(initialPreset.header || '');
   const [bodyText, setBodyText] = useState(initialPreset.body || '');
   const [footerText, setFooterText] = useState(initialPreset.footer || '');
-  const [button1Text, setButton1Text] = useState(initialPreset.buttons[0]?.title || '');
-  const [button2Text, setButton2Text] = useState(initialPreset.buttons[1]?.title || '');
+  const [button1Text, setButton1Text] = useState(initialPreset.buttons?.[0]?.title || '');
+  const [button2Text, setButton2Text] = useState(initialPreset.buttons?.[1]?.title || '');
   const [showPreview, setShowPreview] = useState(true);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastSummary, setBroadcastSummary] = useState(null);
@@ -231,11 +306,21 @@ export const BroadcastTemplateModal = ({ onClose }) => {
         }
 
         if (list && isMounted) {
-          const filtered = list.filter(t => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+          let filtered = list.filter(t => !deletedList.includes(String(t.id)) && (!t.name || !deletedList.includes(t.name)));
+          if (isSitarcTenant) {
+            for (let i = DEFAULT_SITARC_WORKSPACE_PRESETS.length - 1; i >= 0; i--) {
+              const sp = DEFAULT_SITARC_WORKSPACE_PRESETS[i];
+              if (!filtered.some(t => t.rawName === sp.rawName || t.name === sp.rawName || t.name === sp.name || String(t.id) === String(sp.id))) {
+                filtered.unshift(sp);
+              }
+            }
+          }
           const formatted = filtered.map(formatTemplatePreset);
           if (formatted.length > 0) {
             setPresets(formatted);
           }
+        } else if (isMounted && isSitarcTenant) {
+          setPresets(DEFAULT_SITARC_WORKSPACE_PRESETS);
         }
       } catch (err) {
         console.warn('Could not refresh templates:', err);
@@ -244,7 +329,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
 
     fetchLatestTemplates();
     return () => { isMounted = false; };
-  }, [isBroadcastTemplateModalOpen, currentWorkspaceId]);
+  }, [isBroadcastTemplateModalOpen, currentWorkspaceId, isSitarcTenant]);
 
   // Ensure current selection is valid when presets update
   useEffect(() => {
@@ -284,11 +369,11 @@ export const BroadcastTemplateModal = ({ onClose }) => {
 
   const handleSelectPreset = (preset) => {
     setSelectedPresetId(preset.id);
-    setHeaderText(preset.header);
-    setBodyText(preset.body);
-    setFooterText(preset.footer);
-    setButton1Text(preset.buttons[0]?.title || 'Yes');
-    setButton2Text(preset.buttons[1]?.title || 'Tell me more');
+    setHeaderText(preset.header || '');
+    setBodyText(preset.body || '');
+    setFooterText(preset.footer || '');
+    setButton1Text(preset.buttons?.[0]?.title || '');
+    setButton2Text(preset.buttons?.[1]?.title || '');
   };
 
   const handleInsertTag = (tag) => {
@@ -544,9 +629,18 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                     }`}
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-1 mb-1">
+                      {preset.header && (
+                        <div className="flex items-center gap-1 text-[10px] text-[#0284C7] font-bold bg-[#E0F2FE]/70 px-2 py-0.5 rounded-md mb-2 border border-[#BAE6FD]/70 w-fit max-w-full truncate">
+                          <Sparkles className="w-3 h-3 shrink-0 text-[#0284C7]" />
+                          <span className="truncate">Header: {preset.header}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
                         <span className="text-xs font-bold text-[#101828] truncate">{preset.name}</span>
                         {isSelected && <Check className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
+                      </div>
+                      <div className="text-[10px] font-mono text-[#667085] truncate mb-1.5">
+                        key: {preset.rawName || preset.name}
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[10px] text-[#0284C7] font-semibold bg-[#E0F2FE] px-1.5 py-0.5 rounded-sm uppercase tracking-wide">
@@ -562,10 +656,21 @@ export const BroadcastTemplateModal = ({ onClose }) => {
                         </span>
                       </div>
                     </div>
-                    <div className="mt-2 text-[10px] text-[#475467] line-clamp-2">
-                      {preset.buttons && preset.buttons.length > 0
-                        ? preset.buttons.map((b) => b.title).join(' • ')
-                        : (preset.footer || 'Standard Meta notification')}
+                    <div className="mt-2.5 pt-2 border-t border-[#EAECF0] space-y-1">
+                      {preset.buttons && preset.buttons.length > 0 ? (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-[9px] text-[#667085] font-semibold">BUTTONS:</span>
+                          {preset.buttons.map((b, idx) => (
+                            <span key={idx} className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-medium">
+                              ✓ {b.title}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-[#475467] line-clamp-1">
+                          {preset.footer || 'Standard Meta notification'}
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
