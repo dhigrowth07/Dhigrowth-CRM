@@ -120,6 +120,11 @@ export const handleInboundWebhook = async (req, res) => {
             );
             console.log(`💬 Message: "${messageText}"`);
 
+            const tenantChannelId =
+              tenantWorkspaceId === 'b0000000-0000-0000-0000-000000000002' || matchedTenant?.username === 'sitarc'
+                ? 'd0000000-0000-0000-0000-000000000005'
+                : 'd0000000-0000-0000-0000-000000000001';
+
             // Process message in Supabase & reply
             await processIncomingChatMessage({
               channelType: 'whatsapp',
@@ -127,7 +132,7 @@ export const handleInboundWebhook = async (req, res) => {
               customerName,
               messageText,
               externalMessageId: message.id,
-              channelId: 'd0000000-0000-0000-0000-000000000001',
+              channelId: tenantChannelId,
               workspaceId: tenantWorkspaceId,
               phoneNumberId,
               accessToken: tenantAccessToken,
@@ -227,7 +232,12 @@ async function processIncomingChatMessage({
   sendReply,
 }) {
   const isValidUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  const effectiveWorkspaceId = isValidUuid(workspaceId) ? workspaceId : DEFAULT_WORKSPACE_ID;
+  let resolvedWsId = workspaceId;
+  // If old/transitional Si'Tarc workspace ID or Si'Tarc phone number, route to standard Si'Tarc workspace
+  if (resolvedWsId === 'b1a0f6303e25-c325-3844-871b-c6fb9aedb713' || phoneNumberId === '1399911839867541') {
+    resolvedWsId = 'b0000000-0000-0000-0000-000000000002';
+  }
+  const effectiveWorkspaceId = isValidUuid(resolvedWsId) ? resolvedWsId : DEFAULT_WORKSPACE_ID;
   const supabase = getSupabase();
   if (!supabase) {
     console.warn('[WebhookHandler] Supabase not connected. Skipping database write.');
@@ -657,8 +667,19 @@ async function handleLeadQualificationFlow({
         name: knownName,
       });
 
+      const isSitarcTenant =
+        effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+        phoneNumberId === '1399911839867541';
+
       // Prepare dynamic template content
-      let welcomeMsg = matchedTemplate?.body_text || `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`;
+      let welcomeMsg = matchedTemplate?.body_text;
+      if (!welcomeMsg) {
+        if (isSitarcTenant) {
+          welcomeMsg = `Hello 👋 Welcome to *Si'Tarc Testing & Calibration Laboratory*.\n\nHow can we help you today?\n\n🔧 *Instrument Calibration*\n⚙️ *Mechanical Testing*\n⚡ *Electrical Testing*\n🧪 *Chemical Testing*\n💧 *Water Testing*\n🍚 *Food Testing*\n📞 *Contact Our Team*`;
+        } else {
+          welcomeMsg = `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`;
+        }
+      }
       if (knownName) {
         welcomeMsg = welcomeMsg.replace(/\{\{name\}\}/gi, knownName);
       } else {
@@ -666,13 +687,19 @@ async function handleLeadQualificationFlow({
       }
 
       const imageUrl = (matchedTemplate?.header_type === 'IMAGE' && matchedTemplate?.header_content) ||
-        (matchedTemplate?.header_content && matchedTemplate.header_content.startsWith('http') ? matchedTemplate.header_content : 'https://www.dhigrowth.com/logo.png');
+        (matchedTemplate?.header_content && matchedTemplate.header_content.startsWith('http') ? matchedTemplate.header_content : (isSitarcTenant ? 'https://www.sitarc.com/images/logo.png' : 'https://www.dhigrowth.com/logo.png'));
 
       const templateButtons = Array.isArray(matchedTemplate?.buttons) && matchedTemplate.buttons.length > 0
         ? matchedTemplate.buttons.slice(0, 3).map((b, idx) => ({
             id: b.id || `btn_${idx + 1}`,
             title: String(b.text || b.title || 'Select').slice(0, 20),
           }))
+        : isSitarcTenant
+        ? [
+            { id: 'btn_calib', title: '🔧 Calibration' },
+            { id: 'btn_testing', title: '⚙️ Testing' },
+            { id: 'btn_contact', title: '📞 Contact Us' },
+          ]
         : [
             { id: 'btn_yes', title: 'Yes im interested' },
             { id: 'btn_more', title: 'Tell more' },

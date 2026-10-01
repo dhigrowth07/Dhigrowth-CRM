@@ -84,6 +84,37 @@ export const SEED_TENANTS = [
     status: 'active',
     createdAt: '2026-09-11T00:00:00.000Z',
   },
+  {
+    id: 'b0000000-0000-0000-0000-000000000002',
+    workspaceId: 'b0000000-0000-0000-0000-000000000002',
+    name: "Si'Tarc Testing & Calibration Laboratory",
+    username: 'sitarc',
+    email: 'sitarcinfo@sitarc.com',
+    companyName: "Si'Tarc Testing & Calibration Laboratory",
+    slug: 'sitarc',
+    role: 'CRM User',
+    plan: 'Enterprise Scale',
+    isSuperAdmin: false,
+    isAdmin: false,
+    isExternalClient: false,
+    password: 'sitarc',
+    passwordHash: '$2a$10$954hF52aM/UfxY8c3Y7fse9fL4k9nU2r8/xRSm2sT.k2k9e9nL8zK',
+    permissions: {
+      sendDueToAll: false,
+      send_due_all: false,
+      teamInbox: true,
+      team_inbox: true,
+      metaKeys: true,
+      aiStudio: true,
+      fileManager: true,
+      invoicing: true,
+      instagramInbox: false,
+      'instagram-inbox': false,
+      instagram_inbox: false,
+    },
+    status: 'active',
+    createdAt: '2026-10-01T00:00:00.000Z',
+  },
 ];
 
 export const NAVIGATION_MODULES = [
@@ -250,21 +281,31 @@ export const AppProvider = ({ children }) => {
         }
       }
 
-      // Overlay saved dedicated permissions for each tenant
+      // Overlay saved dedicated permissions for each tenant & normalize sitarc
       return baseList.map((t) => {
         const cleanUser = t.username?.toLowerCase();
+        let targetWorkspaceId = t.workspaceId;
+        let targetId = t.id;
+        if (cleanUser === 'sitarc') {
+          targetWorkspaceId = 'b0000000-0000-0000-0000-000000000002';
+          targetId = 'b0000000-0000-0000-0000-000000000002';
+        }
+
         let savedPerms = null;
         try {
           const s = localStorage.getItem(`dhigrowth_tenant_perms_${cleanUser}`) ||
                     localStorage.getItem(`dhigrowth_tenant_perms_${t.id}`);
           if (s) savedPerms = JSON.parse(s);
         } catch {}
-        if (savedPerms) {
+        if (savedPerms || cleanUser === 'sitarc') {
           return {
             ...t,
+            id: targetId,
+            workspaceId: targetWorkspaceId,
             permissions: {
               ...(t.permissions || {}),
-              ...savedPerms,
+              ...(savedPerms || {}),
+              ...(cleanUser === 'sitarc' ? { sendDueToAll: false, send_due_all: false } : {}),
             },
           };
         }
@@ -302,6 +343,11 @@ export const AppProvider = ({ children }) => {
         parsed.role = 'Super Administrator';
         parsed.isSuperAdmin = true;
         parsed.isAdmin = true;
+      } else if (parsed?.username?.toLowerCase() === 'sitarc') {
+        parsed.workspaceId = 'b0000000-0000-0000-0000-000000000002';
+        parsed.id = 'b0000000-0000-0000-0000-000000000002';
+        parsed.companyName = "Si'Tarc Testing & Calibration Laboratory";
+        parsed.name = "Si'Tarc Testing & Calibration Laboratory";
       }
 
       // Overlay saved tenant permissions for currentUser
@@ -1091,7 +1137,12 @@ export const AppProvider = ({ children }) => {
               ) {
                 setCurrentUser((prevUser) => {
                   if (!prevUser) return prevUser;
-                  const updatedUser = { ...prevUser, permissions: combinedPerms };
+                  const updatedUser = {
+                    ...prevUser,
+                    workspaceId: cleanUser === 'sitarc' ? 'b0000000-0000-0000-0000-000000000002' : prevUser.workspaceId,
+                    id: cleanUser === 'sitarc' ? 'b0000000-0000-0000-0000-000000000002' : prevUser.id,
+                    permissions: combinedPerms,
+                  };
                   try {
                     localStorage.setItem('dhigrowth_auth_session', JSON.stringify(updatedUser));
                     localStorage.setItem(`dhigrowth_auth_session_${cleanUser}`, JSON.stringify(updatedUser));
@@ -1108,7 +1159,12 @@ export const AppProvider = ({ children }) => {
               ) {
                 setImpersonatedTenant((prevImp) => {
                   if (!prevImp) return prevImp;
-                  const nextImp = { ...prevImp, permissions: combinedPerms };
+                  const nextImp = {
+                    ...prevImp,
+                    workspaceId: cleanUser === 'sitarc' ? 'b0000000-0000-0000-0000-000000000002' : prevImp.workspaceId,
+                    id: cleanUser === 'sitarc' ? 'b0000000-0000-0000-0000-000000000002' : prevImp.id,
+                    permissions: combinedPerms,
+                  };
                   try {
                     localStorage.setItem('dhigrowth_impersonated_tenant', JSON.stringify(nextImp));
                   } catch {}
@@ -1119,6 +1175,8 @@ export const AppProvider = ({ children }) => {
               const mergedTenant = {
                 ...(idx >= 0 ? merged[idx] : {}),
                 ...ct,
+                workspaceId: cleanUser === 'sitarc' ? 'b0000000-0000-0000-0000-000000000002' : ct.workspaceId,
+                id: cleanUser === 'sitarc' ? 'b0000000-0000-0000-0000-000000000002' : ct.id,
                 permissions: combinedPerms,
               };
 
@@ -1648,7 +1706,9 @@ export const AppProvider = ({ children }) => {
       throw new Error(`A user or tenant with username "${cleanUser}" or email "${cleanEmail}" already exists.`);
     }
 
-    const newWorkspaceId = `b${Date.now().toString(16).padStart(7, '0')}-${Math.random().toString(16).substring(2, 6)}-${Math.random().toString(16).substring(2, 6)}-${Math.random().toString(16).substring(2, 6)}-${Math.random().toString(16).substring(2, 14)}`;
+    const newWorkspaceId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'b0000000-0000-4000-8000-' + Math.random().toString(16).substring(2, 14).padEnd(12, '0');
 
     let passwordHash = '';
     try {

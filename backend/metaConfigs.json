@@ -53,9 +53,32 @@
       "workspaceId": "a0000000-0000-0000-0000-000000000001",
       "updatedBy": "admin",
       "updatedAt": "2026-09-28T08:02:00.027Z"
+    },
+    "sitarc": {
+      "phoneNumberId": "1399911839867541",
+      "accessToken": "EAATZCRGaYrzABSlTfQO5YOV9tU1CSCGK0P7jnbgDcTVtVaf4okjyqLEJDQ0NVjD5hdSxCVmZAb1kxsnn8xB2AK8omZBORZCHDAirZCfkCI0seV4hEoogEZAXANuQA86bwSFafNsuHerfxmTUTZCtHvBGIZCsICLd8zf4QiXGoLTTWrT1Abt4YxTg0JJoOEP1dAZDZD",
+      "wabaId": "1395172716062686",
+      "verifyToken": "dhigrowth_webhook_secret_2026",
+      "workspaceId": "b0000000-0000-0000-0000-000000000002",
+      "updatedBy": "SITARC",
+      "updatedAt": "2026-10-01T07:30:04.156Z"
+    },
+    "b0000000-0000-0000-0000-000000000002": {
+      "phoneNumberId": "1399911839867541",
+      "accessToken": "EAATZCRGaYrzABSlTfQO5YOV9tU1CSCGK0P7jnbgDcTVtVaf4okjyqLEJDQ0NVjD5hdSxCVmZAb1kxsnn8xB2AK8omZBORZCHDAirZCfkCI0seV4hEoogEZAXANuQA86bwSFafNsuHerfxmTUTZCtHvBGIZCsICLd8zf4QiXGoLTTWrT1Abt4YxTg0JJoOEP1dAZDZD",
+      "wabaId": "1395172716062686",
+      "verifyToken": "dhigrowth_webhook_secret_2026",
+      "workspaceId": "b0000000-0000-0000-0000-000000000002",
+      "updatedBy": "SITARC",
+      "updatedAt": "2026-10-01T07:30:04.156Z"
     }
   },
   "phoneToTenant": {
+    "1399911839867541": {
+      "workspaceId": "b0000000-0000-0000-0000-000000000002",
+      "username": "sitarc",
+      "accessToken": "EAATZCRGaYrzABSlTfQO5YOV9tU1CSCGK0P7jnbgDcTVtVaf4okjyqLEJDQ0NVjD5hdSxCVmZAb1kxsnn8xB2AK8omZBORZCHDAirZCfkCI0seV4hEoogEZAXANuQA86bwSFafNsuHerfxmTUTZCtHvBGIZCsICLd8zf4QiXGoLTTWrT1Abt4YxTg0JJoOEP1dAZDZD"
+    },
     "1228199333717113": {
       "workspaceId": "b1a0a9dd26af-9d29-b53e-7fd6-c592f69f2bc5",
       "username": "maddy",
