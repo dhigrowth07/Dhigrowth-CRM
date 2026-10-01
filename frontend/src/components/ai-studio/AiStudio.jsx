@@ -24,6 +24,8 @@ import {
   Layers,
   Save,
   X,
+  Edit3,
+  RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -84,6 +86,45 @@ const PROVIDERS = [
   },
 ];
 
+const DEFAULT_PERSONA_PROMPT = `You are DhiGrowth AI Business Concierge, the official intelligent assistant for DhiGrowth IT Services on WhatsApp.
+
+About DhiGrowth IT Services:
+We provide:
+📱 App Development (iOS, Android, Cross-platform, Flutter, React Native)
+🤖 AI Business Solutions & Development (Custom AI agents, LLM integrations, workflow automations, 24/7 concierges)
+💬 WhatsApp CRM & Automation (Official Meta Cloud API, lead capture, automated broadcasts, team inboxes)
+💻 Custom IT Solutions (Web & SaaS development, cloud infrastructure, API integrations, enterprise software)
+
+Core Behavior Instructions:
+1. UNDERSTAND THE USER'S SPECIFIC BUSINESS WORDS: Comprehend and analyze their exact requirement.
+2. TAILORED & RELEVANT: Give direct, helpful answers addressing specifically what they asked.
+3. CONCISE FOR WHATSAPP: Keep replies concise (2-4 clear sentences or short punchy bullet points with emojis).
+4. LEAD REQUIREMENTS COLLECTION: Inquire about services needed, full name, phone number, and preferred meeting date/time.
+5. LOCATION: Registered headquarters in Coimbatore, Tamil Nadu, India.`;
+
+const PERSONA_PRESETS = [
+  {
+    id: 'it_services',
+    label: 'IT & Software Concierge',
+    prompt: DEFAULT_PERSONA_PROMPT,
+  },
+  {
+    id: 'ecommerce',
+    label: 'E-Commerce & Retail',
+    prompt: `You are the friendly WhatsApp Sales Assistant for our retail store.\nHelp customers browse our product catalog, verify sizing/colors, confirm Cash on Delivery (COD) orders, and provide real-time shipment updates.\nKeep messages warm, helpful, and concise with relevant emojis.`,
+  },
+  {
+    id: 'appointments',
+    label: 'Appointments & Consultations',
+    prompt: `You are the executive appointment coordinator for our business.\nAnswer prospective client questions, collect project requirements, and assist them in scheduling a consultation call or live demo.\nAlways collect their Name, Phone number, and preferred date/time slot.`,
+  },
+  {
+    id: 'support',
+    label: '24/7 Customer Support',
+    prompt: `You are the 24/7 Customer Support AI for our business.\nAssist users with account inquiries, order tracking, troubleshooting, and answers to common questions.\nIf a question requires human attention, reassure the user and offer to escalate to an agent.`,
+  },
+];
+
 export const AiStudio = () => {
   const {
     aiConfig,
@@ -110,6 +151,9 @@ export const AiStudio = () => {
   const [testResult, setTestResult] = useState(null);
   const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
   const [rechargeAmt, setRechargeAmt] = useState('25');
+  const [isEditingPersona, setIsEditingPersona] = useState(false);
+  const [isSavingPersona, setIsSavingPersona] = useState(false);
+  const [savedPersonaBackup, setSavedPersonaBackup] = useState(aiConfig?.systemPrompt || '');
 
   // Sync state if aiConfig updates from server
   useEffect(() => {
@@ -117,7 +161,10 @@ export const AiStudio = () => {
       if (aiConfig.provider) setProvider(aiConfig.provider);
       if (aiConfig.model) setModel(aiConfig.model);
       if (aiConfig.apiKey && !apiKey) setApiKey(aiConfig.apiKey);
-      if (aiConfig.systemPrompt && !systemPrompt) setSystemPrompt(aiConfig.systemPrompt);
+      if (aiConfig.systemPrompt && !systemPrompt) {
+        setSystemPrompt(aiConfig.systemPrompt);
+        setSavedPersonaBackup(aiConfig.systemPrompt);
+      }
     }
   }, [aiConfig]);
 
@@ -185,9 +232,35 @@ export const AiStudio = () => {
         model,
         systemPrompt,
       });
+      setSavedPersonaBackup(systemPrompt);
+      showToast('🎉 AI configuration updated successfully!', 'success');
     } catch (err) {
       // Error is handled in AppContext
     }
+  };
+
+  const handleSavePersona = async () => {
+    setIsSavingPersona(true);
+    try {
+      await saveAiConfig({
+        provider,
+        apiKey: apiKey.trim(),
+        model,
+        systemPrompt,
+      });
+      setSavedPersonaBackup(systemPrompt);
+      setIsEditingPersona(false);
+      showToast('🎉 Business Persona & System Instructions saved successfully!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to save Business Persona', 'error');
+    } finally {
+      setIsSavingPersona(false);
+    }
+  };
+
+  const handleCancelPersonaEdit = () => {
+    setSystemPrompt(savedPersonaBackup || aiConfig?.systemPrompt || '');
+    setIsEditingPersona(false);
   };
 
   // Sandbox Live Test Messages
@@ -562,22 +635,174 @@ export const AiStudio = () => {
           </div>
 
           {/* Card 2: System Instructions & Persona */}
-          <div className="sendiee-card p-6 space-y-3 bg-white">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-bold uppercase text-[#667085] flex items-center gap-2 font-mono">
-                <Sliders className="w-4 h-4 text-[#7C3AED]" />
-                <span>Business Persona & System Instructions</span>
+          <div className="sendiee-card p-6 space-y-4 bg-white border border-[#EAECF0] rounded-2xl shadow-xs">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-50 text-[#7C3AED] flex items-center justify-center border border-purple-200">
+                  <Sliders className="w-4 h-4 text-[#7C3AED]" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold uppercase text-[#101828] flex items-center gap-2 font-mono">
+                    <span>Business Persona & System Instructions</span>
+                    <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+                      Active
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#667085]">
+                    Injected into every live WhatsApp conversation for automated intelligence
+                  </p>
+                </div>
               </div>
-              <span className="text-[10px] text-[#98A2B3]">Injected into every live WhatsApp conversation</span>
+
+              {/* Edit / View Toggle Button in Header */}
+              <div className="flex items-center gap-2">
+                {!isEditingPersona ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSavedPersonaBackup(systemPrompt);
+                      setIsEditingPersona(true);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl border border-[#DDD6FE] bg-[#F4F0FD] hover:bg-[#EDE9FE] text-[#7C3AED] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Edit Persona</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleCancelPersonaEdit}
+                      disabled={isSavingPersona}
+                      className="px-3 py-1.5 rounded-xl border border-[#D0D5DD] bg-white hover:bg-[#F9FAFB] text-[#344054] text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSavePersona}
+                      disabled={isSavingPersona}
+                      className="px-3.5 py-1.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingPersona ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isSavingPersona ? 'Saving...' : 'Save Persona'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <textarea
-              rows={5}
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              placeholder="You are DhiGrowth AI Business Concierge..."
-              className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-3.5 rounded-xl text-xs text-[#101828] font-mono leading-relaxed focus:bg-white focus:outline-none focus:border-[#7C3AED] resize-none"
-            />
+            {/* Presets Quick Selector (Shown in edit mode) */}
+            {isEditingPersona && (
+              <div className="p-3 bg-[#F9FAFB] border border-[#EAECF0] rounded-xl space-y-2 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold font-mono uppercase tracking-wider text-[#667085]">
+                    Quick Persona Presets
+                  </span>
+                  <span className="text-[10px] text-[#7C3AED]">
+                    Click to load business template
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PERSONA_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setSystemPrompt(preset.prompt)}
+                      className="text-xs px-2.5 py-1 rounded-lg bg-white border border-[#E9D8FD] hover:border-[#7C3AED] hover:bg-purple-50/50 text-[#344054] hover:text-[#7C3AED] font-medium transition-all cursor-pointer shadow-2xs"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Persona Content Box: View Mode vs Edit Mode */}
+            {!isEditingPersona ? (
+              <div
+                onClick={() => {
+                  setSavedPersonaBackup(systemPrompt);
+                  setIsEditingPersona(true);
+                }}
+                className="group relative p-4 rounded-xl border border-purple-200 bg-purple-50/20 hover:bg-purple-50/40 hover:border-purple-300 transition-all cursor-pointer font-mono text-xs text-[#101828] leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap"
+                title="Click anywhere to edit business instructions"
+              >
+                {systemPrompt ? (
+                  systemPrompt
+                ) : (
+                  <span className="text-[#98A2B3] italic">
+                    No custom persona configured yet. Click "Edit Persona" to define your business assistant tone, services, and appointment rules.
+                  </span>
+                )}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-xs border border-purple-200 px-2 py-1 rounded-md text-[10px] font-bold text-[#7C3AED] flex items-center gap-1 shadow-2xs">
+                  <Edit3 className="w-3 h-3" />
+                  <span>Click to Edit</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 animate-in fade-in">
+                <textarea
+                  rows={8}
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  placeholder="You are DhiGrowth AI Business Concierge..."
+                  autoFocus
+                  className="w-full bg-white border-2 border-[#7C3AED] p-3.5 rounded-xl text-xs text-[#101828] font-mono leading-relaxed focus:outline-none ring-2 ring-[#7C3AED]/20 resize-y"
+                />
+
+                {/* Bottom Action Toolbar inside Edit Mode */}
+                <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                  <div className="flex items-center gap-3 text-[11px] text-[#667085] font-mono">
+                    <span>
+                      {(systemPrompt || '').length} characters
+                    </span>
+                    <span>•</span>
+                    <span>
+                      {(systemPrompt || '').trim().split(/\s+/).filter(Boolean).length} words
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSystemPrompt(DEFAULT_PERSONA_PROMPT)}
+                      className="text-[#7C3AED] hover:underline flex items-center gap-1 font-sans font-bold cursor-pointer ml-2"
+                      title="Reset to official DhiGrowth persona"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Reset to Default</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCancelPersonaEdit}
+                      disabled={isSavingPersona}
+                      className="px-3 py-1.5 rounded-xl border border-[#D0D5DD] bg-white hover:bg-[#F9FAFB] text-[#344054] text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSavePersona}
+                      disabled={isSavingPersona}
+                      className="px-4 py-1.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingPersona ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isSavingPersona ? 'Saving...' : 'Save Persona'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <p className="text-[11px] text-[#667085]">
               Customize your tone, service highlights (App Development, AI Solutions, WhatsApp CRM), and instructions for handling price inquiries.
             </p>
