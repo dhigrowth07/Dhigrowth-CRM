@@ -85,6 +85,7 @@ export const BroadcastDueModal = ({ onClose }) => {
     isBroadcastDueModalOpen,
     setIsBroadcastDueModalOpen,
     showToast,
+    hasNavPermission,
   } = useApp();
 
   const [broadcastDesc, setBroadcastDesc] = useState('WAPPPILOT WhatsApp CRM & AI Business Concierge');
@@ -97,7 +98,7 @@ export const BroadcastDueModal = ({ onClose }) => {
 
   const textareaRef = useRef(null);
 
-  if (!isBroadcastDueModalOpen) return null;
+  if (!isBroadcastDueModalOpen || (typeof hasNavPermission === 'function' && !hasNavPermission('send_due_all'))) return null;
 
   // Recipients scoped strictly to current workspace
   const effectiveChats = chats || [];

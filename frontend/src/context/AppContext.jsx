@@ -445,9 +445,9 @@ export const AppProvider = ({ children }) => {
         if (perms['meta-api'] === false || perms['meta_api'] === false || perms['metaKeys'] === false) return false;
         return true;
       }
-      if (navId === 'send_due_all') {
-        if (perms['send_due_all'] === true) return true;
+      if (navId === 'send_due_all' || navId === 'sendDueToAll') {
         if (perms['send_due_all'] === false || perms['sendDueToAll'] === false) return false;
+        if (perms['send_due_all'] === true || perms['sendDueToAll'] === true) return true;
         return true;
       }
 
@@ -2145,6 +2145,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const hasPermission = (permissionKey, targetUser = null) => {
+    const navKey = permissionKey === 'sendDueToAll' ? 'send_due_all' : permissionKey;
+    if (navKey === 'send_due_all' || (ALL_PERMISSION_KEYS || []).includes(navKey)) {
+      return hasNavPermission(navKey, targetUser ? { username: targetUser } : null);
+    }
+
     // Super Admin has master access to everything
     const activeUsername = currentUser?.username?.toLowerCase()?.trim();
     if (currentUser?.isAdmin || activeUsername === 'admin') {

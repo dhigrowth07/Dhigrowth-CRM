@@ -87,7 +87,11 @@ export const TeamInbox = () => {
     clientTenants,
     getChatCountForWorkspace,
     setActiveTab,
+    hasNavPermission,
   } = useApp();
+
+  const canSendDue = typeof hasNavPermission === 'function' ? hasNavPermission('send_due_all') : true;
+  const canBroadcastTemplate = typeof hasNavPermission === 'function' ? hasNavPermission('templates') : true;
 
   useEffect(() => {
     if (typeof requestNotificationPermission === 'function') {
@@ -1410,30 +1414,36 @@ export const TeamInbox = () => {
             </div>
           )}
 
-          {/* Quick Broadcast Actions (2-column responsive pills) */}
-          <div className="grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                setBroadcastSummary(null);
-                setIsBroadcastDueModalOpen(true);
-              }}
-              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1 sm:py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
-              title="Send Payment Due PDF with payment link to all WhatsApp contacts"
-            >
-              <Zap className="w-3.5 h-3.5 text-[#0284C7] group-hover:scale-110 transition-transform shrink-0" />
-              <span className="truncate">Send Due to All</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsBroadcastTemplateModalOpen(true)}
-              className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1 sm:py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
-              title="Send interactive template with Yes reply button to all WhatsApp contacts"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#0284C7] group-hover:scale-110 transition-transform shrink-0" />
-              <span className="truncate">Send Template (Yes)</span>
-            </button>
-          </div>
+          {/* Quick Broadcast Actions (Responsive permission-gated pills) */}
+          {(canSendDue || canBroadcastTemplate) && (
+            <div className={`grid gap-1.5 ${canSendDue && canBroadcastTemplate ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {canSendDue && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBroadcastSummary(null);
+                    setIsBroadcastDueModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1 sm:py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
+                  title="Send Payment Due PDF with payment link to all WhatsApp contacts"
+                >
+                  <Zap className="w-3.5 h-3.5 text-[#0284C7] group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="truncate">Send Due to All</span>
+                </button>
+              )}
+              {canBroadcastTemplate && (
+                <button
+                  type="button"
+                  onClick={() => setIsBroadcastTemplateModalOpen(true)}
+                  className="flex items-center justify-center gap-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-1 sm:py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs group min-w-0"
+                  title="Send interactive template with Yes reply button to all WhatsApp contacts"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#0284C7] group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="truncate">Send Template (Yes)</span>
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="relative">
             <Search className="w-4 h-4 text-[#98A2B3] absolute left-3 top-2 sm:top-2.5" />

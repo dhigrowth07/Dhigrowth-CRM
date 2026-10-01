@@ -61,13 +61,14 @@ export const ClientPortal = () => {
     testMetaConfig,
     isMetaLoading,
     hasPermission,
+    hasNavPermission,
     setIsBroadcastDueModalOpen,
     clientViewMode,
     toggleClientViewMode,
     chats,
   } = useApp();
 
-  const canSendDue = hasPermission('sendDueToAll', currentUser?.username || 'client');
+  const canSendDue = typeof hasNavPermission === 'function' ? hasNavPermission('send_due_all') : hasPermission('sendDueToAll', currentUser?.username || 'client');
   const isSuperAdmin = Boolean(
     currentUser?.isSuperAdmin ||
     currentUser?.username?.toLowerCase() === 'admin' ||

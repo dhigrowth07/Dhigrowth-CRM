@@ -65,6 +65,7 @@ export const DashboardOverview = () => {
     userPermissions,
     updateUserPermission,
     isSuperAdmin,
+    hasNavPermission,
   } = useApp();
 
   const [activeChannelToConnect, setActiveChannelToConnect] = useState(null);
@@ -495,29 +496,31 @@ export const DashboardOverview = () => {
 
           <div className="space-y-2.5">
             {/* Action: Broadcast Payment Due Invoices */}
-            <div
-              onClick={() => {
-                setActiveTab('inbox');
-                setIsBroadcastDueModalOpen(true);
-              }}
-              className="p-3.5 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-between cursor-pointer hover-item-card group"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#7C3AED] flex items-center justify-center text-white icon-box transition-colors shadow-2xs">
-                  <Zap className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-[#101828] flex items-center gap-1.5">
-                    <span>Send Payment Due PDFs to All Contacts</span>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#86EFAC]">
-                      Auto-Receipt
-                    </span>
+            {typeof hasNavPermission === 'function' && hasNavPermission('send_due_all') && (
+              <div
+                onClick={() => {
+                  setActiveTab('inbox');
+                  setIsBroadcastDueModalOpen(true);
+                }}
+                className="p-3.5 rounded-2xl bg-[#F4F0FD] border border-[#E9D8FD] flex items-center justify-between cursor-pointer hover-item-card group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#7C3AED] flex items-center justify-center text-white icon-box transition-colors shadow-2xs">
+                    <Zap className="w-4 h-4 text-white" />
                   </div>
-                  <div className="text-[11px] text-[#667085]">Dispatches Due PDF & pay link; auto-sends Paid Receipt on payment</div>
+                  <div>
+                    <div className="text-xs font-bold text-[#101828] flex items-center gap-1.5">
+                      <span>Send Payment Due PDFs to All Contacts</span>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#86EFAC]">
+                        Auto-Receipt
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#667085]">Dispatches Due PDF & pay link; auto-sends Paid Receipt on payment</div>
+                  </div>
                 </div>
+                <ArrowRight className="w-4 h-4 text-[#7C3AED] arrow-icon transition-all" />
               </div>
-              <ArrowRight className="w-4 h-4 text-[#7C3AED] arrow-icon transition-all" />
-            </div>
+            )}
 
             {/* Step 1: Connect a channel */}
             <div
