@@ -78,6 +78,7 @@ export const TeamInbox = () => {
     metaConfig,
     currentWorkspaceId,
     currentUser,
+    currentTenant,
     adminViewProfile,
     subscription,
     openCheckout,
