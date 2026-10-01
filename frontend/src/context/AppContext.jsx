@@ -945,29 +945,41 @@ export const AppProvider = ({ children }) => {
   });
   const [isAiConfigLoading, setIsAiConfigLoading] = useState(false);
 
-  const fetchAiConfig = async () => {
+  const fetchAiConfig = async (overrideWorkspaceId, overrideUsername) => {
     try {
-      const cleanUser = currentUser?.username?.toLowerCase()?.trim();
-      const tenantKey = cleanUser || currentWorkspaceId;
+      const activeWs = overrideWorkspaceId || currentWorkspaceId;
+      const cleanUser = (overrideUsername || currentUser?.username || '').toLowerCase().trim();
+      const isSitarc =
+        activeWs === 'b0000000-0000-0000-0000-000000000002' ||
+        cleanUser.includes('sitarc') ||
+        currentUser?.companyName?.toLowerCase()?.includes('sitarc') ||
+        currentUser?.name?.toLowerCase()?.includes('sitarc');
+      const tenantKey = isSitarc ? 'sitarc' : (cleanUser || activeWs || 'default');
+
+      // Check per-tenant local storage first
       if (tenantKey) {
         try {
           const tenantSaved = localStorage.getItem(`dhigrowth_ai_config_${tenantKey}`);
           if (tenantSaved) {
             const parsed = JSON.parse(tenantSaved);
             if (parsed && typeof parsed === 'object') {
-              setAiConfig((prev) => ({ ...prev, ...parsed }));
+              // Guard: If Si'Tarc, don't use old cached DhiGrowth prompt
+              if (!isSitarc || !parsed.systemPrompt?.includes('DhiGrowth')) {
+                setAiConfig((prev) => ({ ...prev, ...parsed }));
+              }
             }
           }
         } catch {}
       }
 
+      const qs = `?workspaceId=${encodeURIComponent(isSitarc ? 'b0000000-0000-0000-0000-000000000002' : (activeWs || ''))}&tenant=${encodeURIComponent(tenantKey)}`;
       let res;
       try {
-        res = await fetch(`${BACKEND_URL}/api/ai-config`);
+        res = await fetch(`${BACKEND_URL}/api/ai-config${qs}`);
       } catch {}
       if (!res || !res.ok) {
         try {
-          res = await fetch('http://localhost:4000/api/ai-config');
+          res = await fetch(`http://localhost:4000/api/ai-config${qs}`);
         } catch {}
       }
       if (res && res.ok) {
@@ -975,10 +987,18 @@ export const AppProvider = ({ children }) => {
         if (raw && !raw.trim().startsWith('<')) {
           const data = JSON.parse(raw);
           if (data.success && data.config) {
-            setAiConfig((prev) => ({
-              ...prev,
-              ...data.config,
-            }));
+            // Guard: ensure Si'Tarc does not get contaminated with DhiGrowth prompt
+            if (isSitarc && data.config.systemPrompt && data.config.systemPrompt.includes('DhiGrowth')) {
+              console.warn('[AppContext] Sanitizing SiTarc prompt from DhiGrowth fallback');
+            } else {
+              setAiConfig((prev) => ({
+                ...prev,
+                ...data.config,
+              }));
+              try {
+                localStorage.setItem(`dhigrowth_ai_config_${tenantKey}`, JSON.stringify(data.config));
+              } catch {}
+            }
           }
         }
       }
@@ -990,7 +1010,14 @@ export const AppProvider = ({ children }) => {
   const saveAiConfig = async (newConfig) => {
     setIsAiConfigLoading(true);
     const cleanUser = currentUser?.username?.toLowerCase()?.trim() || 'user';
-    const tenantKey = cleanUser || currentWorkspaceId || 'default';
+    const isSitarc =
+      newConfig?.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+      currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+      cleanUser.includes('sitarc') ||
+      currentUser?.companyName?.toLowerCase()?.includes('sitarc') ||
+      currentUser?.name?.toLowerCase()?.includes('sitarc');
+    const tenantKey = isSitarc ? 'sitarc' : (cleanUser || currentWorkspaceId || 'default');
+    const activeWs = isSitarc ? 'b0000000-0000-0000-0000-000000000002' : (newConfig?.workspaceId || currentWorkspaceId);
 
     // 1. Immediately update state so UI responds without delay
     setAiConfig((prev) => ({
@@ -1002,16 +1029,18 @@ export const AppProvider = ({ children }) => {
         : prev?.maskedKey,
     }));
 
-    // 2. Persist locally to storage (both global and per-tenant)
+    // 2. Persist locally to storage (per-tenant only, never overwrite global with tenant prompt)
     try {
       localStorage.setItem(`dhigrowth_ai_config_${tenantKey}`, JSON.stringify(newConfig));
-      localStorage.setItem('dhigrowth_ai_config', JSON.stringify(newConfig));
+      if (!isSitarc && tenantKey !== 'sitarc') {
+        localStorage.setItem('dhigrowth_ai_config', JSON.stringify(newConfig));
+      }
     } catch {}
 
     // 3. Update tenant dedicated configuration if tenant account
-    if (currentUser?.id || currentUser?.username) {
+    if (currentUser?.id || currentUser?.username || isSitarc) {
       try {
-        const userKey = currentUser.id || currentUser.username;
+        const userKey = currentUser?.id || currentUser?.username || 'sitarc';
         if (typeof updateTenantAiConfig === 'function') {
           updateTenantAiConfig(userKey, {
             aiProvider: newConfig.provider || 'gemini',
@@ -1023,18 +1052,21 @@ export const AppProvider = ({ children }) => {
       } catch {}
     }
 
-    // 4. Send to backend if available
+    // 4. Send to backend with workspace and tenant identification
     let res;
     let data = null;
+    const payload = {
+      ...newConfig,
+      workspaceId: activeWs,
+      tenantId: currentUser?.id || currentUser?.username || (isSitarc ? 'sitarc' : undefined),
+      updatedBy: cleanUser,
+    };
     try {
       try {
         res = await fetch(`${BACKEND_URL}/api/ai-config`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...newConfig,
-            updatedBy: cleanUser,
-          }),
+          body: JSON.stringify(payload),
         });
       } catch {}
 
@@ -1043,10 +1075,7 @@ export const AppProvider = ({ children }) => {
           res = await fetch(`http://localhost:4000/api/ai-config`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...newConfig,
-              updatedBy: cleanUser,
-            }),
+            body: JSON.stringify(payload),
           });
         } catch {}
       }

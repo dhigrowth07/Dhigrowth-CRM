@@ -79,14 +79,26 @@ export const handleInboundWebhook = async (req, res) => {
             continue;
           }
 
+          const rawDisplayPhone = String(change.metadata?.display_phone_number || '').replace(/[^0-9]/g, '');
+          const rawWabaId = String(entry.id || '').trim();
           const phoneNumberId =
             change.metadata?.phone_number_id ||
             process.env.META_WHATSAPP_PHONE_NUMBER_ID ||
             '1272943605907701';
-          const matchedTenant = getTenantByPhoneNumberId(phoneNumberId);
-          const tenantWorkspaceId = matchedTenant?.workspaceId || DEFAULT_WORKSPACE_ID;
-          const tenantAccessToken =
-            matchedTenant?.accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
+
+          let matchedTenant = getTenantByPhoneNumberId(phoneNumberId);
+          const isSitarcIncoming =
+            phoneNumberId === '1399911839867541' ||
+            rawDisplayPhone.includes('9487580473') ||
+            rawWabaId === '1395172716062686' ||
+            matchedTenant?.username === 'sitarc';
+
+          const tenantWorkspaceId = isSitarcIncoming
+            ? 'b0000000-0000-0000-0000-000000000002'
+            : (matchedTenant?.workspaceId || DEFAULT_WORKSPACE_ID);
+          const tenantAccessToken = isSitarcIncoming
+            ? (matchedTenant?.accessToken || 'EAATZCRGaYrzABSlTfQO5YOV9tU1CSCGK0P7jnbgDcTVtVaf4okjyqLEJDQ0NVjD5hdSxCVmZAb1kxsnn8xB2AK8omZBORZCHDAirZCfkCI0seV4hEoogEZAXANuQA86bwSFafNsuHerfxmTUTZCtHvBGIZCsICLd8zf4QiXGoLTTWrT1Abt4YxTg0JJoOEP1dAZDZD')
+            : (matchedTenant?.accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN);
 
           const messages = Array.isArray(change.messages) ? change.messages : [];
 
@@ -232,9 +244,14 @@ async function processIncomingChatMessage({
   sendReply,
 }) {
   const isValidUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  let resolvedWsId = workspaceId;
-  // If old/transitional Si'Tarc workspace ID or Si'Tarc phone number, route to standard Si'Tarc workspace
-  if (resolvedWsId === 'b1a0f6303e25-c325-3844-871b-c6fb9aedb713' || phoneNumberId === '1399911839867541') {
+  // If Si'Tarc workspace, phone ID, or tenant name, route to standard Si'Tarc workspace
+  const isSitarcTarget =
+    resolvedWsId === 'b0000000-0000-0000-0000-000000000002' ||
+    resolvedWsId === 'b1a0f6303e25-c325-3844-871b-c6fb9aedb713' ||
+    phoneNumberId === '1399911839867541' ||
+    String(resolvedWsId || '').toLowerCase().includes('sitarc');
+
+  if (isSitarcTarget) {
     resolvedWsId = 'b0000000-0000-0000-0000-000000000002';
   }
   const effectiveWorkspaceId = isValidUuid(resolvedWsId) ? resolvedWsId : DEFAULT_WORKSPACE_ID;
@@ -447,13 +464,13 @@ async function processIncomingChatMessage({
     }
 
     // 5. Generate AI Concierge Response for all other words and questions
-    console.log(`🤖 Dhigrowth AI Concierge is generating response for: "${messageText}" with history context...`);
+    console.log(`🤖 Dhigrowth / Si'Tarc AI Concierge is generating response for: "${messageText}" with history context...`);
     const aiResult = await generateAIResponse({
       customerName,
       customerMessage: messageText,
       channelType,
       conversationHistory,
-      workspaceId,
+      workspaceId: effectiveWorkspaceId,
     });
 
     const aiResponseText = typeof aiResult === 'object' && aiResult.reply ? aiResult.reply : String(aiResult);
@@ -470,12 +487,18 @@ async function processIncomingChatMessage({
 
         const aiButtons = (typeof aiResult === 'object' && Array.isArray(aiResult.buttons)) ? aiResult.buttons : null;
 
+        const isSitarcMsg =
+          effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+          phoneNumberId === '1399911839867541' ||
+          String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc');
+
         if (channelType === 'whatsapp' && aiButtons && aiButtons.length > 0 && phoneNumberId && accessToken) {
           try {
             const btnRes = await sendWhatsAppInteractiveButtons({
               phoneNumberId,
               accessToken,
               recipientPhone: recipientPhone || senderIdentifier,
+              headerText: isSitarcMsg ? "Si'Tarc Testing Laboratory" : 'DhiGrowth IT Services',
               imageUrl: aiImageUrl,
               bodyText: aiResponseText,
               buttons: aiButtons,
@@ -619,6 +642,11 @@ async function handleLeadQualificationFlow({
     return inquiryKeywords.some((kw) => lower.includes(kw));
   };
 
+  const isSitarcTenant =
+    effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+    phoneNumberId === '1399911839867541' ||
+    String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc');
+
   // 1. Reset / restart commands
   if (['reset', 'restart', 'start over', 'menu'].includes(lowerMsg)) {
     clearQualificationSession(senderIdentifier);
@@ -629,7 +657,7 @@ async function handleLeadQualificationFlow({
   const isTellMore = lowerMsg.includes("tell me more") || lowerMsg.includes("tell more") || lowerMsg === 'btn_more';
   const isUserAskingQuestion = isQuestionOrInquiry(cleanMsg);
 
-  // If the user's message is an informational question or inquiry (e.g. "About dhigrowth", "Tell about your services"),
+  // If the user's message is an informational question or inquiry (e.g. "About sitarc", "Tell about your services"),
   // DO NOT intercept it with qualification form steps — allow the AI Concierge to reply intelligently!
   if (isUserAskingQuestion && !isYesClick) {
     console.log(`🧠 [LeadQualification] Message "${cleanMsg}" detected as conversational question/inquiry. Passing to AI Concierge.`);
@@ -639,7 +667,7 @@ async function handleLeadQualificationFlow({
   // Check dynamic templates configured in the Templates page
   let matchedTemplate = null;
   try {
-    const wsTemplates = getWorkspaceTemplates(effectiveWorkspaceId);
+    const wsTemplates = getWorkspaceTemplates(isSitarcTenant ? 'b0000000-0000-0000-0000-000000000002' : effectiveWorkspaceId);
     if (Array.isArray(wsTemplates)) {
       matchedTemplate = wsTemplates.find((t) => {
         if (!t.footer_text) return false;
@@ -647,9 +675,15 @@ async function handleLeadQualificationFlow({
         return triggers.some((tr) => lowerMsg === tr || lowerMsg.includes(tr));
       });
       if (!matchedTemplate && isGreetingOnly) {
-        matchedTemplate = wsTemplates.find(
-          (t) => t.name === 'ai_it_discovery' || t.name === 'hi' || (t.footer_text && t.footer_text.includes('hi'))
-        ) || wsTemplates[0];
+        if (isSitarcTenant) {
+          matchedTemplate = wsTemplates.find(
+            (t) => t.name === 'si_tarc_testing_inquiry' || t.name === 'sitarc_testing_inquiry' || (t.footer_text && t.footer_text.includes('sitarc'))
+          ) || SITARC_PRESET_TEMPLATES[0];
+        } else {
+          matchedTemplate = wsTemplates.find(
+            (t) => t.name === 'ai_it_discovery' || t.name === 'hi' || (t.footer_text && t.footer_text.includes('hi'))
+          ) || wsTemplates[0];
+        }
       }
     }
   } catch (tErr) {
@@ -667,43 +701,44 @@ async function handleLeadQualificationFlow({
         name: knownName,
       });
 
-      const isSitarcTenant =
-        effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
-        phoneNumberId === '1399911839867541';
-
       // Prepare dynamic template content
       let welcomeMsg = matchedTemplate?.body_text;
-      if (!welcomeMsg) {
-        if (isSitarcTenant) {
-          welcomeMsg = `Hello 👋 Welcome to *Si'Tarc Testing & Calibration Laboratory*.\n\nHow can we help you today?\n\n🔧 *Instrument Calibration*\n⚙️ *Mechanical Testing*\n⚡ *Electrical Testing*\n🧪 *Chemical Testing*\n💧 *Water Testing*\n🍚 *Food Testing*\n📞 *Contact Our Team*`;
-        } else {
-          welcomeMsg = `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`;
+      if (isSitarcTenant) {
+        if (!welcomeMsg || welcomeMsg.toLowerCase().includes('dhigrowth')) {
+          welcomeMsg = `Hello 👋 Welcome to *Si'Tarc Testing & Calibration Laboratory*, Coimbatore 🔬\n\nHow can our accredited laboratory assist you today?\n\n1️⃣ *Pump & Motor Testing* (IS standards, BEE Star Rating)\n2️⃣ *Calibration Services* (NABL / ISO 17025 Accredited)\n3️⃣ *Mechanical, Electrical & Chemical Testing*\n4️⃣ *Water & Food Testing*\n\nReply with 1, 2, 3, 4 or tap below to connect with our technical engineers!`;
         }
+      } else if (!welcomeMsg) {
+        welcomeMsg = `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`;
       }
+
       if (knownName) {
         welcomeMsg = welcomeMsg.replace(/\{\{name\}\}/gi, knownName);
       } else {
         welcomeMsg = welcomeMsg.replace(/\{\{name\}\}/gi, 'there');
       }
 
-      const imageUrl = (matchedTemplate?.header_type === 'IMAGE' && matchedTemplate?.header_content) ||
-        (matchedTemplate?.header_content && matchedTemplate.header_content.startsWith('http') ? matchedTemplate.header_content : (isSitarcTenant ? 'https://www.sitarc.com/images/logo.png' : 'https://www.dhigrowth.com/logo.png'));
+      const imageUrl = isSitarcTenant
+        ? 'https://www.sitarc.com/images/logo.png'
+        : ((matchedTemplate?.header_type === 'IMAGE' && matchedTemplate?.header_content) ||
+          (matchedTemplate?.header_content && matchedTemplate.header_content.startsWith('http') ? matchedTemplate.header_content : 'https://www.dhigrowth.com/logo.png'));
 
-      const templateButtons = Array.isArray(matchedTemplate?.buttons) && matchedTemplate.buttons.length > 0
-        ? matchedTemplate.buttons.slice(0, 3).map((b, idx) => ({
-            id: b.id || `btn_${idx + 1}`,
-            title: String(b.text || b.title || 'Select').slice(0, 20),
-          }))
-        : isSitarcTenant
-        ? [
-            { id: 'btn_calib', title: '🔧 Calibration' },
-            { id: 'btn_testing', title: '⚙️ Testing' },
-            { id: 'btn_contact', title: '📞 Contact Us' },
-          ]
-        : [
-            { id: 'btn_yes', title: 'Yes im interested' },
-            { id: 'btn_more', title: 'Tell more' },
-          ];
+      let templateButtons = [];
+      if (isSitarcTenant) {
+        templateButtons = [
+          { id: 'btn_quote', title: 'Request Test Quote' },
+          { id: 'btn_engineer', title: 'Connect Engineer' },
+        ];
+      } else if (Array.isArray(matchedTemplate?.buttons) && matchedTemplate.buttons.length > 0) {
+        templateButtons = matchedTemplate.buttons.slice(0, 3).map((b, idx) => ({
+          id: b.id || `btn_${idx + 1}`,
+          title: String(b.text || b.title || 'Select').slice(0, 20),
+        }));
+      } else {
+        templateButtons = [
+          { id: 'btn_yes', title: 'Yes im interested' },
+          { id: 'btn_more', title: 'Tell more' },
+        ];
+      }
 
       // Try sending interactive button message first on WhatsApp
       if (channelType === 'whatsapp' && phoneNumberId && accessToken && templateButtons.length > 0) {
@@ -712,6 +747,7 @@ async function handleLeadQualificationFlow({
             phoneNumberId,
             accessToken,
             recipientPhone: cleanPhone,
+            headerText: isSitarcTenant ? "Si'Tarc Testing Laboratory" : 'DhiGrowth IT Services',
             imageUrl,
             bodyText: welcomeMsg,
             footerText: 'Tap an option to respond:',
@@ -760,35 +796,50 @@ async function handleLeadQualificationFlow({
   if (session) {
     // STEP 1: Awaiting Service
     if (session.step === 'AWAITING_SERVICE') {
-      if (isYesClick || isTellMore) {
-        const knownName = session.name || (customerName && !customerName.startsWith('Customer') && !customerName.startsWith('Instagram') ? customerName : 'Valued Customer');
+      const isAffirmation = isYesClick || isTellMore || lowerMsg === 'btn_quote' || lowerMsg === 'btn_engineer' || lowerMsg === 'request test quote' || lowerMsg === 'connect engineer' || lowerMsg.includes('connect') || lowerMsg.includes('quote');
+      if (isAffirmation) {
+        const knownName = session.name || (customerName && !customerName.startsWith('Customer') && !customerName.startsWith('Instagram') ? customerName : (isSitarcTenant ? 'Valued Client' : 'Valued Customer'));
         const finalPhone = cleanPhone ? `+${cleanPhone}` : senderIdentifier;
 
         // Auto-stream confirmation to Google Sheets right away
         sendLeadToGoogleSheets({
           name: knownName,
           phone: finalPhone,
-          service: 'DhiGrowth Services (App Dev / AI Auto-Pilot / WhatsApp CRM)',
+          service: isSitarcTenant ? "Si'Tarc Laboratory Testing & Calibration" : 'DhiGrowth Services (App Dev / AI Auto-Pilot / WhatsApp CRM)',
           purpose: `Customer confirmed interest: "${cleanMsg}"`,
           channel: channelType === 'whatsapp' ? 'WhatsApp' : 'Instagram',
           workspaceId: effectiveWorkspaceId,
           timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
         }).catch((err) => console.warn('[Webhook AutoSync Sheets Error]:', err.message));
 
-        const reply = `Awesome, thank you for confirming, *${knownName}*! 🎉\n\nWe've noted your interest and automatically recorded your details for our development team.\n\nWhich service from DhiGrowth would you like to build or automate?\n\n1️⃣ *Mobile App or Web Platform*\n2️⃣ *AI Business Solutions & Auto-Pilot Bots*\n3️⃣ *WhatsApp CRM & Automation*\n4️⃣ *Custom IT Software*\n\n👉 *Reply with 1, 2, 3, or 4 (or describe what you need):*`;
+        const reply = isSitarcTenant
+          ? `Awesome, thank you for confirming, *${knownName}*! 🔬\n\nWe've noted your interest and automatically recorded your details for our laboratory technical team.\n\nWhich service from Si'Tarc Laboratory do you require?\n\n1️⃣ *Pump & Motor Testing* (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating)\n2️⃣ *Calibration Services* (Electro-Technical, Thermal, Mechanical, Pressure)\n3️⃣ *Electrical, Chemical & Mechanical Testing* (Metals, polymers, cables, raw materials)\n4️⃣ *Water, Food & Environmental Testing* (Drinking water, effluent, food products)\n\n👉 *Reply with 1, 2, 3, or 4 (or describe what you need tested):*`
+          : `Awesome, thank you for confirming, *${knownName}*! 🎉\n\nWe've noted your interest and automatically recorded your details for our development team.\n\nWhich service from DhiGrowth would you like to build or automate?\n\n1️⃣ *Mobile App or Web Platform*\n2️⃣ *AI Business Solutions & Auto-Pilot Bots*\n3️⃣ *WhatsApp CRM & Automation*\n4️⃣ *Custom IT Software*\n\n👉 *Reply with 1, 2, 3, or 4 (or describe what you need):*`;
         await dispatchBotReply(reply);
         return true;
       }
 
       let selectedService = null;
-      if (lowerMsg === '1' || lowerMsg === '1️⃣' || /^(mobile\s+app|app\s+development|flutter|react\s+native|ios|android)$/i.test(lowerMsg) || (lowerMsg.includes('app') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
-        selectedService = 'Mobile App & Web Development';
-      } else if (lowerMsg === '2' || lowerMsg === '2️⃣' || /^(ai|ai\s+solutions|ai\s+bot|auto-pilot|custom\s+ai|agent)$/i.test(lowerMsg) || (lowerMsg.includes('ai') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
-        selectedService = 'AI Business Solutions & Auto-Pilot Bots';
-      } else if (lowerMsg === '3' || lowerMsg === '3️⃣' || /^(whatsapp|whatsapp\s+crm|marketing\s+automation)$/i.test(lowerMsg) || (lowerMsg.includes('whatsapp') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
-        selectedService = 'WhatsApp CRM & Marketing Automation';
-      } else if (lowerMsg === '4' || lowerMsg === '4️⃣' || /^(custom\s+software|enterprise|custom\s+it)$/i.test(lowerMsg) || (lowerMsg.includes('software') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
-        selectedService = 'Custom IT Software & Enterprise Systems';
+      if (isSitarcTenant) {
+        if (lowerMsg === '1' || lowerMsg === '1️⃣' || /^(pump|motor|monobloc|submersible|openwell)$/i.test(lowerMsg) || (lowerMsg.includes('pump') || lowerMsg.includes('motor'))) {
+          selectedService = 'Pump & Motor Testing (IS / BEE Standards)';
+        } else if (lowerMsg === '2' || lowerMsg === '2️⃣' || /^(calib|calibration|gauge|dimension|thermal|pressure)$/i.test(lowerMsg) || lowerMsg.includes('calib') || lowerMsg.includes('gauge')) {
+          selectedService = 'Calibration Services (NABL / ISO 17025 Accredited)';
+        } else if (lowerMsg === '3' || lowerMsg === '3️⃣' || /^(electrical|chemical|mechanical|material|tensile|metal)$/i.test(lowerMsg) || lowerMsg.includes('chemical') || lowerMsg.includes('electrical') || lowerMsg.includes('mechanical')) {
+          selectedService = 'Electrical, Chemical & Mechanical Testing';
+        } else if (lowerMsg === '4' || lowerMsg === '4️⃣' || /^(water|food|effluent|ro\s+water|drinking)$/i.test(lowerMsg) || lowerMsg.includes('water') || lowerMsg.includes('food')) {
+          selectedService = 'Water & Food Testing';
+        }
+      } else {
+        if (lowerMsg === '1' || lowerMsg === '1️⃣' || /^(mobile\s+app|app\s+development|flutter|react\s+native|ios|android)$/i.test(lowerMsg) || (lowerMsg.includes('app') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
+          selectedService = 'Mobile App & Web Development';
+        } else if (lowerMsg === '2' || lowerMsg === '2️⃣' || /^(ai|ai\s+solutions|ai\s+bot|auto-pilot|custom\s+ai|agent)$/i.test(lowerMsg) || (lowerMsg.includes('ai') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
+          selectedService = 'AI Business Solutions & Auto-Pilot Bots';
+        } else if (lowerMsg === '3' || lowerMsg === '3️⃣' || /^(whatsapp|whatsapp\s+crm|marketing\s+automation)$/i.test(lowerMsg) || (lowerMsg.includes('whatsapp') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
+          selectedService = 'WhatsApp CRM & Marketing Automation';
+        } else if (lowerMsg === '4' || lowerMsg === '4️⃣' || /^(custom\s+software|enterprise|custom\s+it)$/i.test(lowerMsg) || (lowerMsg.includes('software') && !lowerMsg.includes('about') && !lowerMsg.includes('what'))) {
+          selectedService = 'Custom IT Software & Enterprise Systems';
+        }
       }
 
       // If user did not pick a valid numbered service or recognized service keyword,
@@ -806,14 +857,18 @@ async function handleLeadQualificationFlow({
             service: selectedService,
             name: knownName,
           });
-          const askPurposeMsg = `Great choice! 🚀 We've noted your interest in *${selectedService}*.\n\nCould you please describe the *purpose or key requirements* of your project?\n(e.g., Target audience, features you need, timeline, or current challenges)`;
+          const askPurposeMsg = isSitarcTenant
+            ? `Great choice! 🔬 We've noted your requirement for *${selectedService}*.\n\nCould you please describe your *sample or testing requirements*?\n(e.g., Equipment rating/range, number of samples, IS standard, or calibration needs)`
+            : `Great choice! 🚀 We've noted your interest in *${selectedService}*.\n\nCould you please describe the *purpose or key requirements* of your project?\n(e.g., Target audience, features you need, timeline, or current challenges)`;
           await dispatchBotReply(askPurposeMsg);
         } else {
           updateQualificationSession(senderIdentifier, {
             step: 'AWAITING_NAME',
             service: selectedService,
           });
-          const askNameMsg = `Great choice! 🚀 We've noted your interest in *${selectedService}*.\n\nMay I know your *Full Name* please?`;
+          const askNameMsg = isSitarcTenant
+            ? `Great choice! 🔬 We've noted your requirement for *${selectedService}*.\n\nMay I know your *Full Name* please?`
+            : `Great choice! 🚀 We've noted your interest in *${selectedService}*.\n\nMay I know your *Full Name* please?`;
           await dispatchBotReply(askNameMsg);
         }
         return true;
@@ -838,7 +893,9 @@ async function handleLeadQualificationFlow({
         name: validName,
       });
 
-      const askPurposeMsg = `Nice to meet you, *${validName}*! 😊\n\nCould you please describe the *purpose or key requirements* of your project?\n(e.g., What features do you need, your business type, or goals?)`;
+      const askPurposeMsg = isSitarcTenant
+        ? `Nice to meet you, *${validName}*! 🔬\n\nCould you please describe your *sample or testing requirements*?\n(e.g., Equipment rating, number of samples, IS standard, or calibration needs)`
+        : `Nice to meet you, *${validName}*! 😊\n\nCould you please describe the *purpose or key requirements* of your project?\n(e.g., What features do you need, your business type, or goals?)`;
       await dispatchBotReply(askPurposeMsg);
       return true;
     }
@@ -851,8 +908,9 @@ async function handleLeadQualificationFlow({
       }
 
       const purpose = cleanMsg;
-      const finalName = session.name || customerName || 'Valued Customer';
-      const finalService = session.service || 'DhiGrowth IT Services';
+      const finalName = session.name || customerName || (isSitarcTenant ? 'Valued Client' : 'Valued Customer');
+      const defaultService = isSitarcTenant ? "Si'Tarc Testing & Calibration" : 'DhiGrowth IT Services';
+      const finalService = session.service || defaultService;
       const finalPhone = cleanPhone ? `+${cleanPhone}` : (recipientPhone || senderIdentifier || '');
 
       const leadData = {
@@ -889,7 +947,9 @@ async function handleLeadQualificationFlow({
       // 3. Mark completed and clear qualification session
       clearQualificationSession(senderIdentifier);
 
-      const confirmMsg = `Thank you so much, *${finalName}*! 🎉\n\nWe have recorded your requirements:\n📋 *Service:* ${finalService}\n👤 *Name:* ${finalName}\n📞 *Contact:* ${finalPhone}\n🎯 *Purpose:* ${purpose}\n\n✅ Your details have been submitted to our DhiGrowth team & synced to our records. A solutions consultant will review your requirements and reach out to you shortly with a personalized proposal! 🚀`;
+      const confirmMsg = isSitarcTenant
+        ? `Thank you so much, *${finalName}*! 🔬\n\nWe have recorded your testing requirements:\n📋 *Service:* ${finalService}\n👤 *Name:* ${finalName}\n📞 *Contact:* ${finalPhone}\n🎯 *Requirements:* ${purpose}\n\n✅ Your details have been submitted to our Si'Tarc Laboratory technical team. A laboratory engineer will review your specifications and contact you shortly with testing schedules and proforma quotes! 🔬`
+        : `Thank you so much, *${finalName}*! 🎉\n\nWe have recorded your requirements:\n📋 *Service:* ${finalService}\n👤 *Name:* ${finalName}\n📞 *Contact:* ${finalPhone}\n🎯 *Purpose:* ${purpose}\n\n✅ Your details have been submitted to our DhiGrowth team & synced to our records. A solutions consultant will review your requirements and reach out to you shortly with a personalized proposal! 🚀`;
 
       await dispatchBotReply(confirmMsg);
       return true;

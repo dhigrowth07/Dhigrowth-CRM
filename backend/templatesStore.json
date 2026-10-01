@@ -174,6 +174,92 @@
         "syncedWithMeta": true,
         "updatedAt": "2026-09-29T05:47:03.208Z"
       }
+    ],
+    "b0000000-0000-0000-0000-000000000002": [
+      {
+        "id": "tpl_sitarc_testing_inquiry",
+        "name": "si_tarc_testing_inquiry",
+        "displayName": "Si'Tarc Testing Inquiry",
+        "badge": "Recommended",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "Si'Tarc Testing Laboratory",
+        "body_text": "Hello {{name}}! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory.\n\nHow can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Mechanical testing and calibration services?\n\nTap below to connect with our technical testing team! 🔬",
+        "footer_text": "hi, hello, hey, start, testing, calibration, pump, motor, sitarc, lab, quote",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Request Test Quote"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Connect Engineer"
+          }
+        ],
+        "variables": [
+          "name"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-10-01T07:00:00.000Z"
+      },
+      {
+        "id": "tpl_sitarc_calibration_booking",
+        "name": "sitarc_calibration_booking",
+        "displayName": "Calibration Booking",
+        "badge": "Popular",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "Si'Tarc Calibration Services",
+        "body_text": "Hi {{name}}! ⚙️ Looking for NABL / ISO 17025 accredited calibration for your industrial instruments, pressure gauges, or thermal equipment?\n\nWe provide comprehensive on-site and laboratory calibration with certified test reports.",
+        "footer_text": "calibration, nabl, iso17025, instruments, report",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Book Calibration"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "View Accreditation"
+          }
+        ],
+        "variables": [
+          "name"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-10-01T07:00:00.000Z"
+      },
+      {
+        "id": "tpl_sitarc_report_status",
+        "name": "sitarc_report_status",
+        "displayName": "Test Report Status",
+        "badge": "High Conversion",
+        "category": "UTILITY",
+        "language": "en_US",
+        "status": "APPROVED",
+        "header_type": "TEXT",
+        "header_content": "Test Report Dispatch",
+        "body_text": "Hello {{name}}! Your sample testing / calibration report is being processed by the Si'Tarc laboratory technical team. Would you like a digital copy dispatched via WhatsApp?",
+        "footer_text": "report, status, certificate, dispatch, sitarc",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Send Test Report"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Speak to Lab Head"
+          }
+        ],
+        "variables": [
+          "name"
+        ],
+        "syncedWithMeta": true,
+        "updatedAt": "2026-10-01T07:00:00.000Z"
+      }
     ]
   },
   "deletedTemplates": []

@@ -15,6 +15,7 @@ import {
 import { generateInvoicePdf } from './invoicePdfGenerator.js';
 import {
   getActiveAiConfig,
+  getAiConfigForWorkspace,
   saveActiveAiConfig,
   testAiConnection,
   generateAIResponse,
@@ -1297,7 +1298,12 @@ app.post('/api/meta-config/test', async (req, res) => {
 // 9. AI API Engine Configuration Endpoints (User-Side)
 app.get('/api/ai-config', (req, res) => {
   try {
-    const config = getActiveAiConfig();
+    const workspaceId =
+      req.query.workspaceId ||
+      req.headers['x-workspace-id'] ||
+      req.query.tenant ||
+      req.query.username;
+    const config = workspaceId ? getAiConfigForWorkspace(workspaceId) : getActiveAiConfig();
     res.json({
       success: true,
       config,
@@ -1309,8 +1315,17 @@ app.get('/api/ai-config', (req, res) => {
 
 app.post('/api/ai-config', async (req, res) => {
   try {
-    const { provider, apiKey, model, systemPrompt, updatedBy = 'user' } = req.body || {};
-    const saved = await saveActiveAiConfig({ provider, apiKey, model, systemPrompt, updatedBy });
+    const { provider, apiKey, model, systemPrompt, updatedBy = 'user', workspaceId, tenantId } = req.body || {};
+    const targetWs = workspaceId || tenantId || req.headers['x-workspace-id'] || req.query.workspaceId;
+    const saved = await saveActiveAiConfig({
+      provider,
+      apiKey,
+      model,
+      systemPrompt,
+      updatedBy,
+      workspaceId: targetWs,
+      tenantId,
+    });
     const provName = saved?.provider || provider || 'gemini';
     const modelName = saved?.model || model || 'gemini-1.5-flash';
     res.json({
@@ -1323,6 +1338,7 @@ app.post('/api/ai-config', async (req, res) => {
         maskedKey: saved?.apiKey ? `${saved.apiKey.slice(0, 7)}...${saved.apiKey.slice(-4)}` : '',
         systemPrompt: saved?.systemPrompt || systemPrompt || '',
         updatedAt: saved?.updatedAt || new Date().toISOString(),
+        isTenantSpecific: Boolean(saved?.isTenantSpecific),
       },
     });
   } catch (err) {

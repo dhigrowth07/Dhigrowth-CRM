@@ -575,30 +575,49 @@ export const AiStudio = () => {
   const [isSavingPersona, setIsSavingPersona] = useState(false);
   const [savedPersonaBackup, setSavedPersonaBackup] = useState(aiConfig?.systemPrompt || '');
 
-  const isSitarcTenant =
+  const isSitarcTenant = Boolean(
     currentUser?.username?.toLowerCase().includes('sitarc') ||
     currentUser?.companyName?.toLowerCase().includes('sitarc') ||
     currentUser?.name?.toLowerCase().includes('sitarc') ||
-    aiConfig?.systemPrompt?.includes("Si'Tarc");
+    currentUser?.workspaceId === 'b0000000-0000-0000-0000-000000000002'
+  );
 
-  // Sync state if aiConfig updates from server
+  // Sync state if aiConfig updates from server or tenant changes
   useEffect(() => {
     if (aiConfig) {
       if (aiConfig.provider) setProvider(aiConfig.provider);
       if (aiConfig.model) setModel(aiConfig.model);
       if (aiConfig.apiKey && !apiKey) setApiKey(aiConfig.apiKey);
-      if (aiConfig.systemPrompt) {
-        setSystemPrompt(aiConfig.systemPrompt);
-        setSavedPersonaBackup(aiConfig.systemPrompt);
-      } else if (isSitarcTenant && !systemPrompt) {
-        setSystemPrompt(SITARC_PERSONA_PROMPT);
-        setSavedPersonaBackup(SITARC_PERSONA_PROMPT);
+
+      if (isSitarcTenant) {
+        // If logged into Si'Tarc, strictly ensure Si'Tarc prompt is used, never DhiGrowth
+        if (aiConfig.systemPrompt && !aiConfig.systemPrompt.includes('DhiGrowth')) {
+          setSystemPrompt(aiConfig.systemPrompt);
+          setSavedPersonaBackup(aiConfig.systemPrompt);
+        } else {
+          setSystemPrompt(SITARC_PERSONA_PROMPT);
+          setSavedPersonaBackup(SITARC_PERSONA_PROMPT);
+        }
+      } else {
+        // Default / DhiGrowth tenant
+        if (aiConfig.systemPrompt && !aiConfig.systemPrompt.includes("Si'Tarc")) {
+          setSystemPrompt(aiConfig.systemPrompt);
+          setSavedPersonaBackup(aiConfig.systemPrompt);
+        } else if (!isSitarcTenant && aiConfig.systemPrompt?.includes("Si'Tarc")) {
+          // If a DhiGrowth user gets a Si'Tarc prompt by mistake, reset to DhiGrowth default
+          const defaultDhiPrompt = PERSONA_PRESETS[0]?.prompt || aiConfig.systemPrompt;
+          setSystemPrompt(defaultDhiPrompt);
+          setSavedPersonaBackup(defaultDhiPrompt);
+        } else {
+          setSystemPrompt(aiConfig.systemPrompt || '');
+          setSavedPersonaBackup(aiConfig.systemPrompt || '');
+        }
       }
     } else if (isSitarcTenant && !systemPrompt) {
       setSystemPrompt(SITARC_PERSONA_PROMPT);
       setSavedPersonaBackup(SITARC_PERSONA_PROMPT);
     }
-  }, [aiConfig, isSitarcTenant]);
+  }, [aiConfig, isSitarcTenant, currentUser?.id, currentUser?.username]);
 
   const currentProviderConfig = PROVIDERS.find((p) => p.id === provider) || PROVIDERS[0];
 
@@ -664,18 +683,23 @@ export const AiStudio = () => {
       const activeKey = (apiKey || '').trim();
       const activeMod = model || 'gemini-1.5-flash';
       const promptToSave = systemPrompt || (isSitarcTenant ? SITARC_PERSONA_PROMPT : '');
+      const targetWorkspaceId = isSitarcTenant
+        ? 'b0000000-0000-0000-0000-000000000002'
+        : (currentUser?.workspaceId || 'b0000000-0000-0000-0000-000000000001');
+      const targetTenantId = currentUser?.id || currentUser?.username || (isSitarcTenant ? 'sitarc' : 'sri');
 
       await saveAiConfig({
         provider: activeProv,
         apiKey: activeKey,
         model: activeMod,
         systemPrompt: promptToSave,
+        workspaceId: targetWorkspaceId,
+        tenantId: targetTenantId,
       });
 
-      const userKey = currentUser?.id || currentUser?.workspaceId || currentUser?.username || 'sitarc';
       if (typeof updateTenantAiConfig === 'function') {
         try {
-          updateTenantAiConfig(userKey, {
+          updateTenantAiConfig(targetTenantId, {
             aiProvider: activeProv,
             aiApiKey: activeKey,
             aiModel: activeMod,
@@ -698,18 +722,23 @@ export const AiStudio = () => {
       const activeKey = (apiKey || '').trim();
       const activeMod = model || 'gemini-1.5-flash';
       const promptToSave = systemPrompt || (isSitarcTenant ? SITARC_PERSONA_PROMPT : '');
+      const targetWorkspaceId = isSitarcTenant
+        ? 'b0000000-0000-0000-0000-000000000002'
+        : (currentUser?.workspaceId || 'b0000000-0000-0000-0000-000000000001');
+      const targetTenantId = currentUser?.id || currentUser?.username || (isSitarcTenant ? 'sitarc' : 'sri');
 
       await saveAiConfig({
         provider: activeProv,
         apiKey: activeKey,
         model: activeMod,
         systemPrompt: promptToSave,
+        workspaceId: targetWorkspaceId,
+        tenantId: targetTenantId,
       });
 
-      const userKey = currentUser?.id || currentUser?.workspaceId || currentUser?.username || 'sitarc';
       if (typeof updateTenantAiConfig === 'function') {
         try {
-          updateTenantAiConfig(userKey, {
+          updateTenantAiConfig(targetTenantId, {
             aiProvider: activeProv,
             aiApiKey: activeKey,
             aiModel: activeMod,

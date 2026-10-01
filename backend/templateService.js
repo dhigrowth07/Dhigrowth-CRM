@@ -107,10 +107,10 @@ export const SITARC_PRESET_TEMPLATES = [
     header_type: 'TEXT',
     header_content: "Si'Tarc Testing Laboratory",
     body_text: "Hello {{name}}! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory.\n\nHow can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Mechanical testing and calibration services?\n\nTap below to connect with our technical testing team! 🔬",
-    footer_text: 'testing, calibration, pump, motor, sitarc, lab, quote',
+    footer_text: 'hi, hello, hey, start, testing, calibration, pump, motor, sitarc, lab, quote',
     buttons: [
       { type: 'QUICK_REPLY', text: 'Request Test Quote' },
-      { type: 'QUICK_REPLY', text: 'Connect with Engineer' },
+      { type: 'QUICK_REPLY', text: 'Connect Engineer' },
     ],
     variables: ['name'],
     syncedWithMeta: true,
@@ -236,12 +236,15 @@ function saveTemplatesToDisk() {
  * Get all templates for a workspace (cached or merged with starter templates)
  */
 export function getWorkspaceTemplates(workspaceId = 'b0000000-0000-0000-0000-000000000001') {
+  const isSitarc = workspaceId === 'b0000000-0000-0000-0000-000000000002' || String(workspaceId).toLowerCase().includes('sitarc');
+
   if (!Array.isArray(templatesStore.workspaces[workspaceId])) {
     const deleted = templatesStore.deletedTemplates || [];
-    const starters = STARTER_TEMPLATES.filter(
+    const baseStarters = isSitarc ? SITARC_PRESET_TEMPLATES : STARTER_TEMPLATES;
+    const starters = baseStarters.filter(
       (t) => !deleted.includes(t.name) && !deleted.includes(String(t.id))
     );
-    templatesStore.workspaces[workspaceId] = workspaceId === 'b0000000-0000-0000-0000-000000000001' ? [...starters] : [];
+    templatesStore.workspaces[workspaceId] = [...starters];
     saveTemplatesToDisk();
   }
 
@@ -250,7 +253,6 @@ export function getWorkspaceTemplates(workspaceId = 'b0000000-0000-0000-0000-000
   const currentList = templatesStore.workspaces[workspaceId];
   let changed = false;
 
-  const isSitarc = workspaceId === 'b0000000-0000-0000-0000-000000000002';
   const targetPresets = isSitarc ? SITARC_PRESET_TEMPLATES : DHI_PRESET_TEMPLATES;
 
   // Walk in reverse so they are unshifted in order [0, 1, 2, 3] at the beginning

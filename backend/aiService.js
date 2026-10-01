@@ -89,12 +89,79 @@ Core Behavior Instructions:
      2. Your Gmail / email address
      We will schedule the call and send the Google Meet invitation directly to your inbox! 🚀"`;
 
+export const SITARC_SYSTEM_PROMPT = `You are the official AI Business Assistant for Si'Tarc Testing & Calibration Laboratory, operated by Scientific and Industrial Testing and Research Centre (Si'Tarc), Coimbatore.
+
+Your role is to assist customers, pump & motor manufacturers, industrial enterprises, engineers, students, and organizations by providing accurate information about Si'Tarc's testing and calibration services, understanding their testing requirements, and guiding them to the appropriate laboratory team.
+
+==================================================
+BUSINESS IDENTITY & ACCREDITATIONS
+==================================================
+Business Name: Si'Tarc Testing & Calibration Laboratory
+Organization: Scientific and Industrial Testing and Research Centre
+Location: #83, 84, Avanampalayam Road, K.K.R. Puram Post, Coimbatore - 641006, Tamil Nadu, India.
+Phone: 0422-2560473, +91 94875 80473, +91 63697 93937
+Email: sitarcinfo@sitarc.com
+Website: www.sitarc.com
+
+Accreditations & Recognitions:
+- ISO/IEC 17025 accredited laboratory by NABL
+- Recognized by DSIR, BIS, BEE, and MNRE
+- Government-recognized autonomous testing and research institution
+
+==================================================
+LABORATORIES & TESTING FACILITIES
+==================================================
+1. Pump & Motor Testing Laboratory:
+   - Submersible pump sets, monobloc pumps, openwell pumps, solar pumps, agricultural & domestic pumps
+   - Testing as per Indian Standards: IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating efficiency verification
+   - Flow rate, total head, input power, overall efficiency, temperature rise, high-voltage breakdown, endurance testing
+
+2. Instrument Calibration Services (NABL Accredited):
+   - Pressure: Gauges, transmitters, vacuum gauges, dead-weight testers
+   - Thermal: Temperature indicators, controllers, RTDs, thermocouples, dry block calibrators, ovens
+   - Electrical: Multimeters, clamp meters, insulation testers, power analyzers, shunt calibrators
+   - Mechanical / Dimensional: Vernier calipers, micrometers, dial gauges, height gauges, feeler gauges
+   - Mass & Volume: Standard weights, micro balances, laboratory volumetric glassware
+
+3. Materials & Mechanical Testing:
+   - Tensile, yield, elongation, hardness (Rockwell, Brinell, Vickers), impact (Charpy / Izod)
+   - Chemical composition, optical emission spectrometry (OES), metallurgical micro-structure inspection
+
+4. Chemical & Environmental Testing:
+   - Drinking water, packaged drinking water, industrial wastewater, effluent water
+   - Food and agricultural products testing
+
+==================================================
+CORE CONVERSATION BEHAVIOR
+==================================================
+1. YOU ARE EXCLUSIVELY SI'TARC: NEVER mention DhiGrowth or IT software services. You are solely the dedicated AI Business Assistant for Si'Tarc Laboratory.
+2. CONCISE & PROFESSIONAL FOR WHATSAPP: Keep replies clear, accurate, and concise (2-4 sentences with relevant emojis like 🔬, ⚙️, ⚡, 💧, 📞).
+3. REQUIREMENTS COLLECTION: Understand:
+   - Customer's Full Name & Company / Industry Name
+   - Sample or Equipment to be tested / calibrated (e.g. Pump model, HP, instrument type)
+   - Standard or Parameters required (e.g. IS 8472, NABL calibration, BIS approval)
+   - Quantity of samples
+4. PRICING & QUOTES: Explain that official testing fees and calibration charges are based on the specific parameters and IS standards. Offer to have our lab technical team prepare an official proforma quote.
+5. LOCATION & CONTACT: Share #83, 84, Avanampalayam Road, Coimbatore - 641006 and phone 0422-2560473 / +91 94875 80473 when asked. In-person sample drop-offs are welcome Monday to Saturday.`;
+
 const DHIGROWTH_WELCOME = {
   reply: `Hello! 👋 Welcome to *DhiGrowth IT Services*.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 *App Development*\n🤖 *AI Business Solutions & Development*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nTell us what your business needs, and let's build something powerful together! 🚀`,
   imageUrl: 'https://www.dhigrowth.com/logo.png',
   buttons: [
     { id: 'btn_yes', title: 'Yes im interested' },
     { id: 'btn_more', title: 'Tell more' },
+  ],
+  toString: function () {
+    return this.reply;
+  },
+};
+
+export const SITARC_WELCOME = {
+  reply: `Hello 👋 Welcome to *Si'Tarc Testing & Calibration Laboratory*, Coimbatore 🔬\n\nHow can our accredited laboratory assist you today?\n\n1️⃣ *Pump & Motor Testing* (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating)\n2️⃣ *Calibration Services* (NABL / ISO 17025 Accredited Calibration)\n3️⃣ *Mechanical, Electrical & Chemical Testing*\n4️⃣ *Water & Food Testing*\n\nReply with 1, 2, 3, 4 or tap below to connect with our technical engineers!`,
+  imageUrl: 'https://www.sitarc.com/images/logo.png',
+  buttons: [
+    { id: 'btn_quote', title: 'Request Test Quote' },
+    { id: 'btn_engineer', title: 'Connect Engineer' },
   ],
   toString: function () {
     return this.reply;
@@ -179,38 +246,42 @@ export const getAiConfigForWorkspace = (workspaceIdOrUsername) => {
   const globalConfig = getActiveAiConfig();
   if (!workspaceIdOrUsername) return globalConfig;
 
+  const cleanTarget = String(workspaceIdOrUsername).trim().toLowerCase();
+  const isSitarc = cleanTarget === 'b0000000-0000-0000-0000-000000000002' || cleanTarget.includes('sitarc');
+
   try {
     if (fs.existsSync(TENANTS_FILE)) {
       const tenants = JSON.parse(fs.readFileSync(TENANTS_FILE, 'utf-8'));
       if (Array.isArray(tenants)) {
-        const cleanTarget = String(workspaceIdOrUsername).trim().toLowerCase();
         const tenant = tenants.find(
           (t) =>
             t.workspaceId === workspaceIdOrUsername ||
             t.id === workspaceIdOrUsername ||
             t.username?.toLowerCase() === cleanTarget ||
-            t.slug?.toLowerCase() === cleanTarget
+            t.slug?.toLowerCase() === cleanTarget ||
+            (isSitarc && (t.id === 'b0000000-0000-0000-0000-000000000002' || t.username === 'sitarc'))
         );
 
         if (tenant) {
           const tenantKey = tenant.aiApiKey ? String(tenant.aiApiKey).trim() : '';
-          const tenantPrompt = tenant.systemInstruction ? String(tenant.systemInstruction).trim() : '';
+          let tenantPrompt = tenant.systemInstruction ? String(tenant.systemInstruction).trim() : '';
+          if (isSitarc && (!tenantPrompt || tenantPrompt.includes('DhiGrowth'))) {
+            tenantPrompt = SITARC_SYSTEM_PROMPT;
+          }
           const tenantProvider = tenant.aiProvider || globalConfig.provider || 'gemini';
           const tenantModel = tenant.aiModel || globalConfig.model || 'gemini-1.5-flash';
 
-          if (tenantKey || tenantPrompt) {
-            const effKey = tenantKey || globalConfig.apiKey;
-            return {
-              provider: tenantProvider,
-              apiKey: effKey,
-              model: tenantModel,
-              systemPrompt: tenantPrompt || globalConfig.systemPrompt || DEFAULT_SYSTEM_PROMPT,
-              hasKey: Boolean(effKey),
-              maskedKey: effKey ? `${effKey.slice(0, 7)}...${effKey.slice(-4)}` : '',
-              isTenantSpecific: true,
-              tenantName: tenant.name || tenant.companyName || tenant.username,
-            };
-          }
+          const effKey = tenantKey || globalConfig.apiKey;
+          return {
+            provider: tenantProvider,
+            apiKey: effKey,
+            model: tenantModel,
+            systemPrompt: tenantPrompt || (isSitarc ? SITARC_SYSTEM_PROMPT : (globalConfig.systemPrompt || DEFAULT_SYSTEM_PROMPT)),
+            hasKey: Boolean(effKey),
+            maskedKey: effKey ? `${effKey.slice(0, 7)}...${effKey.slice(-4)}` : '',
+            isTenantSpecific: true,
+            tenantName: tenant.name || tenant.companyName || tenant.username || "Si'Tarc",
+          };
         }
       }
     }
@@ -218,10 +289,89 @@ export const getAiConfigForWorkspace = (workspaceIdOrUsername) => {
     console.warn('[AIService] Note reading tenant AI config:', err.message);
   }
 
+  if (isSitarc) {
+    return {
+      ...globalConfig,
+      systemPrompt: SITARC_SYSTEM_PROMPT,
+      isTenantSpecific: true,
+      tenantName: "Si'Tarc Testing & Calibration Laboratory",
+    };
+  }
+
   return globalConfig;
 };
 
 export const saveActiveAiConfig = async (newConfig) => {
+  const workspaceTarget = String(newConfig.workspaceId || newConfig.tenantId || newConfig.updatedBy || '').trim().toLowerCase();
+  const isSitarc = workspaceTarget === 'b0000000-0000-0000-0000-000000000002' || workspaceTarget.includes('sitarc');
+
+  // Check if target is a tenant in tenants.json
+  let isTenantTarget = isSitarc;
+  let tenants = [];
+  try {
+    if (fs.existsSync(TENANTS_FILE)) {
+      tenants = JSON.parse(fs.readFileSync(TENANTS_FILE, 'utf-8'));
+      if (Array.isArray(tenants)) {
+        const found = tenants.some(
+          (t) =>
+            t.workspaceId === newConfig.workspaceId ||
+            t.id === newConfig.workspaceId ||
+            t.id === newConfig.tenantId ||
+            t.workspaceId === newConfig.tenantId ||
+            t.username?.toLowerCase() === workspaceTarget ||
+            t.slug?.toLowerCase() === workspaceTarget
+        );
+        if (found && workspaceTarget !== 'b0000000-0000-0000-0000-000000000001' && workspaceTarget !== 'sri' && workspaceTarget !== 'dhigrowth') {
+          isTenantTarget = true;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[AIService] Note inspecting tenants:', err.message);
+  }
+
+  if (isTenantTarget) {
+    // 1. Isolate and save tenant AI config to tenants.json without touching DhiGrowth config
+    try {
+      const idx = tenants.findIndex(
+        (t) =>
+          t.workspaceId === newConfig.workspaceId ||
+          t.id === newConfig.workspaceId ||
+          t.id === newConfig.tenantId ||
+          t.workspaceId === newConfig.tenantId ||
+          t.username?.toLowerCase() === workspaceTarget ||
+          t.slug?.toLowerCase() === workspaceTarget ||
+          (isSitarc && (t.id === 'b0000000-0000-0000-0000-000000000002' || t.username === 'sitarc'))
+      );
+
+      if (idx !== -1) {
+        if (newConfig.systemPrompt !== undefined) {
+          tenants[idx].systemInstruction = newConfig.systemPrompt;
+        }
+        if (newConfig.provider) tenants[idx].aiProvider = newConfig.provider;
+        if (newConfig.apiKey !== undefined) tenants[idx].aiApiKey = String(newConfig.apiKey).trim();
+        if (newConfig.model) tenants[idx].aiModel = newConfig.model;
+        tenants[idx].updatedAt = new Date().toISOString();
+
+        fs.writeFileSync(TENANTS_FILE, JSON.stringify(tenants, null, 2), 'utf-8');
+        console.log(`✅ [AIService] Saved tenant-isolated persona for ${tenants[idx].name || workspaceTarget} to tenants.json. DhiGrowth config preserved.`);
+
+        return {
+          provider: tenants[idx].aiProvider || 'gemini',
+          apiKey: tenants[idx].aiApiKey || '',
+          model: tenants[idx].aiModel || 'gemini-1.5-flash',
+          systemPrompt: tenants[idx].systemInstruction || SITARC_SYSTEM_PROMPT,
+          updatedAt: tenants[idx].updatedAt,
+          isTenantSpecific: true,
+          tenantName: tenants[idx].name,
+        };
+      }
+    } catch (tErr) {
+      console.error('[AIService] Failed saving tenant AI config to tenants.json:', tErr);
+    }
+  }
+
+  // 2. Global / DhiGrowth Config update
   const existing = getActiveAiConfig();
   const merged = {
     provider: newConfig.provider || existing.provider || 'gemini',
@@ -233,6 +383,21 @@ export const saveActiveAiConfig = async (newConfig) => {
   };
 
   fs.writeFileSync(AI_CONFIG_FILE, JSON.stringify(merged, null, 2), 'utf-8');
+
+  // Also keep DhiGrowth tenant in tenants.json in sync if present
+  try {
+    if (fs.existsSync(TENANTS_FILE)) {
+      const dhiTenants = JSON.parse(fs.readFileSync(TENANTS_FILE, 'utf-8'));
+      const dhiIdx = dhiTenants.findIndex((t) => t.id === 'b0000000-0000-0000-0000-000000000001' || t.username === 'sri');
+      if (dhiIdx !== -1) {
+        dhiTenants[dhiIdx].systemInstruction = merged.systemPrompt;
+        if (merged.provider) dhiTenants[dhiIdx].aiProvider = merged.provider;
+        if (merged.apiKey) dhiTenants[dhiIdx].aiApiKey = merged.apiKey;
+        if (merged.model) dhiTenants[dhiIdx].aiModel = merged.model;
+        fs.writeFileSync(TENANTS_FILE, JSON.stringify(dhiTenants, null, 2), 'utf-8');
+      }
+    }
+  } catch {}
 
   // Also sync to Supabase channel settings if available
   try {
@@ -433,19 +598,32 @@ export const generateAIResponse = async ({
   workspaceId,
 }) => {
   const query = customerMessage?.trim().toLowerCase() || '';
+  const cleanWs = String(workspaceId || '').trim().toLowerCase();
+  const isSitarc = cleanWs === 'b0000000-0000-0000-0000-000000000002' || cleanWs.includes('sitarc');
+  const targetWsId = isSitarc ? 'b0000000-0000-0000-0000-000000000002' : (workspaceId || DEFAULT_WORKSPACE_ID);
 
-  // 1. Check custom configured templates from Supabase
+  // 1. Initial Greeting Detection (Only trigger welcome menu on standalone greeting)
+  const isGreeting = ['hi', 'hello', 'hey', 'start', 'menu', 'help', 'hi!', 'hello!', 'hey!'].includes(query) ||
+    query === 'hi there' || query === 'hello there';
+  if (isGreeting) {
+    return isSitarc ? SITARC_WELCOME : DHIGROWTH_WELCOME;
+  }
+
+  // 1.5 Check custom configured templates from Supabase
   try {
     const supabase = getSupabase();
     if (supabase) {
       const { data: dbTemplates } = await supabase
         .from('templates')
         .select('*')
-        .eq('workspace_id', DEFAULT_WORKSPACE_ID)
+        .eq('workspace_id', targetWsId)
         .eq('status', 'approved');
 
       if (dbTemplates && dbTemplates.length > 0) {
         for (const tmpl of dbTemplates) {
+          if (isSitarc && tmpl.body_text && tmpl.body_text.toLowerCase().includes('dhigrowth')) {
+            continue;
+          }
           const triggers = (tmpl.footer_text || '')
             .split(',')
             .map((t) => t.trim().toLowerCase())
@@ -475,13 +653,6 @@ export const generateAIResponse = async ({
     }
   } catch (err) {
     console.warn('[AIService] Note checking DB templates:', err.message);
-  }
-
-  // 2. Initial Greeting Detection (Only trigger welcome menu on standalone greeting)
-  const isGreeting = ['hi', 'hello', 'hey', 'start', 'menu', 'help', 'hi!', 'hello!', 'hey!'].includes(query) ||
-    query === 'hi there' || query === 'hello there';
-  if (isGreeting) {
-    return DHIGROWTH_WELCOME;
   }
 
   // 2.5 Strict Scope & Off-Topic Guardrail: Block general trivia, arithmetic, roleplay, and non-business queries
@@ -545,11 +716,17 @@ export const generateAIResponse = async ({
   const offTopicType = checkOffTopic(query);
   if (offTopicType === 'ROLEPLAY') {
     console.log(`🛑 [AIService] Intercepted roleplay/impersonation attempt: "${query}"`);
+    if (isSitarc) {
+      return `I am the official AI Business Assistant for Si'Tarc Testing & Calibration Laboratory, Coimbatore. 🔬\n\nIf you would like to connect directly with our laboratory leadership or senior testing engineers, please share:\n1. Your Full Name & Company Name\n2. Your Contact Phone Number\n3. The testing/calibration standard or equipment details\n\nOur technical team will review your requirements and reach out promptly!`;
+    }
     return `I am DhiGrowth's official AI Business Concierge, and I cannot impersonate or act as the founder or human executives. 🤖\n\nIf you would like to connect directly with our leadership or senior tech architects for your project, please share:\n1. Your Full Name\n2. Your Contact Phone Number\n3. A brief description of what your business needs\n\nOur team will review your requirements and schedule an official consultation! 🚀`;
   }
 
   if (offTopicType === 'GENERAL') {
     console.log(`🛑 [AIService] Intercepted off-topic query: "${query}" -> Returning business concierge steer message`);
+    if (isSitarc) {
+      return `I am the official AI Business Assistant for Si'Tarc Testing & Calibration Laboratory, Coimbatore 🔬\n\nWe specialize exclusively in accredited testing and calibration:\n1️⃣ *Pump & Motor Testing* (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating)\n2️⃣ *Calibration Services* (NABL / ISO 17025 Accredited Calibration)\n3️⃣ *Electrical, Chemical & Mechanical Testing*\n4️⃣ *Water & Food Testing*\n\nPlease let us know what equipment or testing services you need assistance with!`;
+    }
     return `I am DhiGrowth's AI Business Concierge, focused exclusively on helping businesses with digital technology and software solutions! 🚀\n\nWe specialize in:\n📱 *App Development* (iOS & Android)\n🤖 *AI Business Solutions & Automation*\n💬 *WhatsApp CRM & Automation*\n💻 *Custom IT Solutions*\n\nPlease let us know what software or business technology you need, and we'd love to help build it!`;
   }
 
@@ -560,9 +737,9 @@ export const generateAIResponse = async ({
   const activeAi = getAiConfigForWorkspace(workspaceId);
   if (activeAi.hasKey) {
     try {
-      let effectiveSystemPrompt = activeAi.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+      let effectiveSystemPrompt = activeAi.systemPrompt || (isSitarc ? SITARC_SYSTEM_PROMPT : DEFAULT_SYSTEM_PROMPT);
       if (channelType === 'instagram') {
-        effectiveSystemPrompt += `\n\n[Instagram Direct Messaging Rules]:\nYou are chatting with an Instagram user via Instagram Direct Messages. Keep responses conversational, modern, friendly, concise (2-3 short punchy sentences), with relevant emojis. Help users with product questions, pricing, demo bookings, or IT & AI automation services. When appropriate, offer to connect on WhatsApp or schedule a quick discovery call.`;
+        effectiveSystemPrompt += `\n\n[Instagram Direct Messaging Rules]:\nYou are chatting with an Instagram user via Instagram Direct Messages. Keep responses conversational, modern, friendly, concise (2-3 short punchy sentences), with relevant emojis. Help users with product questions, pricing, demo bookings, or testing services. When appropriate, offer to connect on WhatsApp or schedule a quick discovery call.`;
       }
 
       console.log(`🤖 Invoking Live AI (${(activeAi?.provider || 'AI').toUpperCase()} / ${activeAi?.model || 'model'}) for [${(channelType || 'channel').toUpperCase()}]: "${customerMessage}"`);
@@ -571,7 +748,7 @@ export const generateAIResponse = async ({
         apiKey: activeAi.apiKey,
         model: activeAi.model,
         systemPrompt: effectiveSystemPrompt,
-        userMessage: `Customer Name: ${customerName || 'Instagram User'}\nChannel: ${channelType}\nCustomer Message: "${customerMessage}"`,
+        userMessage: `Customer Name: ${customerName || 'Client'}\nChannel: ${channelType}\nCustomer Message: "${customerMessage}"`,
         conversationHistory,
       });
 
@@ -586,6 +763,41 @@ export const generateAIResponse = async ({
   }
 
   // 4. Smart Business Rules Engine Fallback
+  // 4.A Si'Tarc Specific Rules
+  if (isSitarc) {
+    if (query.includes('interested') || query.includes('tell me more') || /^(yes|yeah|yep|sure|ok|okay|yup|definitely|absolutely|let's do it|demo|start|call me|connect)$/i.test(query)) {
+      return `Awesome, thank you for contacting *Si'Tarc Testing & Calibration Laboratory*, ${customerName || 'friend'}! 🔬\n\nWe have recorded your details for our laboratory technical team.\n\nTo help us guide you to the right laboratory, which service do you need?\n\n1️⃣ *Pump & Motor Testing* (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating)\n2️⃣ *Calibration Services* (NABL / ISO 17025 Accredited Calibration)\n3️⃣ *Electrical, Chemical & Mechanical Testing*\n4️⃣ *Water & Food Testing*\n\n👉 Reply with 1, 2, 3, or 4 (or describe your sample/equipment)! 🔬`;
+    }
+
+    if (query === '1' || query === '1️⃣' || /pump|motor/i.test(query)) {
+      return `🔬 **Pump & Motor Testing Laboratory**\n\nSi'Tarc conducts comprehensive performance, electrical, and endurance testing for Submersible, Monobloc, Openwell, and Agricultural Pumps as per IS standards (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating).\n\nCould you please share the pump type, HP rating, or test standard you require?`;
+    }
+    if (query === '2' || query === '2️⃣' || /calib|gauge|sensor/i.test(query)) {
+      return `⚙️ **Si'Tarc Calibration Services (NABL Accredited)**\n\nWe provide high-precision calibration for pressure gauges, thermal sensors, electrical meters, dimensional instruments, and laboratory balances with ISO/IEC 17025 accredited calibration certificates.\n\nWhich instruments or equipment do you need calibrated?`;
+    }
+    if (query === '3' || query === '3️⃣' || /electrical|chemical|mechanical|material/i.test(query)) {
+      return `⚡🧪 **Materials, Chemical & Electrical Testing Laboratory**\n\nSi'Tarc provides accredited tensile, hardness, chemical composition, raw material verification, and electrical safety testing.\n\nCould you tell us what material or component you would like tested?`;
+    }
+    if (query === '4' || query === '4️⃣' || /water|food|ro/i.test(query)) {
+      return `💧 **Water & Environmental Testing**\n\nWe provide complete physical, chemical, and microbiological analysis of drinking water, industrial wastewater, RO water, and food samples.\n\nWhat parameters or testing standard do you need?`;
+    }
+
+    if (/\b(about|who are you|sitarc)\b/i.test(query)) {
+      return `🏢 **About Si'Tarc Testing & Calibration Laboratory**\n\nSi'Tarc (Scientific and Industrial Testing and Research Centre) is a premier ISO/IEC 17025 NABL-accredited laboratory recognized by DSIR, BIS, BEE, and MNRE.\n\n📍 **Location:**\n#83, 84, Avanampalayam Road, K.K.R. Puram Post, Coimbatore - 641006, Tamil Nadu, India.\n\n📞 **Phone:** 0422-2560473 | +91 94875 80473 | +91 63697 93937\n✉️ **Email:** sitarcinfo@sitarc.com\n🌐 **Website:** www.sitarc.com\n\nHow can our accredited laboratory assist your industry or project today? 🔬`;
+    }
+
+    if (/\b(location|office|address|where are you|where is your office|based|coimbatore|visit|map)\b/i.test(query)) {
+      return `🏢 **Si'Tarc Testing & Calibration Laboratory**\n\n📍 **Address:**\n#83, 84, Avanampalayam Road, K.K.R. Puram Post, Coimbatore - 641006, Tamil Nadu, India.\n\n📞 **Contact:** 0422-2560473 | +91 94875 80473 | +91 63697 93937\n🌐 **Website:** www.sitarc.com\n\nOur laboratory is open Monday through Saturday for sample submissions and testing consultations. In-person visits and sample drop-offs are welcome!`;
+    }
+
+    if (query.includes('price') || query.includes('cost') || query.includes('quote') || query.includes('rate') || query.includes('fee')) {
+      return `💼 Official testing fees and calibration charges are based on the specific IS standards, parameters, and number of samples.\n\nCould you please share the equipment/sample type and specifications? Our technical team will promptly provide an official proforma quote! 🔬`;
+    }
+
+    return `Hello ${customerName || 'there'}! 👋 Welcome to **Si'Tarc Testing & Calibration Laboratory**, Coimbatore 🔬\n\nOur laboratory engineers are here to assist you with accredited Pump & Motor Testing, Instrument Calibration, and Material Testing.\n\nCould you please share your testing or calibration requirements with us?`;
+  }
+
+  // 4.B DhiGrowth Smart Rules Fallback
   // 4.1 Positive affirmations & confirmations ("yes, i'm interested", "tell me more", etc.)
   if (query.includes('interested') || query.includes('tell me more') || /^(yes|yeah|yep|sure|ok|okay|yup|definitely|absolutely|let's do it|demo|start|call me|connect)$/i.test(query)) {
     return `Awesome, thank you for confirming, ${customerName || 'friend'}! 🎉\n\nWe've noted your interest and automatically recorded your details into our system.\n\nTo help us tailor the perfect solution for you, which service do you need?\n\n1️⃣ Mobile App or Web Platform Development\n2️⃣ AI Business Solutions & Auto-Pilot Bots\n3️⃣ WhatsApp CRM & Marketing Automation\n4️⃣ Custom IT Software & Enterprise Systems\n\n👉 Reply with 1, 2, 3, or 4 (or describe what you'd like to build)! 🚀`;

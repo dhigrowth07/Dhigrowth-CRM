@@ -57,8 +57,18 @@ const persistStore = () => {
 /**
  * Message templates for the 24-hour window follow-ups
  */
-export const getFollowUpMessage = (step, customerName = 'there') => {
+export const getFollowUpMessage = (step, customerName = 'there', isSitarc = false) => {
   const name = customerName.replace(/\(\+?[0-9]+\)/g, '').trim() || 'there';
+
+  if (isSitarc) {
+    if (step === 1) {
+      // 2-minute follow up
+      return `Hi ${name}! 👋 Just checking in from *Si'Tarc Testing & Calibration Laboratory*, Coimbatore 🔬\n\nDo you have any questions regarding sample testing, instrument calibration, or test report requirements? Our laboratory engineers are ready to assist you! 📞 0422-2560473`;
+    }
+
+    // 3-hour follow up (stay in 24-hour Meta window)
+    return `Hello ${name}! 👋 Following up from *Si'Tarc Laboratory* 🔬\n\nOur technical testing team is available to assist with Pump, Motor, Electrical, Chemical, or Mechanical testing and on-site calibration. Reply anytime or visit www.sitarc.com for assistance! 🌟`;
+  }
 
   if (step === 1) {
     // 2-minute follow up
@@ -91,14 +101,19 @@ export function scheduleFollowUps({
   cancelExistingTimers(cleanPhone);
 
   const inboundTimestamp = Date.now();
+  const isSitarc =
+    workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+    phoneNumberId === '1399911839867541' ||
+    String(workspaceId || '').toLowerCase().includes('sitarc');
+  const resolvedWsId = isSitarc ? 'b0000000-0000-0000-0000-000000000002' : workspaceId;
 
   const record = {
     cleanPhone,
     recipientPhone,
-    customerName: customerName || 'Valued Client',
+    customerName: customerName || (isSitarc ? 'Valued Client' : 'Valued Customer'),
     conversationId,
     channelId,
-    workspaceId,
+    workspaceId: resolvedWsId,
     phoneNumberId: phoneNumberId || process.env.META_WHATSAPP_PHONE_NUMBER_ID || '1272943605907701',
     accessToken: accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN,
     lastInboundAt: inboundTimestamp,
@@ -188,7 +203,11 @@ async function executeFollowUpStep(cleanPhone, step, scheduledForInboundTimestam
     }
   }
 
-  const messageText = getFollowUpMessage(step, record.customerName);
+  const isSitarc =
+    record.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+    record.phoneNumberId === '1399911839867541' ||
+    String(record.workspaceId || '').toLowerCase().includes('sitarc');
+  const messageText = getFollowUpMessage(step, record.customerName, isSitarc);
 
   console.log(`\n📤 [FollowUpService] Triggering Step ${step} follow-up to ${record.customerName} (+${cleanPhone}) to keep 24-hr window active...`);
   console.log(`💬 Message: "${messageText}"`);
