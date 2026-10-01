@@ -205,7 +205,7 @@ export function createPromocode({
   if (!promocodesCache) initPromocodeStore();
 
   const existingIndex = promocodesCache.findIndex(
-    (p) => p.code.toUpperCase() === cleanCode
+    (p) => (p.code || '').toUpperCase() === cleanCode
   );
   if (existingIndex >= 0) {
     throw new Error(`Promo code "${cleanCode}" already exists. Please choose a different code.`);
@@ -297,7 +297,7 @@ export function validatePromocode(code) {
   const cleanCode = code.trim().toUpperCase();
   if (!promocodesCache) initPromocodeStore();
 
-  const promo = promocodesCache.find((p) => p.code.toUpperCase() === cleanCode);
+  const promo = promocodesCache.find((p) => (p.code || '').toUpperCase() === cleanCode);
   if (!promo) {
     return { valid: false, error: `Promo code "${cleanCode}" is invalid.` };
   }
@@ -351,7 +351,7 @@ export function redeemPromocode({
   const cleanCode = code.trim().toUpperCase();
   if (!promocodesCache) initPromocodeStore();
 
-  const target = promocodesCache.find((p) => p.code.toUpperCase() === cleanCode);
+  const target = promocodesCache.find((p) => (p.code || '').toUpperCase() === cleanCode);
   if (!target) return null;
 
   const redemptionRecord = {

@@ -550,6 +550,7 @@ export const AiStudio = () => {
     setAiConfig,
     saveAiConfig,
     testAiConfig,
+    updateTenantAiConfig,
     isAiConfigLoading,
     knowledgeBase,
     setKnowledgeBase,
@@ -659,13 +660,31 @@ export const AiStudio = () => {
   const handleSaveConfig = async (e) => {
     e?.preventDefault();
     try {
+      const activeProv = provider || 'gemini';
+      const activeKey = (apiKey || '').trim();
+      const activeMod = model || 'gemini-1.5-flash';
+      const promptToSave = systemPrompt || (isSitarcTenant ? SITARC_PERSONA_PROMPT : '');
+
       await saveAiConfig({
-        provider,
-        apiKey: apiKey.trim(),
-        model,
-        systemPrompt,
+        provider: activeProv,
+        apiKey: activeKey,
+        model: activeMod,
+        systemPrompt: promptToSave,
       });
-      setSavedPersonaBackup(systemPrompt);
+
+      const userKey = currentUser?.id || currentUser?.workspaceId || currentUser?.username || 'sitarc';
+      if (typeof updateTenantAiConfig === 'function') {
+        try {
+          updateTenantAiConfig(userKey, {
+            aiProvider: activeProv,
+            aiApiKey: activeKey,
+            aiModel: activeMod,
+            systemInstruction: promptToSave,
+          });
+        } catch {}
+      }
+
+      setSavedPersonaBackup(promptToSave);
       showToast('🎉 AI configuration updated successfully!', 'success');
     } catch (err) {
       // Error is handled in AppContext
@@ -675,13 +694,31 @@ export const AiStudio = () => {
   const handleSavePersona = async () => {
     setIsSavingPersona(true);
     try {
+      const activeProv = provider || 'gemini';
+      const activeKey = (apiKey || '').trim();
+      const activeMod = model || 'gemini-1.5-flash';
+      const promptToSave = systemPrompt || (isSitarcTenant ? SITARC_PERSONA_PROMPT : '');
+
       await saveAiConfig({
-        provider: provider || 'gemini',
-        apiKey: (apiKey || '').trim(),
-        model: model || 'gemini-1.5-flash',
-        systemPrompt,
+        provider: activeProv,
+        apiKey: activeKey,
+        model: activeMod,
+        systemPrompt: promptToSave,
       });
-      setSavedPersonaBackup(systemPrompt);
+
+      const userKey = currentUser?.id || currentUser?.workspaceId || currentUser?.username || 'sitarc';
+      if (typeof updateTenantAiConfig === 'function') {
+        try {
+          updateTenantAiConfig(userKey, {
+            aiProvider: activeProv,
+            aiApiKey: activeKey,
+            aiModel: activeMod,
+            systemInstruction: promptToSave,
+          });
+        } catch {}
+      }
+
+      setSavedPersonaBackup(promptToSave);
       setIsEditingPersona(false);
       showToast('🎉 Business Persona & System Instructions saved successfully!', 'success');
     } catch (err) {
