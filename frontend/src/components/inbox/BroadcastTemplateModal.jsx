@@ -79,10 +79,26 @@ export const DEFAULT_SITARC_WORKSPACE_PRESETS = [
     ],
     status: 'APPROVED',
   },
+  {
+    id: 'tpl_custom_template',
+    rawName: 'custom_template',
+    name: 'Custom Template',
+    displayName: 'Custom Template',
+    badge: 'Freeform',
+    category: 'UTILITY',
+    varsCount: '1 VARS',
+    header: "Si'Tarc Testing Laboratory",
+    body: "Hello {{name}}! 👋 Following up from Si'Tarc Testing & Calibration Laboratory, Coimbatore. Would you like assistance with sample testing or instrument calibration?",
+    footer: 'sitarc, testing, lab, calibration, quote',
+    buttons: [
+      { id: 'btn_yes', title: 'Yes, please' },
+      { id: 'btn_no', title: 'Not right now' },
+    ],
+    status: 'APPROVED',
+  },
 ];
 
 export const DEFAULT_WORKSPACE_PRESETS = [
-  ...DEFAULT_SITARC_WORKSPACE_PRESETS,
   {
     id: '2950860201937776',
     rawName: 'new_client_welcome',
@@ -128,7 +144,7 @@ export const DEFAULT_WORKSPACE_PRESETS = [
   },
 ];
 
-export const formatTemplatePreset = (tpl) => {
+export const formatTemplatePreset = (tpl, isSitarc = false) => {
   const rawName = tpl.rawName || tpl.name || tpl.displayName || 'template';
   const displayName = tpl.displayName || (
     tpl.name === 'new_client_welcome' ? 'new_client_welcome' :
@@ -144,8 +160,19 @@ export const formatTemplatePreset = (tpl) => {
   if (tpl.header_type === 'TEXT' && tpl.header_content) {
     header = tpl.header_content;
   }
-  const body = tpl.body_text || tpl.body || '';
-  const footer = tpl.footer_text || tpl.footer || '';
+  let body = tpl.body_text || tpl.body || '';
+  let footer = tpl.footer_text || tpl.footer || '';
+
+  // If this is Si'Tarc tenant, ensure any custom_template or DhiGrowth branding is replaced with Si'Tarc
+  if (isSitarc) {
+    if (header.toLowerCase().includes('dhigrowth') || rawName === 'custom_template' || tpl.name === 'custom_template') {
+      header = "Si'Tarc Testing Laboratory";
+    }
+    if ((rawName === 'custom_template' || tpl.name === 'custom_template') && (body.includes('share our latest updates') || !body)) {
+      body = "Hello {{name}}! 👋 Following up from Si'Tarc Testing & Calibration Laboratory, Coimbatore. Would you like assistance with sample testing or instrument calibration?";
+      footer = 'sitarc, testing, lab, calibration, quote';
+    }
+  }
 
   let buttons = [];
   if (Array.isArray(tpl.buttons)) {
@@ -158,12 +185,20 @@ export const formatTemplatePreset = (tpl) => {
     }).filter((b) => b.title);
   }
 
+  if (isSitarc && (rawName === 'custom_template' || tpl.name === 'custom_template') && (!buttons || buttons.length === 0)) {
+    buttons = [
+      { id: 'btn_yes', title: 'Yes, please' },
+      { id: 'btn_no', title: 'Not right now' },
+    ];
+  }
+
   const category = (tpl.category || 'MARKETING').toUpperCase();
   const badge = tpl.badge || (
     tpl.name === 'si_tarc_testing_inquiry' || tpl.name === 'sitarc_testing_inquiry' ? 'Recommended' :
     tpl.name === 'sitarc_calibration_booking' ? 'Popular' :
     tpl.name === 'sitarc_report_status' ? 'High Conversion' :
-    (category === 'UTILITY' ? 'Utility' : 'Marketing')
+    (tpl.name === 'custom_template' || rawName === 'custom_template' ? 'Freeform' :
+    (category === 'UTILITY' ? 'Utility' : 'Marketing'))
   );
   const varsCount = Array.isArray(tpl.variables) && tpl.variables.length > 0
     ? `${tpl.variables.length} VARS`
@@ -207,6 +242,9 @@ export const BroadcastTemplateModal = ({ onClose }) => {
     currentUser?.name?.toLowerCase().includes('sitarc') ||
     currentTenant?.username?.toLowerCase().includes('sitarc') ||
     currentTenant?.companyName?.toLowerCase().includes('sitarc') ||
+    currentTenant?.slug?.toLowerCase().includes('sitarc') ||
+    currentTenant?.id === 'b0000000-0000-0000-0000-000000000002' ||
+    currentTenant?.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
     currentWorkspaceId === 'b0000000-0000-0000-0000-000000000002'
   );
 
@@ -238,7 +276,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
               }
             }
             if (active.length > 0) {
-              return active.map(formatTemplatePreset);
+              return active.map((t) => formatTemplatePreset(t, isSitarcTenant));
             }
           }
         }
@@ -249,9 +287,27 @@ export const BroadcastTemplateModal = ({ onClose }) => {
 
   const initialPreset = presets[0] || (isSitarcTenant ? DEFAULT_SITARC_WORKSPACE_PRESETS[0] : DEFAULT_WORKSPACE_PRESETS[0]);
   const [selectedPresetId, setSelectedPresetId] = useState(initialPreset.id);
-  const [headerText, setHeaderText] = useState(initialPreset.header || '');
-  const [bodyText, setBodyText] = useState(initialPreset.body || '');
-  const [footerText, setFooterText] = useState(initialPreset.footer || '');
+  const [headerText, setHeaderText] = useState(() => {
+    let h = initialPreset.header || '';
+    if (isSitarcTenant && (h.toLowerCase().includes('dhigrowth') || initialPreset.rawName === 'custom_template' || initialPreset.name === 'custom_template')) {
+      return "Si'Tarc Testing Laboratory";
+    }
+    return h;
+  });
+  const [bodyText, setBodyText] = useState(() => {
+    let b = initialPreset.body || '';
+    if (isSitarcTenant && (initialPreset.rawName === 'custom_template' || initialPreset.name === 'custom_template') && (b.includes('share our latest updates') || !b)) {
+      return "Hello {{name}}! 👋 Following up from Si'Tarc Testing & Calibration Laboratory, Coimbatore. Would you like assistance with sample testing or instrument calibration?";
+    }
+    return b;
+  });
+  const [footerText, setFooterText] = useState(() => {
+    let f = initialPreset.footer || '';
+    if (isSitarcTenant && (initialPreset.rawName === 'custom_template' || initialPreset.name === 'custom_template') && f.includes('updates')) {
+      return 'sitarc, testing, lab, calibration, quote';
+    }
+    return f;
+  });
   const [button1Text, setButton1Text] = useState(initialPreset.buttons?.[0]?.title || '');
   const [button2Text, setButton2Text] = useState(initialPreset.buttons?.[1]?.title || '');
   const [showPreview, setShowPreview] = useState(true);
@@ -315,7 +371,7 @@ export const BroadcastTemplateModal = ({ onClose }) => {
               }
             }
           }
-          const formatted = filtered.map(formatTemplatePreset);
+          const formatted = filtered.map((t) => formatTemplatePreset(t, isSitarcTenant));
           if (formatted.length > 0) {
             setPresets(formatted);
           }
@@ -369,9 +425,24 @@ export const BroadcastTemplateModal = ({ onClose }) => {
 
   const handleSelectPreset = (preset) => {
     setSelectedPresetId(preset.id);
-    setHeaderText(preset.header || '');
-    setBodyText(preset.body || '');
-    setFooterText(preset.footer || '');
+    let h = preset.header || '';
+    if (isSitarcTenant && (h.toLowerCase().includes('dhigrowth') || preset.rawName === 'custom_template' || preset.name === 'custom_template')) {
+      h = "Si'Tarc Testing Laboratory";
+    }
+    setHeaderText(h);
+
+    let b = preset.body || '';
+    if (isSitarcTenant && (preset.rawName === 'custom_template' || preset.name === 'custom_template') && (b.includes('share our latest updates') || !b)) {
+      b = "Hello {{name}}! 👋 Following up from Si'Tarc Testing & Calibration Laboratory, Coimbatore. Would you like assistance with sample testing or instrument calibration?";
+    }
+    setBodyText(b);
+
+    let f = preset.footer || '';
+    if (isSitarcTenant && (preset.rawName === 'custom_template' || preset.name === 'custom_template') && f.includes('updates')) {
+      f = 'sitarc, testing, lab, calibration, quote';
+    }
+    setFooterText(f);
+
     setButton1Text(preset.buttons?.[0]?.title || '');
     setButton2Text(preset.buttons?.[1]?.title || '');
   };

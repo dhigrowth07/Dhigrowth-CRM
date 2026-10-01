@@ -202,6 +202,25 @@ We provide comprehensive on-site and laboratory calibration with certified test 
     variables: ['name'],
     syncedWithMeta: true,
   },
+  {
+    id: 'tpl_custom_template',
+    name: 'custom_template',
+    displayName: 'Custom Template',
+    badge: 'Freeform',
+    category: 'utility',
+    language: 'en_US',
+    status: 'approved',
+    header_type: 'TEXT',
+    header_content: "Si'Tarc Testing Laboratory",
+    body_text: `Hello {{name}}! 👋 Following up from Si'Tarc Testing & Calibration Laboratory, Coimbatore. Would you like assistance with sample testing or instrument calibration?`,
+    footer_text: 'sitarc, testing, lab, calibration, quote',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, please' },
+      { type: 'QUICK_REPLY', text: 'Not right now' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+  },
 ];
 
 export const DEFAULT_SITARC_TEMPLATES = [

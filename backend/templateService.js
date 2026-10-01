@@ -156,6 +156,26 @@ export const SITARC_PRESET_TEMPLATES = [
     syncedWithMeta: true,
     updatedAt: new Date().toISOString(),
   },
+  {
+    id: 'tpl_custom_template',
+    name: 'custom_template',
+    displayName: 'Custom Template',
+    badge: 'Freeform',
+    category: 'UTILITY',
+    language: 'en_US',
+    status: 'APPROVED',
+    header_type: 'TEXT',
+    header_content: "Si'Tarc Testing Laboratory",
+    body_text: "Hello {{name}}! 👋 Following up from Si'Tarc Testing & Calibration Laboratory, Coimbatore. Would you like assistance with sample testing or instrument calibration?",
+    footer_text: 'sitarc, testing, lab, calibration, quote',
+    buttons: [
+      { type: 'QUICK_REPLY', text: 'Yes, please' },
+      { type: 'QUICK_REPLY', text: 'Not right now' },
+    ],
+    variables: ['name'],
+    syncedWithMeta: true,
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 export const STARTER_TEMPLATES = [
@@ -265,6 +285,18 @@ export function getWorkspaceTemplates(workspaceId = 'b0000000-0000-0000-0000-000
         changed = true;
       }
     }
+  }
+
+  if (isSitarc && Array.isArray(currentList)) {
+    currentList.forEach((t) => {
+      if (t.name === 'custom_template' || t.id === 'tpl_custom_template' || (t.header_content && t.header_content.includes('DhiGrowth'))) {
+        t.header_content = "Si'Tarc Testing Laboratory";
+        if (t.name === 'custom_template' && (t.body_text?.includes('share our latest updates') || !t.body_text)) {
+          t.body_text = "Hello {{name}}! 👋 Following up from Si'Tarc Testing & Calibration Laboratory, Coimbatore. Would you like assistance with sample testing or instrument calibration?";
+          t.footer_text = 'sitarc, testing, lab, calibration, quote';
+        }
+      }
+    });
   }
 
   if (changed) {
