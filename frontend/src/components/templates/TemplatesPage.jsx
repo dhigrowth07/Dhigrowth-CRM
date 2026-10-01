@@ -29,6 +29,11 @@ import {
   Shield,
   UploadCloud,
   Type,
+  Video,
+  ExternalLink,
+  Phone,
+  Globe,
+  FileCheck,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
@@ -323,22 +328,33 @@ export const TemplatesPage = () => {
   // Form State
   const [formName, setFormName] = useState('');
   const [formTriggers, setFormTriggers] = useState('');
-  const [formCategory, setFormCategory] = useState('utility');
-  const [formHeaderType, setFormHeaderType] = useState('NONE'); // 'NONE' | 'TEXT' | 'IMAGE'
+  const [formCategory, setFormCategory] = useState('MARKETING'); // 'MARKETING' | 'UTILITY' | 'AUTHENTICATION'
+  const [formLanguage, setFormLanguage] = useState('en_US');
+  const [formHeaderType, setFormHeaderType] = useState('NONE'); // 'NONE' | 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
   const [formHeaderText, setFormHeaderText] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formBody, setFormBody] = useState('');
+  const [formFooter, setFormFooter] = useState('');
+  const [actionType, setActionType] = useState('QUICK_REPLY'); // 'NONE' | 'CTA' | 'QUICK_REPLY'
+  const [ctaPhone, setCtaPhone] = useState({ text: 'Call Us', phone: '+919791471277' });
+  const [ctaUrl, setCtaUrl] = useState({ text: 'Visit Website', url: 'https://www.dhigrowth.com', urlType: 'Static' });
+  const [quickReplies, setQuickReplies] = useState([
+    { id: 1, text: "Yes, I'm interested" },
+    { id: 2, text: 'Tell me more' },
+  ]);
+  const [sampleValues, setSampleValues] = useState({});
   const [formButton1, setFormButton1] = useState('');
   const [formButton2, setFormButton2] = useState('');
   const [formReSubmitMeta, setFormReSubmitMeta] = useState(true);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [modalTab, setModalTab] = useState('editor'); // 'editor' | 'preview'
   const fileInputRef = useRef(null);
 
-  // Helper to validate whether a string is a valid image URL, data URL, or uploaded path
+  // Helper to validate whether a string is a valid media URL, data URL, or uploaded path
   const isValidImageUrl = (url) => {
     if (!url || typeof url !== 'string') return false;
     const trimmed = url.trim();
-    if (trimmed.startsWith('data:image/')) return true;
+    if (trimmed.startsWith('data:')) return true;
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return true;
     if (trimmed.startsWith('/uploads/')) return true;
     return false;
@@ -599,13 +615,21 @@ export const TemplatesPage = () => {
     }
     setFormName('');
     setFormTriggers('');
-    setFormCategory('utility');
+    setFormCategory('MARKETING');
+    setFormLanguage('en_US');
     setFormHeaderType('NONE');
     setFormHeaderText('');
     setFormImageUrl('');
     setFormBody('');
-    setFormButton1('');
-    setFormButton2('');
+    setFormFooter('');
+    setActionType('QUICK_REPLY');
+    setCtaPhone({ text: 'Call Us', phone: '+919791471277' });
+    setCtaUrl({ text: 'Visit Website', url: 'https://www.dhigrowth.com', urlType: 'Static' });
+    setQuickReplies([
+      { id: 1, text: "Yes, I'm interested" },
+      { id: 2, text: 'Tell me more' },
+    ]);
+    setSampleValues({});
     setFormReSubmitMeta(true);
     setIsCreateModalOpen(true);
   };
@@ -614,33 +638,57 @@ export const TemplatesPage = () => {
     setEditingTemplate(template);
     setFormName(template.displayName || template.name || '');
     setFormTriggers(template.footer_text || '');
-    setFormCategory((template.category || 'utility').toLowerCase());
+    setFormCategory((template.category || 'marketing').toUpperCase());
+    setFormLanguage(template.language || 'en_US');
+    setFormBody(template.body_text || '');
+    setFormFooter(template.footer_text || '');
 
-    const btn1 = template.buttons?.[0]?.text || template.buttons?.[0]?.title || '';
-    const btn2 = template.buttons?.[1]?.text || template.buttons?.[1]?.title || '';
-    setFormButton1(btn1);
-    setFormButton2(btn2);
+    // Buttons
+    if (Array.isArray(template.buttons) && template.buttons.length > 0) {
+      const hasCta = template.buttons.some((b) => b.type === 'URL' || b.type === 'PHONE_NUMBER');
+      if (hasCta) {
+        setActionType('CTA');
+        const pBtn = template.buttons.find((b) => b.type === 'PHONE_NUMBER');
+        if (pBtn) setCtaPhone({ text: pBtn.text || 'Call Us', phone: pBtn.phone_number || '' });
+        const uBtn = template.buttons.find((b) => b.type === 'URL');
+        if (uBtn) setCtaUrl({ text: uBtn.text || 'Visit Website', url: uBtn.url || '', urlType: 'Static' });
+      } else {
+        setActionType('QUICK_REPLY');
+        setQuickReplies(
+          template.buttons.map((b, i) => ({
+            id: i + 1,
+            text: b.text || b.title || '',
+          }))
+        );
+      }
+    } else {
+      setActionType('NONE');
+    }
 
     const rawHeaderType = (template.header_type || '').toUpperCase();
     if (rawHeaderType === 'IMAGE') {
       setFormHeaderType('IMAGE');
       setFormImageUrl(template.header_content || '');
       setFormHeaderText('');
+    } else if (rawHeaderType === 'VIDEO') {
+      setFormHeaderType('VIDEO');
+      setFormImageUrl(template.header_content || '');
+      setFormHeaderText('');
+    } else if (rawHeaderType === 'DOCUMENT') {
+      setFormHeaderType('DOCUMENT');
+      setFormImageUrl(template.header_content || '');
+      setFormHeaderText('');
     } else if (rawHeaderType === 'TEXT' || (template.header_content && !isValidImageUrl(template.header_content))) {
       setFormHeaderType('TEXT');
       setFormHeaderText(template.header_content || template.header_text || '');
       setFormImageUrl('');
-    } else if (template.header_content && isValidImageUrl(template.header_content)) {
-      setFormHeaderType('IMAGE');
-      setFormImageUrl(template.header_content);
-      setFormHeaderText('');
     } else {
       setFormHeaderType('NONE');
       setFormImageUrl('');
       setFormHeaderText('');
     }
 
-    setFormBody(template.body_text || '');
+    setSampleValues(template.sampleValues || {});
     setFormReSubmitMeta(true);
   };
 
@@ -752,53 +800,78 @@ export const TemplatesPage = () => {
   const handleSaveCreate = async (e) => {
     e.preventDefault();
     if (!formName.trim() || !formBody.trim()) {
-      showToast('Template Name and Response Body are required', 'error');
-      return;
-    }
-
-    if (formHeaderType === 'IMAGE' && formImageUrl.trim() && !isValidImageUrl(formImageUrl.trim())) {
-      showToast('Please upload an image file or provide a valid URL starting with https://. If you want a text title, select "Text Title".', 'error');
+      showToast('Template Name and Message Body are required', 'error');
       return;
     }
 
     setIsSaving(true);
-    const hasImage = formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl.trim());
+    const hasMedia = ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formHeaderType) && Boolean(formImageUrl.trim());
     const isTextHeader = formHeaderType === 'TEXT' && Boolean(formHeaderText.trim());
-    const headerType = hasImage ? 'IMAGE' : (isTextHeader ? 'TEXT' : null);
-    const headerContent = hasImage ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
+    const headerType = formHeaderType || 'NONE';
+    const headerContent = hasMedia ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
 
+    // Format buttons according to actionType
     const buttons = [];
-    if (formButton1.trim()) {
-      buttons.push({ type: 'QUICK_REPLY', text: formButton1.trim() });
+    if (actionType === 'CTA') {
+      if (ctaPhone?.text?.trim() && ctaPhone?.phone?.trim()) {
+        buttons.push({
+          type: 'PHONE_NUMBER',
+          text: ctaPhone.text.trim().slice(0, 25),
+          phone_number: ctaPhone.phone.trim().replace(/\s+/g, ''),
+        });
+      }
+      if (ctaUrl?.text?.trim() && ctaUrl?.url?.trim()) {
+        buttons.push({
+          type: 'URL',
+          text: ctaUrl.text.trim().slice(0, 25),
+          url: ctaUrl.url.trim(),
+        });
+      }
+    } else if (actionType === 'QUICK_REPLY') {
+      quickReplies
+        .filter((q) => q.text && q.text.trim())
+        .slice(0, 3)
+        .forEach((q) => {
+          buttons.push({
+            type: 'QUICK_REPLY',
+            text: q.text.trim().slice(0, 25),
+          });
+        });
     }
-    if (formButton2.trim()) {
-      buttons.push({ type: 'QUICK_REPLY', text: formButton2.trim() });
-    }
+
+    const cleanName = formName.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_');
 
     try {
       // 1. Create on Meta Template API
       let metaTemplate;
+      let metaFeedback = null;
+      const payload = {
+        workspaceId: currentWorkspaceId,
+        name: cleanName,
+        displayName: formName.trim(),
+        category: formCategory.toUpperCase(),
+        language: formLanguage || 'en_US',
+        headerType: headerType,
+        headerImageUrl: hasMedia ? headerContent : null,
+        headerMediaUrl: hasMedia ? headerContent : null,
+        headerText: isTextHeader ? headerContent : null,
+        bodyText: formBody.trim(),
+        footerText: (formFooter || formTriggers || '').trim().slice(0, 60),
+        buttons,
+        sampleValues,
+        submitToMeta: formReSubmitMeta,
+      };
+
       try {
         const res = await fetch('/api/meta/templates/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            workspaceId: currentWorkspaceId,
-            name: formName.trim(),
-            category: formCategory.toUpperCase(),
-            language: 'en_US',
-            headerType: headerType || 'NONE',
-            headerImageUrl: hasImage ? headerContent : null,
-            headerText: isTextHeader ? headerContent : null,
-            bodyText: formBody.trim(),
-            footerText: formTriggers.trim(),
-            buttons,
-            submitToMeta: formReSubmitMeta,
-          }),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           const resData = await res.json();
           metaTemplate = resData.template;
+          metaFeedback = resData.template?.metaResult;
         }
       } catch {}
 
@@ -807,23 +880,12 @@ export const TemplatesPage = () => {
           const res = await fetch('http://localhost:4000/api/meta/templates/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              workspaceId: currentWorkspaceId,
-              name: formName.trim(),
-              category: formCategory.toUpperCase(),
-              language: 'en_US',
-              headerType: headerType || 'NONE',
-              headerImageUrl: hasImage ? headerContent : null,
-              headerText: isTextHeader ? headerContent : null,
-              bodyText: formBody.trim(),
-              footerText: formTriggers.trim(),
-              buttons,
-              submitToMeta: formReSubmitMeta,
-            }),
+            body: JSON.stringify(payload),
           });
           if (res.ok) {
             const resData = await res.json();
             metaTemplate = resData.template;
+            metaFeedback = resData.template?.metaResult;
           }
         } catch {}
       }
@@ -832,9 +894,9 @@ export const TemplatesPage = () => {
       try {
         await createTemplate({
           workspaceId: currentWorkspaceId,
-          name: formName.trim(),
+          name: cleanName,
           body_text: formBody.trim(),
-          footer_text: formTriggers.trim(),
+          footer_text: (formFooter || formTriggers || '').trim(),
           category: formCategory,
           status: formReSubmitMeta ? 'pending' : 'approved',
           header_type: headerType,
@@ -846,15 +908,17 @@ export const TemplatesPage = () => {
       const newTmpl = metaTemplate || {
         id: `tmpl-${Date.now()}`,
         workspace_id: currentWorkspaceId,
-        name: formName.trim(),
+        name: cleanName,
         displayName: formName.trim(),
         body_text: formBody.trim(),
-        footer_text: formTriggers.trim(),
+        footer_text: (formFooter || formTriggers || '').trim(),
         category: formCategory.toUpperCase(),
+        language: formLanguage || 'en_US',
         status: formReSubmitMeta ? 'PENDING' : 'APPROVED',
         header_type: headerType,
         header_content: headerContent,
         buttons,
+        sampleValues,
         syncedWithMeta: formReSubmitMeta,
       };
 
@@ -866,10 +930,15 @@ export const TemplatesPage = () => {
         return updated;
       });
       setIsCreateModalOpen(false);
-      if (formReSubmitMeta) {
+
+      if (metaFeedback?.ok) {
+        showToast(`Template "${cleanName}" registered with Meta Graph API! Status: ${metaFeedback.status || 'PENDING'}`, 'success');
+      } else if (metaFeedback && !metaFeedback.ok) {
+        showToast(`Template saved in CRM! Meta: ${metaFeedback.error}`, 'warning');
+      } else if (formReSubmitMeta) {
         showToast(`Template "${formName}" created & submitted to Meta for approval!`, 'success');
       } else {
-        showToast(`Template "${formName}" created & active locally!`, 'success');
+        showToast(`Template "${formName}" created & active!`, 'success');
       }
     } catch (err) {
       console.error('Error creating template:', err);
@@ -877,15 +946,17 @@ export const TemplatesPage = () => {
       const localTmpl = {
         id: `tmpl-${Date.now()}`,
         workspace_id: currentWorkspaceId,
-        name: formName.trim(),
+        name: cleanName,
         displayName: formName.trim(),
         body_text: formBody.trim(),
-        footer_text: formTriggers.trim(),
-        category: formCategory,
+        footer_text: (formFooter || formTriggers || '').trim(),
+        category: formCategory.toUpperCase(),
+        language: formLanguage || 'en_US',
         status: formReSubmitMeta ? 'PENDING' : 'APPROVED',
         header_type: headerType,
         header_content: headerContent,
         buttons,
+        sampleValues,
         syncedWithMeta: formReSubmitMeta,
       };
       setTemplates((prev) => {
@@ -906,44 +977,68 @@ export const TemplatesPage = () => {
     e.preventDefault();
     if (!editingTemplate || !formName.trim() || !formBody.trim()) return;
 
-    if (formHeaderType === 'IMAGE' && formImageUrl.trim() && !isValidImageUrl(formImageUrl.trim())) {
-      showToast('Please upload an image file or provide a valid URL starting with https://. If you want a text title, select "Text Title".', 'error');
-      return;
-    }
-
     setIsSaving(true);
-    const hasImage = formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl.trim());
+    const hasMedia = ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formHeaderType) && Boolean(formImageUrl.trim());
     const isTextHeader = formHeaderType === 'TEXT' && Boolean(formHeaderText.trim());
-    const headerType = hasImage ? 'IMAGE' : (isTextHeader ? 'TEXT' : 'NONE');
-    const headerContent = hasImage ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
+    const headerType = formHeaderType || 'NONE';
+    const headerContent = hasMedia ? formImageUrl.trim() : (isTextHeader ? formHeaderText.trim() : null);
 
+    // Format buttons according to actionType
     const buttons = [];
-    if (formButton1.trim()) {
-      buttons.push({ type: 'QUICK_REPLY', text: formButton1.trim() });
+    if (actionType === 'CTA') {
+      if (ctaPhone?.text?.trim() && ctaPhone?.phone?.trim()) {
+        buttons.push({
+          type: 'PHONE_NUMBER',
+          text: ctaPhone.text.trim().slice(0, 25),
+          phone_number: ctaPhone.phone.trim().replace(/\s+/g, ''),
+        });
+      }
+      if (ctaUrl?.text?.trim() && ctaUrl?.url?.trim()) {
+        buttons.push({
+          type: 'URL',
+          text: ctaUrl.text.trim().slice(0, 25),
+          url: ctaUrl.url.trim(),
+        });
+      }
+    } else if (actionType === 'QUICK_REPLY') {
+      quickReplies
+        .filter((q) => q.text && q.text.trim())
+        .slice(0, 3)
+        .forEach((q) => {
+          buttons.push({
+            type: 'QUICK_REPLY',
+            text: q.text.trim().slice(0, 25),
+          });
+        });
     }
-    if (formButton2.trim()) {
-      buttons.push({ type: 'QUICK_REPLY', text: formButton2.trim() });
-    }
+
+    const cleanName = formName.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_');
 
     try {
       // 1. Call Backend Update API with optional Meta re-submission
       let metaUpdated = null;
+      const updatePayload = {
+        workspaceId: currentWorkspaceId,
+        name: cleanName,
+        displayName: formName.trim(),
+        category: formCategory.toUpperCase(),
+        language: formLanguage || 'en_US',
+        headerType,
+        headerImageUrl: hasMedia ? headerContent : null,
+        headerMediaUrl: hasMedia ? headerContent : null,
+        headerText: isTextHeader ? headerContent : null,
+        bodyText: formBody.trim(),
+        footerText: (formFooter || formTriggers || '').trim().slice(0, 60),
+        buttons,
+        sampleValues,
+        reSubmitToMeta: formReSubmitMeta,
+      };
+
       try {
         const res = await fetch(`/api/meta/templates/${editingTemplate.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            workspaceId: currentWorkspaceId,
-            name: formName.trim(),
-            category: formCategory.toUpperCase(),
-            headerType,
-            headerImageUrl: hasImage ? headerContent : null,
-            headerText: isTextHeader ? headerContent : null,
-            bodyText: formBody.trim(),
-            footerText: formTriggers.trim(),
-            buttons,
-            reSubmitToMeta: formReSubmitMeta,
-          }),
+          body: JSON.stringify(updatePayload),
         });
         if (res.ok) {
           const d = await res.json();
@@ -956,18 +1051,7 @@ export const TemplatesPage = () => {
           const res = await fetch(`http://localhost:4000/api/meta/templates/${editingTemplate.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              workspaceId: currentWorkspaceId,
-              name: formName.trim(),
-              category: formCategory.toUpperCase(),
-              headerType,
-              headerImageUrl: hasImage ? headerContent : null,
-              headerText: isTextHeader ? headerContent : null,
-              bodyText: formBody.trim(),
-              footerText: formTriggers.trim(),
-              buttons,
-              reSubmitToMeta: formReSubmitMeta,
-            }),
+            body: JSON.stringify(updatePayload),
           });
           if (res.ok) {
             const d = await res.json();
@@ -978,9 +1062,9 @@ export const TemplatesPage = () => {
 
       try {
         await updateTemplate(editingTemplate.id, {
-          name: formName.trim(),
+          name: cleanName,
           body_text: formBody.trim(),
-          footer_text: formTriggers.trim(),
+          footer_text: (formFooter || formTriggers || '').trim(),
           category: formCategory,
           status: formReSubmitMeta ? 'pending' : (editingTemplate.status || 'approved'),
           header_type: headerType,
@@ -991,15 +1075,17 @@ export const TemplatesPage = () => {
 
       const updatedObj = metaUpdated || {
         ...editingTemplate,
-        name: formName.trim(),
+        name: cleanName,
         displayName: formName.trim(),
         body_text: formBody.trim(),
-        footer_text: formTriggers.trim(),
+        footer_text: (formFooter || formTriggers || '').trim(),
         category: formCategory.toUpperCase(),
+        language: formLanguage || 'en_US',
         status: formReSubmitMeta ? 'PENDING' : editingTemplate.status,
         header_type: headerType,
         header_content: headerContent,
         buttons,
+        sampleValues,
       };
 
       setTemplates((prev) => {
@@ -1019,12 +1105,16 @@ export const TemplatesPage = () => {
           t.id === editingTemplate.id
             ? {
                 ...t,
-                name: formName.trim(),
+                name: cleanName,
+                displayName: formName.trim(),
                 body_text: formBody.trim(),
-                footer_text: formTriggers.trim(),
-                category: formCategory,
+                footer_text: (formFooter || formTriggers || '').trim(),
+                category: formCategory.toUpperCase(),
+                language: formLanguage || 'en_US',
                 header_type: headerType,
                 header_content: headerContent,
+                buttons,
+                sampleValues,
               }
             : t
         );
@@ -1034,7 +1124,7 @@ export const TemplatesPage = () => {
         return next;
       });
       setEditingTemplate(null);
-      showToast(`Template "${formName}" updated locally!`, 'success');
+      showToast(`Template updated locally!`, 'success');
     } finally {
       setIsSaving(false);
     }
@@ -1765,582 +1855,1039 @@ export const TemplatesPage = () => {
         )}
       </div>
 
-      {/* 6. Add / Edit Template Modal */}
+      {/* 6. Add / Edit Template Modal (Split-Screen Builder & Live Phone Mockup) */}
       {(isCreateModalOpen || editingTemplate) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in font-sans">
-          <div className="bg-white border border-[#EAECF0] rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => {
-                setIsCreateModalOpen(false);
-                setEditingTemplate(null);
-              }}
-              className="absolute top-5 right-5 text-[#98A2B3] hover:text-[#101828] p-1.5 rounded-xl hover:bg-[#F9FAFB] cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in font-sans">
+          <div className="bg-white border border-[#EAECF0] rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative">
+            {/* Modal Top Header */}
+            <div className="px-6 py-4 border-b border-[#EAECF0] flex items-center justify-between shrink-0 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7] shrink-0">
+                  <MessageSquare className="w-5 h-5 text-[#0284C7]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-[#101828]">
+                      {editingTemplate ? `Edit Template: ${editingTemplate.name}` : 'WhatsApp Cloud API Template Builder'}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] text-[10px] font-bold font-mono flex items-center gap-1">
+                      <Shield className="w-3 h-3 text-[#059669]" />
+                      <span>Meta BSP Format (v22.0)</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#667085]">
+                    Build, test in real-time, and register official WhatsApp templates directly with Meta Graph API
+                  </p>
+                </div>
+              </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0284C7]">
-                <MessageSquare className="w-5 h-5 text-[#0284C7]" />
+              {/* Mobile Tab Switcher */}
+              <div className="flex lg:hidden items-center bg-[#F2F4F7] p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setModalTab('editor')}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                    modalTab === 'editor' ? 'bg-white text-[#101828] shadow-xs' : 'text-[#667085]'
+                  }`}
+                >
+                  Editor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalTab('preview')}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                    modalTab === 'preview' ? 'bg-white text-[#0284C7] shadow-xs' : 'text-[#667085]'
+                  }`}
+                >
+                  Phone Preview
+                </button>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-[#101828]">
-                  {editingTemplate ? `Edit Template: ${editingTemplate.name}` : 'Create Auto-Reply Template'}
-                </h3>
-                <p className="text-xs text-[#667085]">
-                  Define the trigger words, optional header media, and the exact message WhatsApp should send back
-                </p>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setEditingTemplate(null);
+                }}
+                className="text-[#98A2B3] hover:text-[#101828] p-2 rounded-xl hover:bg-[#F9FAFB] cursor-pointer transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={editingTemplate ? handleSaveEdit : handleSaveCreate} className="space-y-4">
-              {/* 1. CHOOSE TEMPLATE PRESET */}
-              <div className="space-y-2 pb-2 border-b border-[#EAECF0]">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-[#101828] uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
-                    <span>1. Choose Template Preset</span>
-                  </label>
-                  <span className="text-[10px] text-[#667085]">
-                    Click a preset to auto-fill official WhatsApp template
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {DHI_PRESET_TEMPLATES.map((preset) => {
-                    const isSelected = formName.toLowerCase() === preset.displayName.toLowerCase() || formName.toLowerCase() === preset.name.toLowerCase();
-                    return (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => {
-                          setFormName(preset.displayName);
-                          setFormTriggers(preset.footer_text || '');
-                          setFormCategory((preset.category || 'utility').toLowerCase());
-                          setFormHeaderType(preset.header_type || 'NONE');
-                          setFormHeaderText(preset.header_content || '');
-                          setFormImageUrl('');
-                          setFormBody(preset.body_text || '');
-                          setFormButton1(preset.buttons?.[0]?.text || '');
-                          setFormButton2(preset.buttons?.[1]?.text || '');
-                        }}
-                        className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between h-24 ${
-                          isSelected
-                            ? 'bg-[#F0F9FF] border-2 border-[#0284C7] shadow-xs ring-2 ring-[#0284C7]/20'
-                            : 'bg-white border-[#EAECF0] hover:border-[#BAE6FD] hover:bg-[#F9FAFB]'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between gap-1">
-                            <h5 className="text-xs font-bold text-[#101828] truncate">{preset.displayName}</h5>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
-                          </div>
-                          {preset.badge && (
-                            <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono ${
-                              preset.badge === 'Recommended'
-                                ? 'bg-[#E0F2FE] text-[#0284C7]'
-                                : preset.badge === 'Popular'
-                                ? 'bg-[#E0F2FE] text-[#0369A1]'
-                                : preset.badge === 'High Conversion'
-                                ? 'bg-[#DCFCE7] text-[#16A34A]'
-                                : 'bg-[#F2F4F7] text-[#475467]'
-                            }`}>
-                              {preset.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-[#667085] truncate mt-1">
-                          {preset.buttons?.map(b => b.text).join(' • ') || preset.footer_text}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* Modal Body: Split Screen (Left: Form, Right: Phone Mockup) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-hidden">
+              {/* LEFT COLUMN: BUILDER FORM */}
+              <div
+                className={`lg:col-span-7 overflow-y-auto p-5 sm:p-6 space-y-6 max-h-[calc(92vh-140px)] ${
+                  modalTab === 'preview' ? 'hidden lg:block' : 'block'
+                }`}
+              >
+                <form id="templateBuilderForm" onSubmit={editingTemplate ? handleSaveEdit : handleSaveCreate} className="space-y-6">
+                  {/* PRESETS BAR */}
+                  <div className="space-y-2 pb-4 border-b border-[#EAECF0]">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#101828] uppercase tracking-wider font-mono flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
+                        <span>Pre-approved WhatsApp Templates</span>
+                      </label>
+                      <span className="text-[10px] text-[#667085]">
+                        Click to auto-populate high conversion templates
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {DHI_PRESET_TEMPLATES.map((preset) => {
+                        const isSelected = formName.toLowerCase() === preset.displayName.toLowerCase() || formName.toLowerCase() === preset.name.toLowerCase();
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => {
+                              setFormName(preset.displayName);
+                              setFormTriggers(preset.footer_text || '');
+                              setFormCategory((preset.category || 'marketing').toUpperCase());
+                              setFormHeaderType(preset.header_type || 'NONE');
+                              setFormHeaderText(preset.header_content || '');
+                              setFormImageUrl(preset.header_type === 'IMAGE' ? (preset.header_content || '') : '');
+                              setFormBody(preset.body_text || '');
+                              setFormFooter(preset.footer_text || '');
 
-              <div>
-                <label className="text-xs font-semibold text-[#344054]">Template Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Welcome Greeting (Hi / Hello)"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#344054]">
-                  Trigger Keywords (Comma separated)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. hi, hello, hey, start, menu"
-                  value={formTriggers}
-                  onChange={(e) => setFormTriggers(e.target.value)}
-                  className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
-                />
-                <p className="text-[10px] text-[#98A2B3] mt-1">
-                  When customer sends any of these words, this template message will be dispatched automatically.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-[#344054]">Category</label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
-                  >
-                    <option value="utility">Utility / Auto-Reply</option>
-                    <option value="marketing">Marketing / Promotion</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-[#344054]">Channel</label>
-                  <div className="mt-1 px-3.5 py-2 bg-[#F2F4F7] border border-[#EAECF0] rounded-xl text-xs font-bold text-[#16A34A] flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
-                    <span>WhatsApp Cloud API</span>
+                              if (Array.isArray(preset.buttons) && preset.buttons.length > 0) {
+                                const hasCta = preset.buttons.some((b) => b.type === 'URL' || b.type === 'PHONE_NUMBER');
+                                if (hasCta) {
+                                  setActionType('CTA');
+                                  const p = preset.buttons.find((b) => b.type === 'PHONE_NUMBER');
+                                  if (p) setCtaPhone({ text: p.text || 'Call Us', phone: p.phone_number || '+919791471277' });
+                                  const u = preset.buttons.find((b) => b.type === 'URL');
+                                  if (u) setCtaUrl({ text: u.text || 'Visit Website', url: u.url || 'https://www.dhigrowth.com', urlType: 'Static' });
+                                } else {
+                                  setActionType('QUICK_REPLY');
+                                  setQuickReplies(
+                                    preset.buttons.map((b, i) => ({ id: i + 1, text: b.text || b.title || '' }))
+                                  );
+                                }
+                              } else {
+                                setActionType('NONE');
+                              }
+                            }}
+                            className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between h-22 ${
+                              isSelected
+                                ? 'bg-[#F0F9FF] border-2 border-[#0284C7] shadow-xs ring-2 ring-[#0284C7]/20'
+                                : 'bg-white border-[#EAECF0] hover:border-[#BAE6FD] hover:bg-[#F9FAFB]'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-1">
+                                <h5 className="text-xs font-bold text-[#101828] truncate">{preset.displayName}</h5>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
+                              </div>
+                              {preset.badge && (
+                                <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono ${
+                                  preset.badge === 'Recommended'
+                                    ? 'bg-[#E0F2FE] text-[#0284C7]'
+                                    : preset.badge === 'Popular'
+                                    ? 'bg-[#E0F2FE] text-[#0369A1]'
+                                    : preset.badge === 'High Conversion'
+                                    ? 'bg-[#DCFCE7] text-[#16A34A]'
+                                    : 'bg-[#F2F4F7] text-[#475467]'
+                                }`}>
+                                  {preset.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#667085] truncate">
+                              {preset.buttons?.map((b) => b.text).join(' • ') || preset.category}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Header Media (None, Text Title, or Attach Image) */}
-              <div className="p-4 bg-[#F9FAFB] border border-[#EAECF0] rounded-2xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-[#0284C7]" />
-                    <label className="text-xs font-bold text-[#344054]">
-                      Header Component (Optional)
-                    </label>
-                  </div>
-                  <span className="text-[10px] font-mono text-[#0284C7] bg-[#F0F9FF] border border-[#BAE6FD] px-2 py-0.5 rounded-full font-bold">
-                    Official WhatsApp Supported
-                  </span>
-                </div>
+                  {/* 1. BASIC INFORMATION (Name, Category, Language) */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-[#344054] uppercase tracking-wider font-mono flex items-center gap-1.5">
+                      <span>1. Basic Information</span>
+                    </h4>
 
-                {/* 3 Header Type Options */}
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormHeaderType('NONE');
-                      setFormImageUrl('');
-                      setFormHeaderText('');
-                    }}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                      formHeaderType === 'NONE'
-                        ? 'bg-white border-2 border-[#0284C7] text-[#0284C7] shadow-xs'
-                        : 'text-[#667085] hover:text-[#101828] bg-white border border-[#EAECF0]'
-                    }`}
-                  >
-                    None (Body Only)
-                  </button>
+                    {/* Template Name & Slug */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-[#344054]">
+                          Template Name <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-[#667085] font-mono">
+                          Meta slug: <span className="font-bold text-[#0284C7]">{(formName || 'template_name').toLowerCase().replace(/[^a-z0-9_]/g, '_')}</span>
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="e.g. seasonal_promo_offer or Welcome Greeting"
+                        value={formName}
+                        onChange={(e) => setFormName(e.target.value)}
+                        className="w-full mt-1.5 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                        required
+                      />
+                      <p className="text-[10px] text-[#98A2B3] mt-1">
+                        Meta requires lowercase letters, numbers, and underscores only. We format it automatically.
+                      </p>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormHeaderType('TEXT');
-                      setFormImageUrl('');
-                    }}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                      formHeaderType === 'TEXT'
-                        ? 'bg-white border-2 border-[#0284C7] text-[#0284C7] shadow-xs'
-                        : 'text-[#667085] hover:text-[#101828] bg-white border border-[#EAECF0]'
-                    }`}
-                  >
-                    <Type className="w-3.5 h-3.5" />
-                    <span>Text Title</span>
-                  </button>
+                    {/* Category & Language */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-[#344054]">
+                          Category <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={formCategory}
+                          onChange={(e) => setFormCategory(e.target.value)}
+                          className="w-full mt-1.5 bg-[#F9FAFB] border border-[#EAECF0] px-3 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white font-medium"
+                        >
+                          <option value="MARKETING">Marketing (Promotions, Offers, Re-engagement)</option>
+                          <option value="UTILITY">Utility (Account Alerts, Orders, Support)</option>
+                          <option value="AUTHENTICATION">Authentication (OTPs, Security Verification)</option>
+                        </select>
+                      </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormHeaderType('IMAGE');
-                      setFormHeaderText('');
-                    }}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                      formHeaderType === 'IMAGE'
-                        ? 'bg-[#0284C7] text-white shadow-xs'
-                        : 'text-[#667085] hover:text-[#101828] bg-white border border-[#EAECF0]'
-                    }`}
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Attach Image</span>
-                  </button>
-                </div>
-
-                {/* TEXT HEADER CONFIGURATION */}
-                {formHeaderType === 'TEXT' && (
-                  <div className="space-y-1.5 pt-2 border-t border-[#EAECF0] animate-in fade-in">
-                    <label className="text-[11px] font-semibold text-[#475467]">
-                      Header Text / Bold Title
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. DhiGrowth IT Services or Exclusive Announcement"
-                      value={formHeaderText}
-                      onChange={(e) => setFormHeaderText(e.target.value)}
-                      className="w-full bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
-                    />
-                    <p className="text-[10px] text-[#98A2B3]">
-                      Appears as a prominent bold header line at the very top of your WhatsApp message.
-                    </p>
-                  </div>
-                )}
-
-                {/* IMAGE HEADER CONFIGURATION */}
-                {formHeaderType === 'IMAGE' && (
-                  <div className="space-y-3 pt-2 border-t border-[#EAECF0] animate-in fade-in">
-                    {/* Hidden Native File Input */}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageFileSelect}
-                      className="hidden"
-                    />
-
-                    {/* Image Attachment Card (when file or valid URL is present) */}
-                    {isValidImageUrl(formImageUrl) ? (
-                      <div className="p-3 bg-white border-2 border-[#BAE6FD] rounded-xl flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#EAECF0] bg-gray-50 shrink-0">
-                          <img
-                            src={formImageUrl}
-                            alt="Selected banner"
-                            className="w-full h-full object-cover"
-                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#0284C7]">
-                            <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
-                            <span>Image Attached & Ready</span>
-                          </div>
-                          <p className="text-[11px] text-[#667085] truncate mt-0.5">
-                            {formImageUrl.startsWith('data:') ? 'Local image uploaded from device' : formImageUrl}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <button
-                              type="button"
-                              onClick={() => fileInputRef.current?.click()}
-                              disabled={isUploadingImage}
-                              className="px-2.5 py-1 text-[11px] font-bold text-[#0284C7] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-                            >
-                              {isUploadingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3" />}
-                              <span>Change Image</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormImageUrl('')}
-                              className="px-2.5 py-1 text-[11px] font-bold text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                          </div>
+                      <div>
+                        <label className="text-xs font-semibold text-[#344054]">
+                          Language <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative mt-1.5">
+                          <select
+                            value={formLanguage}
+                            onChange={(e) => setFormLanguage(e.target.value)}
+                            className="w-full bg-[#F9FAFB] border border-[#EAECF0] px-3 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white font-medium pr-8"
+                          >
+                            <option value="en_US">English (US) - en_US</option>
+                            <option value="en_GB">English (UK) - en_GB</option>
+                            <option value="hi">Hindi (India) - hi</option>
+                            <option value="ta">Tamil (India) - ta</option>
+                            <option value="te">Telugu (India) - te</option>
+                            <option value="es">Spanish - es</option>
+                            <option value="ar">Arabic - ar</option>
+                            <option value="pt_BR">Portuguese (Brazil) - pt_BR</option>
+                          </select>
                         </div>
                       </div>
-                    ) : (
-                      /* Upload Dropzone (when no valid image attached yet) */
-                      <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-5 bg-white border-2 border-dashed border-[#BAE6FD] hover:border-[#0284C7] hover:bg-[#F0F9FF]/50 rounded-xl text-center cursor-pointer transition-all space-y-1.5 group"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-[#F0F9FF] text-[#0284C7] flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
-                          {isUploadingImage ? (
-                            <Loader2 className="w-5 h-5 animate-spin text-[#0284C7]" />
-                          ) : (
-                            <UploadCloud className="w-5 h-5 text-[#0284C7]" />
-                          )}
+                    </div>
+                  </div>
+
+                  {/* 2. HEADER COMPONENT (None, Text, Image, Video, Document) */}
+                  <div className="p-4 bg-[#F9FAFB] border border-[#EAECF0] rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-[#0284C7]" />
+                        <label className="text-xs font-bold text-[#344054]">
+                          Header Component (Optional)
+                        </label>
+                      </div>
+                      <span className="text-[10px] font-mono text-[#0284C7] bg-[#F0F9FF] border border-[#BAE6FD] px-2 py-0.5 rounded-full font-bold">
+                        Official WhatsApp Formats
+                      </span>
+                    </div>
+
+                    {/* 5 Header Format Tabs */}
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                      {[
+                        { id: 'NONE', label: 'None', icon: null },
+                        { id: 'TEXT', label: 'Text Title', icon: Type },
+                        { id: 'IMAGE', label: 'Image', icon: ImageIcon },
+                        { id: 'VIDEO', label: 'Video', icon: Video },
+                        { id: 'DOCUMENT', label: 'Document', icon: FileCheck },
+                      ].map((h) => {
+                        const Icon = h.icon;
+                        const isSelected = formHeaderType === h.id;
+                        return (
+                          <button
+                            key={h.id}
+                            type="button"
+                            onClick={() => {
+                              setFormHeaderType(h.id);
+                              if (h.id === 'NONE') {
+                                setFormImageUrl('');
+                                setFormHeaderText('');
+                              } else if (h.id === 'TEXT') {
+                                setFormImageUrl('');
+                              }
+                            }}
+                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                              isSelected
+                                ? 'bg-[#0284C7] text-white shadow-xs'
+                                : 'text-[#667085] hover:text-[#101828] bg-white border border-[#EAECF0]'
+                            }`}
+                          >
+                            {Icon && <Icon className="w-3.5 h-3.5" />}
+                            <span>{h.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* TEXT HEADER CONFIGURATION */}
+                    {formHeaderType === 'TEXT' && (
+                      <div className="space-y-1.5 pt-2 border-t border-[#EAECF0] animate-in fade-in">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-semibold text-[#475467]">
+                            Header Text (Bold Title)
+                          </label>
+                          <span className="text-[10px] font-mono text-[#98A2B3]">{formHeaderText.length} / 60</span>
                         </div>
-                        <div className="text-xs font-bold text-[#101828]">
-                          {isUploadingImage ? 'Uploading Image...' : 'Click to Upload Image from your Device'}
-                        </div>
-                        <p className="text-[11px] text-[#667085]">
-                          Select JPG, PNG, WebP or SVG from computer/mobile (up to 10MB)
+                        <input
+                          type="text"
+                          maxLength={60}
+                          placeholder="e.g. Exclusive Offer from DhiGrowth"
+                          value={formHeaderText}
+                          onChange={(e) => setFormHeaderText(e.target.value)}
+                          className="w-full bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
+                        />
+                        <p className="text-[10px] text-[#98A2B3]">
+                          Appears as a prominent bold headline at the very top of your WhatsApp message.
                         </p>
                       </div>
                     )}
 
-                    {/* Or Public URL Input */}
-                    <div className="space-y-1 pt-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-semibold text-[#475467]">
-                          Or Paste Public Image URL:
-                        </label>
-                        {isValidImageUrl(formImageUrl) && (
-                          <span className="text-[10px] text-[#16A34A] font-bold">✓ Valid URL</span>
+                    {/* MEDIA (IMAGE, VIDEO, DOCUMENT) CONFIGURATION */}
+                    {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formHeaderType) && (
+                      <div className="space-y-3 pt-2 border-t border-[#EAECF0] animate-in fade-in">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept={
+                            formHeaderType === 'IMAGE'
+                              ? 'image/*'
+                              : formHeaderType === 'VIDEO'
+                              ? 'video/mp4,video/3gpp'
+                              : '.pdf,.doc,.docx,.xlsx'
+                          }
+                          onChange={handleImageFileSelect}
+                          className="hidden"
+                        />
+
+                        {/* Media Attached Card */}
+                        {Boolean(formImageUrl.trim()) ? (
+                          <div className="p-3 bg-white border-2 border-[#BAE6FD] rounded-xl flex items-center gap-3">
+                            <div className="w-14 h-14 rounded-lg overflow-hidden border border-[#EAECF0] bg-gray-50 flex items-center justify-center shrink-0">
+                              {formHeaderType === 'IMAGE' ? (
+                                <img
+                                  src={formImageUrl}
+                                  alt="Attached"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                              ) : formHeaderType === 'VIDEO' ? (
+                                <Video className="w-6 h-6 text-[#0284C7]" />
+                              ) : (
+                                <FileCheck className="w-6 h-6 text-[#0284C7]" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-[#0284C7]">
+                                <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+                                <span>{formHeaderType} Media Attached</span>
+                              </div>
+                              <p className="text-[11px] text-[#667085] truncate mt-0.5 font-mono">
+                                {formImageUrl.startsWith('data:') ? 'Local file uploaded' : formImageUrl}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="text-[11px] font-bold text-[#0284C7] hover:underline cursor-pointer flex items-center gap-1"
+                                >
+                                  <UploadCloud className="w-3 h-3" />
+                                  <span>Change File</span>
+                                </button>
+                                <span className="text-gray-300">•</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setFormImageUrl('')}
+                                  className="text-[11px] font-bold text-[#DC2626] hover:underline cursor-pointer"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Dropzone */
+                          <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-4 bg-white border-2 border-dashed border-[#BAE6FD] hover:border-[#0284C7] hover:bg-[#F0F9FF]/50 rounded-xl text-center cursor-pointer transition-all space-y-1 group"
+                          >
+                            <div className="w-9 h-9 rounded-full bg-[#F0F9FF] text-[#0284C7] flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
+                              <UploadCloud className="w-4 h-4 text-[#0284C7]" />
+                            </div>
+                            <div className="text-xs font-bold text-[#101828]">
+                              Click to upload {formHeaderType.toLowerCase()} from your device
+                            </div>
+                            <p className="text-[10px] text-[#667085]">
+                              {formHeaderType === 'IMAGE' && 'PNG, JPG, WebP (up to 10MB)'}
+                              {formHeaderType === 'VIDEO' && 'MP4 video (up to 16MB)'}
+                              {formHeaderType === 'DOCUMENT' && 'PDF or XLSX document (up to 25MB)'}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Public URL Input */}
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-[#475467]">
+                            Or Paste Public {formHeaderType} URL:
+                          </label>
+                          <input
+                            type="url"
+                            placeholder={
+                              formHeaderType === 'IMAGE'
+                                ? 'https://example.com/banner.png'
+                                : formHeaderType === 'VIDEO'
+                                ? 'https://example.com/promo.mp4'
+                                : 'https://example.com/brochure.pdf'
+                            }
+                            value={formImageUrl}
+                            onChange={(e) => setFormImageUrl(e.target.value)}
+                            className="w-full bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
+                          />
+                        </div>
+
+                        {/* Presets if IMAGE */}
+                        {formHeaderType === 'IMAGE' && (
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-[#98A2B3] font-mono font-bold uppercase">
+                              Preset Banners:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {PRESET_HEADER_IMAGES.map((preset) => (
+                                <button
+                                  key={preset.label}
+                                  type="button"
+                                  onClick={() => setFormImageUrl(preset.url)}
+                                  className={`px-2 py-0.5 rounded-lg border text-[10px] font-medium transition-all cursor-pointer ${
+                                    formImageUrl === preset.url
+                                      ? 'bg-[#F0F9FF] border-[#0284C7] text-[#0284C7] font-bold'
+                                      : 'bg-white border-[#EAECF0] hover:border-[#0284C7] text-[#344054]'
+                                  }`}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="url"
-                          placeholder="https://example.com/banner.png"
-                          value={formImageUrl}
-                          onChange={(e) => setFormImageUrl(e.target.value)}
-                          className="flex-1 bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
-                        />
-                        {formImageUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setFormImageUrl('')}
-                            className="p-2 text-[#98A2B3] hover:text-[#DC2626] rounded-xl hover:bg-white cursor-pointer"
-                            title="Clear Image"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                    )}
+                  </div>
+
+                  {/* 3. MESSAGE BODY (WhatsApp Text & Formatting Toolbar) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[#344054] flex items-center gap-1.5">
+                        <span>Message Body</span>
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[10px] font-mono ${formBody.length > 1024 ? 'text-red-500 font-bold' : 'text-[#98A2B3]'}`}>
+                        {formBody.length} / 1024 characters
+                      </span>
+                    </div>
+
+                    {/* Toolbar: Formatting & Variable Injection */}
+                    <div className="flex items-center justify-between gap-2 p-1.5 bg-[#F2F4F7] rounded-xl flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setFormBody((prev) => prev + ' *bold text* ')}
+                          className="px-2 py-1 rounded-md bg-white hover:bg-gray-50 text-[10px] font-bold text-[#344054] border border-[#EAECF0] cursor-pointer shadow-2xs"
+                          title="Add bold formatting"
+                        >
+                          *Bold*
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormBody((prev) => prev + ' _italic text_ ')}
+                          className="px-2 py-1 rounded-md bg-white hover:bg-gray-50 text-[10px] italic font-semibold text-[#344054] border border-[#EAECF0] cursor-pointer shadow-2xs"
+                          title="Add italic formatting"
+                        >
+                          _Italic_
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormBody((prev) => prev + ' ~strike~ ')}
+                          className="px-2 py-1 rounded-md bg-white hover:bg-gray-50 text-[10px] line-through text-[#344054] border border-[#EAECF0] cursor-pointer shadow-2xs"
+                          title="Add strikethrough"
+                        >
+                          ~Strike~
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-bold font-mono text-[#0284C7]">Insert Variable:</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormBody((prev) => prev + ' {{1}}')}
+                          className="px-2 py-1 rounded-md bg-[#0284C7] hover:bg-[#0369A1] text-white text-[10px] font-bold font-mono cursor-pointer shadow-2xs"
+                          title="Insert variable {{1}}"
+                        >
+                          + {'{{1}}'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormBody((prev) => prev + ' {{2}}')}
+                          className="px-2 py-1 rounded-md bg-[#0284C7] hover:bg-[#0369A1] text-white text-[10px] font-bold font-mono cursor-pointer shadow-2xs"
+                          title="Insert variable {{2}}"
+                        >
+                          + {'{{2}}'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormBody((prev) => prev + ' {{3}}')}
+                          className="px-2 py-1 rounded-md bg-[#0284C7] hover:bg-[#0369A1] text-white text-[10px] font-bold font-mono cursor-pointer shadow-2xs"
+                          title="Insert variable {{3}}"
+                        >
+                          + {'{{3}}'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea
+                      rows={6}
+                      placeholder="Write your official WhatsApp message. Example: Hi {{1}}, thank you for contacting DhiGrowth! Here is your exclusive deal: {{2}}."
+                      value={formBody}
+                      onChange={(e) => setFormBody(e.target.value)}
+                      className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-3.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white leading-relaxed resize-none font-sans"
+                      required
+                    />
+                  </div>
+
+                  {/* 4. DYNAMIC SAMPLE VARIABLES (CRUCIAL FOR META APPROVAL) */}
+                  {(() => {
+                    const detectedVars = Array.from(
+                      new Set((formBody.match(/\{\{(\d+|[a-zA-Z0-9_]+)\}\}/g) || []).map((v) => v.replace(/[{}]/g, '')))
+                    );
+                    if (detectedVars.length === 0) return null;
+
+                    return (
+                      <div className="p-4 bg-[#F0FDF4] border border-[#BBF7D0] rounded-2xl space-y-3 animate-in fade-in">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="text-xs font-bold text-[#166534]">
+                              Sample Variable Values (Required by Meta)
+                            </h4>
+                            <p className="text-[10px] text-[#15803D] leading-relaxed">
+                              Meta's review team strictly requires realistic sample text for every variable placeholder before approving the template.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          {detectedVars.map((v) => (
+                            <div key={v} className="bg-white p-2.5 rounded-xl border border-[#BBF7D0] space-y-1">
+                              <label className="text-[10px] font-mono font-bold text-[#166534] block">
+                                Sample for {'{{' + v + '}}'}:
+                              </label>
+                              <input
+                                type="text"
+                                placeholder={v === '1' ? 'e.g. Rahul Sharma' : v === '2' ? 'e.g. 25% Discount' : 'e.g. Bengaluru'}
+                                value={sampleValues[v] || ''}
+                                onChange={(e) =>
+                                  setSampleValues((prev) => ({
+                                    ...prev,
+                                    [v]: e.target.value,
+                                  }))
+                                }
+                                className="w-full bg-[#F9FAFB] border border-[#EAECF0] px-2.5 py-1.5 rounded-lg text-xs text-[#101828] focus:outline-none focus:border-[#16A34A] focus:bg-white"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* 5. FOOTER (Optional, Max 60 chars) */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[#344054]">
+                        Footer Disclaimer (Optional)
+                      </label>
+                      <span className="text-[10px] font-mono text-[#98A2B3]">
+                        {formFooter.length} / 60
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      maxLength={60}
+                      placeholder="e.g. Reply STOP to unsubscribe • Sent via DhiGrowth CRM"
+                      value={formFooter}
+                      onChange={(e) => setFormFooter(e.target.value)}
+                      className="w-full bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2.5 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white"
+                    />
+                    <p className="text-[10px] text-[#98A2B3]">
+                      Small muted disclaimer line rendered at the bottom of the WhatsApp bubble.
+                    </p>
+                  </div>
+
+                  {/* 6. INTERACTIVE ACTION BUTTONS (CTA or Quick Replies) */}
+                  <div className="p-4 bg-[#F9FAFB] border border-[#EAECF0] rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#344054] flex items-center gap-1.5">
+                        <Check className="w-4 h-4 text-[#0284C7]" />
+                        <span>Interactive Action Buttons</span>
+                      </label>
+                      <span className="text-[10px] font-mono text-[#0284C7] bg-[#F0F9FF] border border-[#BAE6FD] px-2 py-0.5 rounded-full font-bold">
+                        WhatsApp Interactive
+                      </span>
+                    </div>
+
+                    {/* Button Type Selector */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'NONE', label: 'None' },
+                        { id: 'CTA', label: 'Call To Action (CTA)' },
+                        { id: 'QUICK_REPLY', label: 'Quick Reply Buttons' },
+                      ].map((type) => (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => setActionType(type.id)}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                            actionType === type.id
+                              ? 'bg-[#0284C7] text-white shadow-xs'
+                              : 'bg-white border border-[#EAECF0] text-[#667085] hover:text-[#101828]'
+                          }`}
+                        >
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* CTA CONFIGURATION */}
+                    {actionType === 'CTA' && (
+                      <div className="space-y-3 pt-2 border-t border-[#EAECF0] animate-in fade-in">
+                        {/* Phone CTA */}
+                        <div className="p-3 bg-white border border-[#EAECF0] rounded-xl space-y-2">
+                          <span className="text-[10px] font-mono font-bold text-[#16A34A] uppercase flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            <span>1. Call Phone Number</span>
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-[#667085]">Button Text (max 25)</label>
+                              <input
+                                type="text"
+                                maxLength={25}
+                                value={ctaPhone.text}
+                                onChange={(e) => setCtaPhone((prev) => ({ ...prev, text: e.target.value }))}
+                                placeholder="Call Us"
+                                className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3 py-1.5 rounded-lg text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-[#667085]">Phone Number with Country Code</label>
+                              <input
+                                type="text"
+                                value={ctaPhone.phone}
+                                onChange={(e) => setCtaPhone((prev) => ({ ...prev, phone: e.target.value }))}
+                                placeholder="+919791471277"
+                                className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3 py-1.5 rounded-lg text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* URL CTA */}
+                        <div className="p-3 bg-white border border-[#EAECF0] rounded-xl space-y-2">
+                          <span className="text-[10px] font-mono font-bold text-[#0284C7] uppercase flex items-center gap-1">
+                            <ExternalLink className="w-3 h-3" />
+                            <span>2. Visit Website URL</span>
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-[#667085]">Button Text (max 25)</label>
+                              <input
+                                type="text"
+                                maxLength={25}
+                                value={ctaUrl.text}
+                                onChange={(e) => setCtaUrl((prev) => ({ ...prev, text: e.target.value }))}
+                                placeholder="Visit Website"
+                                className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3 py-1.5 rounded-lg text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-[#667085]">Website URL (https://)</label>
+                              <input
+                                type="url"
+                                value={ctaUrl.url}
+                                onChange={(e) => setCtaUrl((prev) => ({ ...prev, url: e.target.value }))}
+                                placeholder="https://www.dhigrowth.com"
+                                className="w-full mt-1 bg-[#F9FAFB] border border-[#EAECF0] px-3 py-1.5 rounded-lg text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* QUICK REPLY CONFIGURATION */}
+                    {actionType === 'QUICK_REPLY' && (
+                      <div className="space-y-2 pt-2 border-t border-[#EAECF0] animate-in fade-in">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-[#475467]">
+                            Quick Replies (Up to 3 buttons, max 25 chars each)
+                          </span>
+                          {quickReplies.length < 3 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQuickReplies((prev) => [
+                                  ...prev,
+                                  { id: Date.now(), text: `Option ${prev.length + 1}` },
+                                ])
+                              }
+                              className="text-[11px] font-bold text-[#0284C7] hover:underline flex items-center gap-1 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Add Button</span>
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          {quickReplies.map((q, idx) => (
+                            <div key={q.id || idx} className="flex items-center gap-2">
+                              <span className="text-xs font-mono font-bold text-[#98A2B3] w-5">#{idx + 1}</span>
+                              <input
+                                type="text"
+                                maxLength={25}
+                                placeholder={`Button label ${idx + 1}`}
+                                value={q.text}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setQuickReplies((prev) =>
+                                    prev.map((item, i) => (i === idx ? { ...item, text: val } : item))
+                                  );
+                                }}
+                                className="flex-1 bg-white border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7]"
+                              />
+                              <span className="text-[10px] text-[#98A2B3] font-mono w-10 text-right">
+                                {q.text?.length || 0}/25
+                              </span>
+                              {quickReplies.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setQuickReplies((prev) => prev.filter((_, i) => i !== idx))}
+                                  className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 cursor-pointer"
+                                  title="Remove Button"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 7. CRM TRIGGERS & META SUBMISSION */}
+                  <div className="space-y-3 pt-2">
+                    <div>
+                      <label className="text-xs font-semibold text-[#344054]">
+                        CRM Bot Trigger Keywords (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. hi, hello, start, menu, promo"
+                        value={formTriggers}
+                        onChange={(e) => setFormTriggers(e.target.value)}
+                        className="w-full mt-1.5 bg-[#F9FAFB] border border-[#EAECF0] px-3.5 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white"
+                      />
+                      <p className="text-[10px] text-[#98A2B3] mt-1">
+                        When customer texts any of these words on WhatsApp, this template is dispatched automatically.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-2xl flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="formReSubmitMeta"
+                        checked={formReSubmitMeta}
+                        onChange={(e) => setFormReSubmitMeta(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 text-[#0284C7] rounded border-gray-300 focus:ring-[#0284C7] cursor-pointer"
+                      />
+                      <label htmlFor="formReSubmitMeta" className="text-xs text-[#344054] cursor-pointer leading-relaxed">
+                        <span className="font-bold text-[#0284C7] flex items-center gap-1.5">
+                          <Shield className="w-3.5 h-3.5 text-[#0284C7]" />
+                          Submit to Meta WhatsApp Cloud API for Review
+                        </span>
+                        <span className="text-[11px] text-[#667085] block mt-0.5">
+                          Directly calls Meta Graph API ({currentUser?.organization || 'Workspace'}). Once approved, the template can be sent to any WhatsApp user worldwide.
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              {/* RIGHT COLUMN: LIVE WHATSAPP PHONE MOCKUP */}
+              <div
+                className={`lg:col-span-5 bg-[#F8FAFC] border-t lg:border-t-0 lg:border-l border-[#EAECF0] p-4 sm:p-6 flex flex-col items-center justify-start overflow-y-auto max-h-[calc(92vh-140px)] ${
+                  modalTab === 'editor' ? 'hidden lg:flex' : 'flex'
+                }`}
+              >
+                <div className="w-full max-w-[340px] space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono font-bold text-[#475467] px-1">
+                    <span className="flex items-center gap-1.5 text-[#16A34A]">
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>WhatsApp Live Preview</span>
+                    </span>
+                    <span className="text-[10px] text-[#667085] bg-gray-200 px-2 py-0.5 rounded-full font-bold">
+                      iOS / Android
+                    </span>
+                  </div>
+
+                  {/* SMARTPHONE FRAME */}
+                  <div className="w-full rounded-[40px] border-8 border-gray-900 bg-white shadow-2xl overflow-hidden flex flex-col relative aspect-[9/18] min-h-[580px]">
+                    {/* Top Notch / Dynamic Island */}
+                    <div className="bg-gray-900 pt-2 pb-1.5 flex justify-center shrink-0">
+                      <div className="w-24 h-4 bg-black rounded-full flex items-center justify-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div>
+                        <div className="w-2 h-2 rounded-full bg-blue-950"></div>
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Business Header */}
+                    <div className="bg-[#075E54] text-white px-3 py-2.5 flex items-center justify-between shrink-0 shadow-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ChevronDown className="w-4 h-4 rotate-90 text-white shrink-0" />
+                        <div className="w-7 h-7 rounded-full bg-[#128C7E] flex items-center justify-center text-[11px] font-bold text-white shrink-0 border border-white/20">
+                          DG
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-bold truncate">DhiGrowth</span>
+                            <CheckCircle2 className="w-3 h-3 text-[#25D366] fill-[#25D366] text-white shrink-0" />
+                          </div>
+                          <p className="text-[9px] text-white/80 leading-none truncate">Official Business Account</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-white/90">
+                        <Video className="w-3.5 h-3.5" />
+                        <Phone className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Chat Canvas */}
+                    <div className="flex-1 bg-[#EFEAE2] p-3 overflow-y-auto space-y-2.5 flex flex-col justify-end text-[11px]">
+                      {/* Date Chip */}
+                      <div className="flex justify-center">
+                        <span className="bg-[#FFFFFF]/90 backdrop-blur-xs text-gray-600 text-[9px] font-bold px-2 py-0.5 rounded-md shadow-2xs uppercase">
+                          Today
+                        </span>
+                      </div>
+
+                      {/* Encryption Note */}
+                      <div className="bg-[#FFF9C4]/80 border border-[#FFEE58]/60 text-gray-700 text-[8px] p-1.5 rounded-lg text-center leading-snug shadow-2xs">
+                        🔒 Messages are end-to-end encrypted. No one outside of this chat can read them.
+                      </div>
+
+                      {/* WhatsApp Outgoing Template Bubble */}
+                      <div className="bg-white text-[#111B21] rounded-2xl rounded-tl-xs p-2.5 shadow-sm space-y-2 relative max-w-[96%]">
+                        {/* Header Media */}
+                        {formHeaderType === 'IMAGE' && (
+                          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 bg-gray-100 border border-black/5 aspect-video flex items-center justify-center relative">
+                            {isValidImageUrl(formImageUrl) ? (
+                              <img
+                                src={formImageUrl}
+                                alt="Header"
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div className="text-center p-3 text-gray-400">
+                                <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                                <span className="text-[9px]">Image Header Preview</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {formHeaderType === 'VIDEO' && (
+                          <div className="rounded-xl overflow-hidden -mx-1 -mt-1 bg-gray-900 border border-black/5 aspect-video flex items-center justify-center relative text-white">
+                            <div className="w-9 h-9 rounded-full bg-white/30 backdrop-blur-xs flex items-center justify-center">
+                              <div className="w-0 h-0 border-y-4 border-y-transparent border-l-6 border-l-white ml-0.5"></div>
+                            </div>
+                            <span className="absolute bottom-1.5 right-1.5 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-mono">
+                              0:30
+                            </span>
+                          </div>
+                        )}
+
+                        {formHeaderType === 'DOCUMENT' && (
+                          <div className="p-2 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                              <FileCheck className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[10px] font-bold truncate text-gray-800">
+                                {formName ? `${formName.toLowerCase().replace(/[^a-z0-9_]/g, '_')}.pdf` : 'document.pdf'}
+                              </p>
+                              <p className="text-[8px] text-gray-400">PDF • 1.2 MB</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {formHeaderType === 'TEXT' && Boolean(formHeaderText.trim()) && (
+                          <div className="font-extrabold text-[12px] text-gray-900 leading-snug pb-1 border-b border-gray-100">
+                            {formHeaderText.trim()}
+                          </div>
+                        )}
+
+                        {/* Body Text with Variable Substitution & Markdown Parsing */}
+                        <div className="text-[11px] leading-relaxed whitespace-pre-line text-gray-800 font-sans">
+                          {(() => {
+                            if (!formBody.trim()) {
+                              return <span className="text-gray-400 italic">Your message will appear here...</span>;
+                            }
+
+                            let parsed = formBody;
+                            // Replace variables with sample values if entered
+                            const vars = Array.from(
+                              new Set((formBody.match(/\{\{(\d+|[a-zA-Z0-9_]+)\}\}/g) || []).map((v) => v.replace(/[{}]/g, '')))
+                            );
+
+                            vars.forEach((v) => {
+                              const sample = sampleValues[v];
+                              const regex = new RegExp(`\\{\\{${v}\\}\\}`, 'g');
+                              if (sample && sample.trim()) {
+                                parsed = parsed.replace(regex, `*${sample.trim()}*`);
+                              }
+                            });
+
+                            return parsed.split('\n').map((line, idx) => {
+                              const rendered = line
+                                .replace(/\*([^*]+)\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
+                                .replace(/_([^_]+)_/g, '<em class="italic">$1</em>')
+                                .replace(/~([^~]+)~/g, '<del class="line-through text-gray-400">$1</del>')
+                                .replace(
+                                  /\{\{(\d+|[a-zA-Z0-9_]+)\}\}/g,
+                                  '<span class="px-1 py-0.2 rounded bg-sky-100 text-sky-700 font-mono text-[9px] font-bold border border-sky-300">{{$1}}</span>'
+                                );
+
+                              return (
+                                <span
+                                  key={idx}
+                                  className="block min-h-[1.1em]"
+                                  dangerouslySetInnerHTML={{ __html: rendered }}
+                                />
+                              );
+                            });
+                          })()}
+                        </div>
+
+                        {/* Footer Disclaimer */}
+                        {Boolean(formFooter.trim()) && (
+                          <p className="text-[9px] text-gray-400 pt-1 border-t border-gray-100">
+                            {formFooter.trim()}
+                          </p>
+                        )}
+
+                        {/* Timestamp & Delivery Checks */}
+                        <div className="flex items-center justify-end gap-1 text-[8px] text-gray-400 font-mono pt-0.5">
+                          <span>10:45 AM</span>
+                          <CheckCheck className="w-3 h-3 text-[#53BDEB]" />
+                        </div>
+
+                        {/* CTA Buttons inside bubble */}
+                        {actionType === 'CTA' && (
+                          <div className="pt-1.5 border-t border-gray-100 space-y-1">
+                            {ctaPhone.text && (
+                              <div className="w-full py-1 px-2 text-[#0284C7] text-[10px] font-bold flex items-center justify-center gap-1.5 bg-gray-50/80 rounded-lg hover:bg-gray-100 transition-colors">
+                                <Phone className="w-3 h-3 text-[#0284C7]" />
+                                <span>{ctaPhone.text}</span>
+                              </div>
+                            )}
+                            {ctaUrl.text && (
+                              <div className="w-full py-1 px-2 text-[#0284C7] text-[10px] font-bold flex items-center justify-center gap-1.5 bg-gray-50/80 rounded-lg hover:bg-gray-100 transition-colors">
+                                <ExternalLink className="w-3 h-3 text-[#0284C7]" />
+                                <span>{ctaUrl.text}</span>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
 
-                      {/* Warning if user typed plain text (e.g. "DhiGrowth IT Services") instead of URL/image */}
-                      {Boolean(formImageUrl.trim()) && !isValidImageUrl(formImageUrl.trim()) && (
-                        <div className="p-2.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[11px] text-[#B42318] flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-[#D92D20] shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold">"{formImageUrl.trim()}"</span> looks like a text title rather than an image file!
-                            <div className="mt-1">
-                              👉 If you want a bold text headline, click{' '}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setFormHeaderText(formImageUrl.trim());
-                                  setFormImageUrl('');
-                                  setFormHeaderType('TEXT');
-                                }}
-                                className="font-bold underline text-[#B42318] hover:text-[#7A271A] cursor-pointer"
+                      {/* Quick Reply Stacked Buttons below bubble */}
+                      {actionType === 'QUICK_REPLY' && quickReplies.some((q) => q.text?.trim()) && (
+                        <div className="space-y-1 pt-1">
+                          {quickReplies
+                            .filter((q) => q.text?.trim())
+                            .map((q, idx) => (
+                              <div
+                                key={idx}
+                                className="w-full py-1.5 px-3 bg-white text-[#00A884] font-bold text-[10px] rounded-xl shadow-xs border border-black/5 text-center flex items-center justify-center gap-1"
                               >
-                                Switch to "Text Title"
-                              </button>
-                              , or click "Upload Image" to pick a photo from your computer.
-                            </div>
-                          </div>
+                                <Check className="w-3 h-3 text-[#00A884]" />
+                                <span>{q.text}</span>
+                              </div>
+                            ))}
                         </div>
                       )}
                     </div>
 
-                    {/* Quick Image Presets */}
-                    <div className="space-y-1.5 pt-1">
-                      <span className="text-[10px] text-[#98A2B3] font-mono font-bold uppercase">
-                        Quick Preset Banners:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {PRESET_HEADER_IMAGES.map((preset) => (
-                          <button
-                            key={preset.label}
-                            type="button"
-                            onClick={() => setFormImageUrl(preset.url)}
-                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all cursor-pointer ${
-                              formImageUrl === preset.url
-                                ? 'bg-[#F0F9FF] border-[#0284C7] text-[#0284C7] font-bold'
-                                : 'bg-white border-[#EAECF0] hover:border-[#0284C7] text-[#344054]'
-                            }`}
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
+                    {/* Chat Input Bar Mockup */}
+                    <div className="bg-[#F0F2F5] px-2 py-1.5 flex items-center gap-1.5 shrink-0 border-t border-gray-200">
+                      <div className="flex-1 bg-white rounded-full px-3 py-1 text-[10px] text-gray-400">
+                        Type a message
+                      </div>
+                      <div className="w-6 h-6 rounded-full bg-[#00A884] text-white flex items-center justify-center">
+                        <Send className="w-3 h-3" />
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-[#344054]">
-                    Message Content (WhatsApp Body)
-                  </label>
-                  <span className="text-[10px] font-mono text-[#98A2B3]">
-                    Tip: Use *bold* or **bold** for bold text
-                  </span>
-                </div>
-
-                {/* Variable Inserter Toolbar */}
-                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                  <span className="text-[10px] font-mono font-bold text-[#667085]">Insert Variables:</span>
-                  <button
-                    type="button"
-                    onClick={() => setFormBody((prev) => prev + ' {{1}}')}
-                    className="px-2 py-0.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] text-[10px] font-bold font-mono transition-colors cursor-pointer"
-                    title="Insert {{1}} (e.g. Customer Name)"
-                  >
-                    + {'{{1}}'} Name
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormBody((prev) => prev + ' {{2}}')}
-                    className="px-2 py-0.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] text-[10px] font-bold font-mono transition-colors cursor-pointer"
-                    title="Insert {{2}} (e.g. City, Deal, or Custom param)"
-                  >
-                    + {'{{2}}'} Custom Param
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormBody((prev) => prev + ' {{3}}')}
-                    className="px-2 py-0.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] text-[10px] font-bold font-mono transition-colors cursor-pointer"
-                    title="Insert {{3}} (e.g. Link, Date, or Offer)"
-                  >
-                    + {'{{3}}'} Link/Offer
-                  </button>
-                </div>
-
-                <textarea
-                  rows={6}
-                  placeholder="Write the exact message WhatsApp should send back..."
-                  value={formBody}
-                  onChange={(e) => setFormBody(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-[#EAECF0] p-3 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] leading-relaxed resize-none font-sans"
-                  required
-                />
-              </div>
-
-              {/* Quick-Reply Buttons (Interactive WhatsApp Responses) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-[#344054] flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-[#16A34A]" />
-                    <span>Quick-Reply Buttons (Interactive Options)</span>
-                  </label>
-                  <span className="text-[10px] text-[#667085]">
-                    Up to 2 buttons (max 25 chars each)
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="text-[10px] font-mono font-bold text-[#667085] block mb-1">
-                      Button 1 (Positive / Primary)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        maxLength={25}
-                        placeholder="e.g. Yes, I'm interested"
-                        value={formButton1}
-                        onChange={(e) => setFormButton1(e.target.value)}
-                        className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-7 pr-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#16A34A] focus:bg-white"
-                      />
-                      <Check className="w-3.5 h-3.5 text-[#16A34A] absolute left-2 top-2.5" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-mono font-bold text-[#667085] block mb-1">
-                      Button 2 (Secondary / Tell More)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        maxLength={25}
-                        placeholder="e.g. Tell me more"
-                        value={formButton2}
-                        onChange={(e) => setFormButton2(e.target.value)}
-                        className="w-full bg-[#F9FAFB] border border-[#EAECF0] pl-7 pr-3 py-2 rounded-xl text-xs text-[#101828] focus:outline-none focus:border-[#0284C7] focus:bg-white"
-                      />
-                      <Plus className="w-3.5 h-3.5 text-[#0284C7] absolute left-2 top-2.5" />
-                    </div>
-                  </div>
+                  <p className="text-[10px] text-[#667085] text-center font-mono">
+                    Live Meta layout preview • Updates in real-time
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Live WhatsApp Customer Bubble Preview */}
-              {(formBody || formButton1 || formButton2 || (formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl)) || (formHeaderType === 'TEXT' && formHeaderText)) && (
-                <div className="p-3.5 rounded-2xl bg-[#EFEAE2] border border-[#D1D5DB] space-y-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#16A34A]">
-                    <Smartphone className="w-3 h-3" />
-                    <span>WhatsApp Live Customer Bubble Preview:</span>
-                  </div>
-                  <div className="bg-white p-3 rounded-2xl text-xs text-[#111B21] shadow-xs leading-relaxed space-y-2 max-w-sm">
-                    {/* Header Image Preview */}
-                    {formHeaderType === 'IMAGE' && isValidImageUrl(formImageUrl.trim()) && (
-                      <div className="rounded-xl overflow-hidden -mx-1 -mt-1 border border-black/5 max-h-48 bg-gray-100 flex items-center justify-center">
-                        <img
-                          src={formImageUrl.trim()}
-                          alt="Template Header Media"
-                          className="w-full max-h-48 object-cover"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Header Text Title Preview */}
-                    {formHeaderType === 'TEXT' && formHeaderText.trim() && (
-                      <p className="font-bold text-[13px] text-[#111B21] leading-snug pb-1 border-b border-gray-100">
-                        {formHeaderText.trim()}
-                      </p>
-                    )}
-
-                    <p className="whitespace-pre-line text-xs">{formBody || 'Type your message above...'}</p>
-                    <div className="flex justify-end items-center text-[9px] text-gray-400 font-mono pt-1">
-                      <span>1:45 PM</span>
-                    </div>
-
-                    {/* Interactive Buttons Preview */}
-                    {(formButton1.trim() || formButton2.trim()) && (
-                      <div className="pt-2 border-t border-gray-100 space-y-1.5 -mx-1">
-                        {formButton1.trim() && (
-                          <div className="w-full py-1.5 px-3 rounded-lg bg-[#F0FDF4] hover:bg-[#DCFCE7] border border-[#BBF7D0] text-[#16A34A] font-bold text-center text-xs flex items-center justify-center gap-1.5 shadow-2xs">
-                            <Check className="w-3 h-3 text-[#16A34A]" />
-                            <span>{formButton1.trim()}</span>
-                          </div>
-                        )}
-                        {formButton2.trim() && (
-                          <div className="w-full py-1.5 px-3 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0284C7] font-bold text-center text-xs flex items-center justify-center gap-1.5 shadow-2xs">
-                            <MessageSquare className="w-3 h-3 text-[#0284C7]" />
-                            <span>{formButton2.trim()}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-white/70 border border-black/5 text-[11px] text-[#475467] flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
-                    <span>When user taps a button on WhatsApp, Sendiee AI Concierge automatically detects and triggers follow-up auto-replies.</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Meta Cloud API Approval Submission Toggle */}
-              <div className="p-3.5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-2xl flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="formReSubmitMeta"
-                  checked={formReSubmitMeta}
-                  onChange={(e) => setFormReSubmitMeta(e.target.checked)}
-                  className="w-4 h-4 mt-0.5 text-[#0284C7] rounded border-gray-300 focus:ring-[#0284C7] cursor-pointer"
-                />
-                <label htmlFor="formReSubmitMeta" className="text-xs text-[#344054] cursor-pointer leading-relaxed">
-                  <span className="font-bold text-[#0284C7] flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-[#0284C7]" />
-                    Submit to Meta for Official Approval
-                  </span>
-                  <span className="text-[11px] text-[#667085] block mt-0.5">
-                    Sync this template directly with Meta WhatsApp Cloud API ({currentUser?.organization || 'Current Workspace'}). Once submitted, Meta evaluates template variables and compliance.
-                  </span>
-                </label>
+            {/* Modal Bottom Footer Actions */}
+            <div className="px-6 py-3.5 border-t border-[#EAECF0] bg-white flex items-center justify-between shrink-0 flex-wrap gap-2">
+              <div className="flex items-center gap-2 text-xs text-[#667085]">
+                <Shield className="w-3.5 h-3.5 text-[#16A34A]" />
+                <span className="hidden sm:inline">
+                  {formReSubmitMeta
+                    ? 'Will be submitted directly to Meta Graph API for review & approval'
+                    : 'Will be stored locally in CRM workspace'}
+                </span>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#EAECF0]">
+              <div className="flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
                     setIsCreateModalOpen(false);
                     setEditingTemplate(null);
                   }}
-                  className="px-4 py-2.5 rounded-xl border border-[#EAECF0] hover:bg-[#F9FAFB] text-xs font-bold text-[#475467] transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#EAECF0] hover:bg-[#F9FAFB] text-xs font-bold text-[#475467] transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  form="templateBuilderForm"
                   disabled={isSaving}
-                  className="px-5 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  className="px-5 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs shadow-sky-500/20 cursor-pointer disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  <span>{editingTemplate ? 'Save & Update Live' : 'Create & Activate'}</span>
+                  <span>{editingTemplate ? 'Save & Update Template' : 'Submit & Register Template'}</span>
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

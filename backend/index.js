@@ -2120,36 +2120,7 @@ app.get('/api/meta/templates', async (req, res) => {
 
 app.post('/api/meta/templates/create', async (req, res) => {
   try {
-    const {
-      workspaceId = process.env.VITE_DEFAULT_WORKSPACE_ID || 'b0000000-0000-0000-0000-000000000001',
-      wabaId,
-      accessToken,
-      name,
-      category = 'UTILITY',
-      language = 'en_US',
-      headerType,
-      headerText,
-      headerImageUrl,
-      bodyText,
-      footerText,
-      buttons,
-    } = req.body;
-
-    const template = await createMetaTemplate({
-      workspaceId,
-      wabaId,
-      accessToken,
-      name,
-      category,
-      language,
-      headerType,
-      headerText,
-      headerImageUrl,
-      bodyText,
-      footerText,
-      buttons,
-    });
-
+    const template = await createMetaTemplate(req.body || {});
     res.json({ success: true, template });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

@@ -349,25 +349,43 @@ export async function createMetaTemplate({
   headerType = 'NONE',
   headerText,
   headerImageUrl,
+  headerMediaUrl,
   bodyText,
   footerText,
   buttons = [],
+  sampleValues = {},
 }) {
   // Normalize template name (Meta requires lowercase snake_case)
-  const cleanName = name
+  const cleanName = (name || '')
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9_]/g, '_');
 
   const components = [];
 
-  // Header component
+  // Header component (IMAGE, VIDEO, DOCUMENT, or TEXT)
   if (headerType === 'IMAGE') {
     components.push({
       type: 'HEADER',
       format: 'IMAGE',
       example: {
-        header_handle: [headerImageUrl || 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800'],
+        header_handle: [headerImageUrl || headerMediaUrl || 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800'],
+      },
+    });
+  } else if (headerType === 'VIDEO') {
+    components.push({
+      type: 'HEADER',
+      format: 'VIDEO',
+      example: {
+        header_handle: [headerMediaUrl || 'https://www.w3schools.com/html/mov_bbb.mp4'],
+      },
+    });
+  } else if (headerType === 'DOCUMENT') {
+    components.push({
+      type: 'HEADER',
+      format: 'DOCUMENT',
+      example: {
+        header_handle: [headerMediaUrl || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'],
       },
     });
   } else if (headerType === 'TEXT' && headerText) {
@@ -384,32 +402,49 @@ export async function createMetaTemplate({
     text: bodyText,
   };
 
-  const varMatches = bodyText.match(/\{\{(\d+)\}\}/g) || [];
+  const varMatches = bodyText.match(/\{\{(\d+|[a-zA-Z0-9_]+)\}\}/g) || [];
   if (varMatches.length > 0) {
+    // Map custom sample values or fallback
+    const sampleArray = varMatches.map((v, i) => {
+      const rawKey = v.replace(/[{}]/g, '');
+      return (sampleValues && sampleValues[rawKey]) || `Sample_${i + 1}`;
+    });
     bodyComponent.example = {
-      body_text: [varMatches.map((_, i) => `SampleValue${i + 1}`)],
+      body_text: [sampleArray],
     };
   }
   components.push(bodyComponent);
 
-  // Footer component
+  // Footer component (Max 60 chars)
   if (footerText && footerText.trim()) {
     components.push({
       type: 'FOOTER',
-      text: footerText.trim(),
+      text: footerText.trim().slice(0, 60),
     });
   }
 
-  // Buttons component
+  // Buttons component (CTA: URL/PHONE or Quick Replies)
   if (buttons && buttons.length > 0) {
     const formattedButtons = buttons.map((b) => {
-      if (b.type === 'URL') {
-        return { type: 'URL', text: b.text, url: b.url };
+      const bType = (b.type || 'QUICK_REPLY').toUpperCase();
+      if (bType === 'URL') {
+        return {
+          type: 'URL',
+          text: (b.text || b.title || 'Visit Website').slice(0, 25),
+          url: b.url || 'https://www.dhigrowth.com',
+        };
       }
-      if (b.type === 'PHONE_NUMBER') {
-        return { type: 'PHONE_NUMBER', text: b.text, phone_number: b.phone_number };
+      if (bType === 'PHONE_NUMBER') {
+        return {
+          type: 'PHONE_NUMBER',
+          text: (b.text || b.title || 'Call Us').slice(0, 25),
+          phone_number: (b.phone_number || b.phone || '+919791471277').replace(/\s+/g, ''),
+        };
       }
-      return { type: 'QUICK_REPLY', text: b.text };
+      return {
+        type: 'QUICK_REPLY',
+        text: (b.text || b.title || 'Option').slice(0, 25),
+      };
     });
     components.push({
       type: 'BUTTONS',
@@ -420,23 +455,28 @@ export async function createMetaTemplate({
   const newTemplate = {
     id: `tpl_${cleanName}_${Date.now()}`,
     name: cleanName,
+    displayName: name || cleanName,
     category: category.toUpperCase(),
     language,
-    status: 'APPROVED', // Default to APPROVED in our suite, Meta will review asynchronously
+    status: 'APPROVED', // Default to active in our CRM suite
     header_type: headerType,
-    header_content: headerType === 'IMAGE' ? (headerImageUrl || '') : (headerText || null),
+    header_content: headerType === 'IMAGE' ? (headerImageUrl || headerMediaUrl || '') : (headerText || headerMediaUrl || null),
     body_text: bodyText,
     footer_text: footerText || '',
     buttons: buttons || [],
     variables: varMatches.map((v) => `var_${v.replace(/[{}]/g, '')}`),
+    sampleValues: sampleValues || {},
     syncedWithMeta: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
-  // Attempt live registration on Meta Graph API if credentials are provided
-  const targetWabaId = wabaId || process.env.META_WHATSAPP_WABA_ID;
-  const token = accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
+  // Attempt live registration on Meta Graph API
+  const tenantMeta = getTenantMetaConfig({ workspaceId });
+  const targetWabaId = wabaId || tenantMeta?.wabaId || process.env.META_WHATSAPP_WABA_ID;
+  const token = accessToken || tenantMeta?.accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
+
+  let metaResult = { ok: false, error: null, id: null, status: null };
 
   if (targetWabaId && token) {
     try {
@@ -447,6 +487,7 @@ export async function createMetaTemplate({
         components,
       };
 
+      console.log(`📡 [TemplateService] Submitting template "${cleanName}" to Meta Graph API...`);
       const res = await fetch(`${GRAPH_BASE_URL}/${targetWabaId}/message_templates`, {
         method: 'POST',
         headers: {
@@ -461,13 +502,19 @@ export async function createMetaTemplate({
         newTemplate.id = data.id || newTemplate.id;
         newTemplate.status = data.status || 'PENDING';
         newTemplate.syncedWithMeta = true;
-        console.log(`✅ [TemplateService] Registered official template "${cleanName}" with Meta! ID: ${data.id}`);
+        metaResult = { ok: true, id: data.id, status: data.status };
+        console.log(`✅ [TemplateService] Registered official template "${cleanName}" with Meta! ID: ${data.id}, Status: ${data.status}`);
       } else {
-        console.warn(`⚠️ [TemplateService] Meta template creation note: ${data.error?.message}. Stored in workspace suite.`);
+        const errMsg = data.error?.message || JSON.stringify(data.error || data);
+        metaResult = { ok: false, error: errMsg };
+        console.warn(`⚠️ [TemplateService] Meta template creation error: ${errMsg}`);
       }
     } catch (err) {
+      metaResult = { ok: false, error: err.message };
       console.warn('[TemplateService] Meta registration network error:', err.message);
     }
+  } else {
+    metaResult = { ok: false, error: 'Meta WABA credentials not configured. Template saved locally.' };
   }
 
   // Save to workspace store
@@ -478,7 +525,10 @@ export async function createMetaTemplate({
   templatesStore.workspaces[workspaceId].unshift(newTemplate);
   saveTemplatesToDisk();
 
-  return newTemplate;
+  return {
+    ...newTemplate,
+    metaResult,
+  };
 }
 
 /**
@@ -557,14 +607,16 @@ export async function updateMetaTemplate({
   const existing = templates[idx];
 
   const bodyText = updates.bodyText !== undefined ? updates.bodyText : (updates.body_text !== undefined ? updates.body_text : existing.body_text);
-  const varMatches = bodyText ? (bodyText.match(/\{\{(\d+)\}\}/g) || []) : [];
+  const varMatches = bodyText ? (bodyText.match(/\{\{(\d+|[a-zA-Z0-9_]+)\}\}/g) || []) : [];
   const variables = varMatches.map((v) => `var_${v.replace(/[{}]/g, '')}`);
 
   const headerType = updates.headerType !== undefined ? updates.headerType : (updates.header_type !== undefined ? updates.header_type : existing.header_type);
-  const headerContent = updates.headerImageUrl || updates.headerText || updates.header_content || existing.header_content;
+  const headerContent = updates.headerImageUrl || updates.headerMediaUrl || updates.headerText || updates.header_content || existing.header_content;
+  const sampleValues = updates.sampleValues !== undefined ? updates.sampleValues : existing.sampleValues || {};
 
   const updatedTemplate = {
     ...existing,
+    displayName: updates.displayName || updates.name || existing.displayName || existing.name,
     name: updates.name ? updates.name.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_') : existing.name,
     category: updates.category ? updates.category.toUpperCase() : existing.category,
     language: updates.language || existing.language || 'en_US',
@@ -574,6 +626,7 @@ export async function updateMetaTemplate({
     footer_text: updates.footerText !== undefined ? updates.footerText : (updates.footer_text !== undefined ? updates.footer_text : existing.footer_text),
     buttons: updates.buttons !== undefined ? updates.buttons : existing.buttons,
     variables,
+    sampleValues,
     status: updates.status || (updates.reSubmitToMeta ? 'PENDING' : existing.status),
     syncedWithMeta: updates.syncedWithMeta !== undefined ? updates.syncedWithMeta : false,
     updatedAt: new Date().toISOString(),
@@ -611,13 +664,15 @@ export async function submitTemplateForMetaApproval({
   }
 
   const tmpl = templates[idx];
-  const targetWabaId = wabaId || process.env.META_WHATSAPP_WABA_ID;
-  const token = accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
+  const tenantMeta = getTenantMetaConfig({ workspaceId });
+  const targetWabaId = wabaId || tenantMeta?.wabaId || process.env.META_WHATSAPP_WABA_ID;
+  const token = accessToken || tenantMeta?.accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN;
 
   // Format components for Meta Graph API
   const components = [];
 
-  if (tmpl.header_type === 'IMAGE') {
+  const hType = (tmpl.header_type || '').toUpperCase();
+  if (hType === 'IMAGE') {
     components.push({
       type: 'HEADER',
       format: 'IMAGE',
@@ -625,7 +680,23 @@ export async function submitTemplateForMetaApproval({
         header_handle: [tmpl.header_content || 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800'],
       },
     });
-  } else if (tmpl.header_type === 'TEXT' && tmpl.header_content) {
+  } else if (hType === 'VIDEO') {
+    components.push({
+      type: 'HEADER',
+      format: 'VIDEO',
+      example: {
+        header_handle: [tmpl.header_content || 'https://www.w3schools.com/html/mov_bbb.mp4'],
+      },
+    });
+  } else if (hType === 'DOCUMENT') {
+    components.push({
+      type: 'HEADER',
+      format: 'DOCUMENT',
+      example: {
+        header_handle: [tmpl.header_content || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'],
+      },
+    });
+  } else if (hType === 'TEXT' && tmpl.header_content) {
     components.push({
       type: 'HEADER',
       format: 'TEXT',
@@ -637,10 +708,14 @@ export async function submitTemplateForMetaApproval({
     type: 'BODY',
     text: tmpl.body_text || '',
   };
-  const varMatches = (tmpl.body_text || '').match(/\{\{(\d+)\}\}/g) || [];
+  const varMatches = (tmpl.body_text || '').match(/\{\{(\d+|[a-zA-Z0-9_]+)\}\}/g) || [];
   if (varMatches.length > 0) {
+    const sampleArray = varMatches.map((v, i) => {
+      const rawKey = v.replace(/[{}]/g, '');
+      return (tmpl.sampleValues && tmpl.sampleValues[rawKey]) || `Sample_${i + 1}`;
+    });
     bodyComponent.example = {
-      body_text: [varMatches.map((_, i) => `SampleValue${i + 1}`)],
+      body_text: [sampleArray],
     };
   }
   components.push(bodyComponent);
@@ -648,18 +723,35 @@ export async function submitTemplateForMetaApproval({
   if (tmpl.footer_text && tmpl.footer_text.trim()) {
     components.push({
       type: 'FOOTER',
-      text: tmpl.footer_text.trim(),
+      text: tmpl.footer_text.trim().slice(0, 60),
     });
   }
 
   if (Array.isArray(tmpl.buttons) && tmpl.buttons.length > 0) {
+    const formattedButtons = tmpl.buttons.map((b) => {
+      const bType = (b.type || 'QUICK_REPLY').toUpperCase();
+      if (bType === 'URL') {
+        return {
+          type: 'URL',
+          text: (b.text || b.title || 'Visit Website').slice(0, 25),
+          url: b.url || 'https://www.dhigrowth.com',
+        };
+      }
+      if (bType === 'PHONE_NUMBER') {
+        return {
+          type: 'PHONE_NUMBER',
+          text: (b.text || b.title || 'Call Us').slice(0, 25),
+          phone_number: (b.phone_number || b.phone || '+919791471277').replace(/\s+/g, ''),
+        };
+      }
+      return {
+        type: 'QUICK_REPLY',
+        text: (b.text || b.title || 'Option').slice(0, 25),
+      };
+    });
     components.push({
       type: 'BUTTONS',
-      buttons: tmpl.buttons.map((b) => {
-        if (b.type === 'URL') return { type: 'URL', text: b.text, url: b.url };
-        if (b.type === 'PHONE_NUMBER') return { type: 'PHONE_NUMBER', text: b.text, phone_number: b.phone_number };
-        return { type: 'QUICK_REPLY', text: b.text };
-      }),
+      buttons: formattedButtons,
     });
   }
 
@@ -673,6 +765,7 @@ export async function submitTemplateForMetaApproval({
         components,
       };
 
+      console.log(`📡 [TemplateService] Submitting template "${tmpl.name}" to Meta Graph API for approval...`);
       const res = await fetch(`${GRAPH_BASE_URL}/${targetWabaId}/message_templates`, {
         method: 'POST',
         headers: {
@@ -694,7 +787,7 @@ export async function submitTemplateForMetaApproval({
       } else {
         console.warn(`⚠️ [TemplateService] Meta API note: ${metaResponse.error?.message}`);
         tmpl.status = 'PENDING';
-        tmpl.reviewNote = `Meta API review queued (${metaResponse.error?.message || 'In review'})`;
+        tmpl.reviewNote = `Meta API response: ${metaResponse.error?.message || 'Queued for review'}`;
         tmpl.submittedAt = new Date().toISOString();
       }
     } catch (err) {

@@ -1664,10 +1664,10 @@ export const SuperAdminTenantsPage = () => {
         </div>
       )}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans">
+          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#EAECF0] flex items-center justify-between bg-[#F9FAFB]">
+            <div className="p-5 sm:p-6 border-b border-[#EAECF0] flex items-center justify-between bg-[#F9FAFB] shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] text-[#047857] flex items-center justify-center border border-[#A7F3D0]">
                   <Building2 className="w-5 h-5" />
@@ -1681,14 +1681,15 @@ export const SuperAdminTenantsPage = () => {
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-[#98A2B3] hover:text-[#101828] text-lg p-1 cursor-pointer"
+                className="text-[#98A2B3] hover:text-[#101828] text-lg p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleCreateTenant} className="p-6 space-y-4">
+            <form onSubmit={handleCreateTenant} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#344054] mb-1.5">
@@ -1945,7 +1946,7 @@ export const SuperAdminTenantsPage = () => {
                   </div>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto space-y-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#EAECF0]">
+                <div className="space-y-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#EAECF0]">
                   {NAVIGATION_MODULES.map((cat) => (
                     <div key={cat.category} className="space-y-1.5">
                       <div className="flex items-center justify-between text-[10px] font-bold font-mono text-[#667085] uppercase tracking-wider">
@@ -2009,22 +2010,23 @@ export const SuperAdminTenantsPage = () => {
                   ))}
                 </div>
               </div>
+              </div>
 
-              {/* Modal Footer */}
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#EAECF0]">
+              {/* Modal Footer (Pinned, always visible at 100% zoom) */}
+              <div className="p-4 sm:px-6 bg-white border-t border-[#EAECF0] flex items-center justify-end gap-3 shrink-0 shadow-xs">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2.5 rounded-lg border border-[#D0D5DD] text-[#344054] text-sm font-semibold hover:bg-[#F9FAFB] cursor-pointer"
+                  className="px-4 py-2.5 rounded-lg border border-[#D0D5DD] text-[#344054] text-sm font-semibold hover:bg-[#F9FAFB] cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-lg bg-[#10B981] hover:bg-[#059669] text-white text-sm font-bold shadow-sm flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 rounded-lg bg-[#10B981] hover:bg-[#059669] text-white text-sm font-bold shadow-sm flex items-center gap-2 cursor-pointer transition-all"
                 >
                   <Check className="w-4 h-4" />
-                  Create Tenant Workspace
+                  <span>Create Tenant Workspace</span>
                 </button>
               </div>
             </form>
@@ -2034,10 +2036,10 @@ export const SuperAdminTenantsPage = () => {
 
       {/* Create / Edit Promo Code Modal */}
       {isPromoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans">
+          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#EAECF0] flex items-center justify-between bg-[#F9FAFB]">
+            <div className="p-5 sm:p-6 border-b border-[#EAECF0] flex items-center justify-between bg-[#F9FAFB] shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#7C3AED] flex items-center justify-center border border-purple-200">
                   <Ticket className="w-5 h-5" />
@@ -2053,14 +2055,15 @@ export const SuperAdminTenantsPage = () => {
               </div>
               <button
                 onClick={() => setIsPromoModalOpen(false)}
-                className="text-[#98A2B3] hover:text-[#101828] text-lg p-1 cursor-pointer"
+                className="text-[#98A2B3] hover:text-[#101828] text-lg p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSavePromo} className="p-6 space-y-4">
+            <form onSubmit={handleSavePromo} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
               {/* Promo Code Name */}
               <div>
                 <label className="block text-xs font-bold text-[#344054] mb-1.5">
@@ -2210,26 +2213,28 @@ export const SuperAdminTenantsPage = () => {
                 </div>
               </div>
 
-              {/* Modal Footer */}
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#EAECF0]">
+              </div>
+
+              {/* Modal Footer (Pinned, always visible at 100% zoom) */}
+              <div className="p-4 sm:px-6 bg-white border-t border-[#EAECF0] flex items-center justify-end gap-3 shrink-0 shadow-xs">
                 <button
                   type="button"
                   onClick={() => setIsPromoModalOpen(false)}
-                  className="px-4 py-2.5 rounded-lg border border-[#D0D5DD] text-[#344054] text-sm font-semibold hover:bg-[#F9FAFB] cursor-pointer"
+                  className="px-4 py-2.5 rounded-lg border border-[#D0D5DD] text-[#344054] text-sm font-semibold hover:bg-[#F9FAFB] cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingPromo}
-                  className="px-5 py-2.5 rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-bold shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-bold shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
                 >
                   {isSavingPromo ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
                     <Check className="w-4 h-4" />
                   )}
-                  {editingPromo ? 'Save Changes' : 'Create Promo Code'}
+                  <span>{editingPromo ? 'Save Changes' : 'Create Promo Code'}</span>
                 </button>
               </div>
             </form>
@@ -2239,10 +2244,10 @@ export const SuperAdminTenantsPage = () => {
 
       {/* Redemption History Modal */}
       {selectedPromoForRedemptions && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans">
+          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#EAECF0] flex items-center justify-between bg-[#F9FAFB]">
+            <div className="p-5 sm:p-6 border-b border-[#EAECF0] flex items-center justify-between bg-[#F9FAFB] shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#7C3AED] flex items-center justify-center border border-purple-200">
                   <Users className="w-5 h-5" />
@@ -2265,7 +2270,7 @@ export const SuperAdminTenantsPage = () => {
             </div>
 
             {/* Modal Body: Redemption List */}
-            <div className="p-6 max-h-[420px] overflow-y-auto">
+            <div className="p-6 overflow-y-auto flex-1 min-h-0">
               {!selectedPromoForRedemptions.usedBy || selectedPromoForRedemptions.usedBy.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="w-10 h-10 text-[#98A2B3] mx-auto mb-2 stroke-[1.5]" />
@@ -2321,11 +2326,11 @@ export const SuperAdminTenantsPage = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#EAECF0] flex justify-end bg-[#F9FAFB]">
+            <div className="p-4 sm:px-6 border-t border-[#EAECF0] flex justify-end bg-[#F9FAFB] shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedPromoForRedemptions(null)}
-                className="px-4 py-2 rounded-lg bg-white border border-[#D0D5DD] text-[#344054] text-xs font-bold hover:bg-[#F2F4F7] cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-white border border-[#D0D5DD] text-[#344054] text-xs font-bold hover:bg-[#F2F4F7] cursor-pointer transition-colors"
               >
                 Close
               </button>
@@ -2336,10 +2341,10 @@ export const SuperAdminTenantsPage = () => {
 
       {/* Edit Tenant AI Assistant Modal */}
       {editingAiTenant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans">
+          <div className="bg-white border border-[#EAECF0] rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Header */}
-            <div className="p-6 border-b border-[#EAECF0] flex items-center justify-between bg-gradient-to-r from-purple-50 to-white">
+            <div className="p-5 sm:p-6 border-b border-[#EAECF0] flex items-center justify-between bg-gradient-to-r from-purple-50 to-white shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center border border-purple-200">
                   <Bot className="w-5 h-5" />
@@ -2356,14 +2361,15 @@ export const SuperAdminTenantsPage = () => {
               <button
                 type="button"
                 onClick={() => setEditingAiTenant(null)}
-                className="text-[#98A2B3] hover:text-[#101828] text-lg p-1 cursor-pointer"
+                className="text-[#98A2B3] hover:text-[#101828] text-lg p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSaveTenantAi} className="p-6 space-y-4">
+            <form onSubmit={handleSaveTenantAi} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#344054] mb-1">
@@ -2441,7 +2447,10 @@ export const SuperAdminTenantsPage = () => {
                 </p>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#EAECF0]">
+              </div>
+
+              {/* Modal Footer (Pinned, always visible at 100% zoom) */}
+              <div className="p-4 sm:px-6 bg-white flex items-center justify-end gap-2.5 border-t border-[#EAECF0] shrink-0 shadow-xs">
                 <button
                   type="button"
                   onClick={() => setEditingAiTenant(null)}
