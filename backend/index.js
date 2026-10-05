@@ -1451,7 +1451,8 @@ const handleAiGenerate = async (req, res) => {
       });
     }
 
-    res.json({ success: true, reply: replyText, imageUrl, leadSynced: Boolean(validPhone || validName) });
+    const buttons = (typeof result === 'object' && Array.isArray(result.buttons)) ? result.buttons : [];
+    res.json({ success: true, reply: replyText, imageUrl, buttons, leadSynced: Boolean(validPhone || validName) });
   } catch (err) {
     console.error('[AI Generate Route Error]:', err);
     res.status(500).json({ success: false, error: err.message });

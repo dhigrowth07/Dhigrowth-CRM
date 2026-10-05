@@ -649,10 +649,23 @@ export const generateAIResponse = async ({
 
           if (isMatch) {
             const imageUrl = (tmpl.header_type === 'IMAGE' || tmpl.header_content) ? tmpl.header_content : null;
+            const tButtons = Array.isArray(tmpl.buttons) && tmpl.buttons.length > 0
+              ? tmpl.buttons.map((b, idx) => ({ id: b.id || `btn_${idx + 1}`, title: String(b.text || b.title || 'Select').slice(0, 20) }))
+              : isSitarc
+              ? [
+                  { id: 'btn_quote', title: 'Request Test Quote' },
+                  { id: 'btn_engineer', title: 'Connect Engineer' },
+                ]
+              : [
+                  { id: 'btn_yes', title: 'Yes im interested' },
+                  { id: 'btn_more', title: 'Tell more' },
+                ];
+
             console.log(`🎯 Matched Custom Template: "${tmpl.name}" for trigger in query: "${query}" (Media: ${imageUrl || 'None'})`);
             return {
               reply: tmpl.body_text,
               imageUrl,
+              buttons: tButtons,
               templateId: tmpl.id,
               templateName: tmpl.name,
               toString: () => tmpl.body_text,

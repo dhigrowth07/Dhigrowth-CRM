@@ -506,14 +506,27 @@ async function processIncomingChatMessage({
         // Allow customer to see "typing..." animation on WhatsApp for ~1.2s before the message arrives
         await new Promise((resolve) => setTimeout(resolve, 1200));
 
-        const aiButtons = (typeof aiResult === 'object' && Array.isArray(aiResult.buttons)) ? aiResult.buttons : null;
+        let buttonsToSend = (typeof aiResult === 'object' && Array.isArray(aiResult.buttons)) ? aiResult.buttons : null;
 
         const isSitarcMsg =
           effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
           phoneNumberId === '1399911839867541' ||
+          String(businessPhone || '').includes('9487580473') ||
           String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc');
 
-        if (channelType === 'whatsapp' && aiButtons && aiButtons.length > 0 && phoneNumberId && accessToken) {
+        if ((!buttonsToSend || buttonsToSend.length === 0) && (aiResponseText.toLowerCase().includes('welcome') || aiResponseText.toLowerCase().includes('how can our ai') || aiResponseText.toLowerCase().includes('which service') || isSitarcMsg)) {
+          buttonsToSend = isSitarcMsg
+            ? [
+                { id: 'btn_quote', title: 'Request Test Quote' },
+                { id: 'btn_engineer', title: 'Connect Engineer' },
+              ]
+            : [
+                { id: 'btn_yes', title: 'Yes im interested' },
+                { id: 'btn_more', title: 'Tell more' },
+              ];
+        }
+
+        if (channelType === 'whatsapp' && buttonsToSend && buttonsToSend.length > 0 && phoneNumberId && accessToken) {
           try {
             const btnRes = await sendWhatsAppInteractiveButtons({
               phoneNumberId,
@@ -522,7 +535,7 @@ async function processIncomingChatMessage({
               headerText: isSitarcMsg ? "Si'Tarc Testing Laboratory" : 'DhiGrowth IT Services',
               imageUrl: aiImageUrl,
               bodyText: aiResponseText,
-              buttons: aiButtons,
+              buttons: buttonsToSend,
             });
             aiWamid = btnRes?.messages?.[0]?.id || null;
             console.log(`📤 Outbound interactive reply with buttons dispatched via Meta. (WAMID: ${aiWamid})`);
@@ -559,9 +572,10 @@ async function processIncomingChatMessage({
         channel_id: channelId,
         direction: 'outbound',
         ai_generated: true,
-        type: aiImageUrl ? 'image' : 'text',
+        type: buttonsToSend && buttonsToSend.length > 0 ? 'interactive' : (aiImageUrl ? 'image' : 'text'),
         content: aiResponseText,
         media_url: aiImageUrl || null,
+        payload: buttonsToSend && buttonsToSend.length > 0 ? { buttons: buttonsToSend } : {},
         status: aiWamid ? 'sent' : 'failed',
         external_message_id: aiWamid,
       },
