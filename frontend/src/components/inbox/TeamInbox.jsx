@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Search,
   Bot,
@@ -509,21 +509,63 @@ export const TeamInbox = () => {
 
   const [isMobileContactPickerOpen, setIsMobileContactPickerOpen] = useState(false);
 
+  const filteredChats = useMemo(() => {
+    return [...(chats || [])]
+      .filter((chat) => {
+        // Exclude pure Instagram threads from WhatsApp Inbox so both stay clean and separated
+        const isIg = (chat.channel || '').toLowerCase() === 'instagram' || chat.phone?.startsWith('@ig') || chat.phone?.startsWith('@');
+        if (isIg) return false;
+
+        // Strict Tenant & Workspace Isolation
+        const chatWs = chat.workspaceId;
+        const isSitarcChat =
+          chatWs === 'b0000000-0000-0000-0000-000000000002' ||
+          chat.clientCompanyName?.toLowerCase()?.includes('sitarc') ||
+          chat.clientProfileName?.toLowerCase()?.includes('sitarc') ||
+          chat.phone === '+918939878810' ||
+          chat.phone === '+918428713160' ||
+          (typeof chat.phone === 'string' && (chat.phone.includes('8939878810') || chat.phone.includes('8428713160')));
+
+        if (isSitarcTenant) {
+          // If logged in as Si'Tarc, ONLY show Si'Tarc chats
+          if (!isSitarcChat && chatWs && chatWs !== 'b0000000-0000-0000-0000-000000000002') return false;
+        } else {
+          // If logged in as DhiGrowth user (Sri or any non-sitarc account), NEVER show Si'Tarc chats!
+          if (isSitarcChat) return false;
+        }
+
+        if (statusFilter === 'ai' && !chat.aiHandled) return false;
+        if (statusFilter === 'human' && chat.aiHandled) return false;
+        if (statusFilter === 'hot' && chat.tag !== 'Hot') return false;
+        if (
+          searchTerm &&
+          !chat.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          !chat.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => (b.lastMessageTimestamp || 0) - (a.lastMessageTimestamp || 0));
+  }, [chats, isSitarcTenant, statusFilter, searchTerm]);
+
   // On desktop: if activeChatId is null, default to first chat so middle pane isn't blank
   // On mobile: if activeChatId is null, user is viewing the contact list!
   const activeChat = isMobileView
-    ? (activeChatId ? chats.find((c) => c.id === activeChatId || c.conversationId === activeChatId) : null)
-    : (activeChatId ? chats.find((c) => c.id === activeChatId || c.conversationId === activeChatId) : (chats.length > 0 ? chats[0] : null));
+    ? (activeChatId ? filteredChats.find((c) => c.id === activeChatId || c.conversationId === activeChatId) : null)
+    : (activeChatId
+        ? (filteredChats.find((c) => c.id === activeChatId || c.conversationId === activeChatId) || (filteredChats.length > 0 ? filteredChats[0] : null))
+        : (filteredChats.length > 0 ? filteredChats[0] : null));
 
   const isAiTyping = Boolean(typingChatIds && activeChat && typingChatIds[activeChat.id]);
 
-  const currentChatIndex = chats.findIndex((c) => c.id === activeChat?.id);
+  const currentChatIndex = filteredChats.findIndex((c) => c.id === activeChat?.id);
   const hasPrevChat = currentChatIndex > 0;
-  const hasNextChat = currentChatIndex >= 0 && currentChatIndex < chats.length - 1;
+  const hasNextChat = currentChatIndex >= 0 && currentChatIndex < filteredChats.length - 1;
 
   const handlePrevChat = () => {
     if (hasPrevChat) {
-      const prev = chats[currentChatIndex - 1];
+      const prev = filteredChats[currentChatIndex - 1];
       if (openChat) openChat(prev.id);
       else setActiveChatId(prev.id);
     }
@@ -531,7 +573,7 @@ export const TeamInbox = () => {
 
   const handleNextChat = () => {
     if (hasNextChat) {
-      const next = chats[currentChatIndex + 1];
+      const next = filteredChats[currentChatIndex + 1];
       if (openChat) openChat(next.id);
       else setActiveChatId(next.id);
     }
@@ -553,25 +595,6 @@ export const TeamInbox = () => {
     { name: 'French', code: 'fr', native: 'Français', flag: '🇫🇷' },
     { name: 'German', code: 'de', native: 'Deutsch', flag: '🇩🇪' },
   ];
-
-  const filteredChats = [...(chats || [])]
-    .filter((chat) => {
-      // Exclude pure Instagram threads from WhatsApp Inbox so both stay clean and separated
-      const isIg = (chat.channel || '').toLowerCase() === 'instagram' || chat.phone?.startsWith('@ig') || chat.phone?.startsWith('@');
-      if (isIg) return false;
-      if (statusFilter === 'ai' && !chat.aiHandled) return false;
-      if (statusFilter === 'human' && chat.aiHandled) return false;
-      if (statusFilter === 'hot' && chat.tag !== 'Hot') return false;
-      if (
-        searchTerm &&
-        !chat.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !chat.phone?.toLowerCase().includes(searchTerm.toLowerCase())
-      ) {
-        return false;
-      }
-      return true;
-    })
-    .sort((a, b) => (b.lastMessageTimestamp || 0) - (a.lastMessageTimestamp || 0));
 
   const [isSendingLive, setIsSendingLive] = useState(false);
   const isAiAutoPilot = Boolean(activeChat?.aiHandled);

@@ -245,6 +245,7 @@ async function processIncomingChatMessage({
 }) {
   const isValidUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   // If Si'Tarc workspace, phone ID, or tenant name, route to standard Si'Tarc workspace
+  let resolvedWsId = workspaceId;
   const isSitarcTarget =
     resolvedWsId === 'b0000000-0000-0000-0000-000000000002' ||
     resolvedWsId === 'b1a0f6303e25-c325-3844-871b-c6fb9aedb713' ||

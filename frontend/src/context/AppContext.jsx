@@ -375,11 +375,10 @@ export const AppProvider = ({ children }) => {
 
   const isAuthenticated = Boolean(currentUser);
 
-  // Super Administrator check (Master Platform Owner)
+  // Super Administrator check (Master Platform Owner) - strictly reserved for root 'admin'
   const isSuperAdmin = Boolean(
-    currentUser?.isSuperAdmin ||
     currentUser?.username?.toLowerCase() === 'admin' ||
-    currentUser?.role === 'Super Administrator'
+    (currentUser?.role === 'Super Administrator' && currentUser?.username?.toLowerCase() !== 'sri')
   );
 
   // Client tenants list (excluding Super Admin)
@@ -2338,7 +2337,12 @@ export const AppProvider = ({ children }) => {
         const saved = localStorage.getItem(`dhigrowth_chats_${wsId}`);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return parsed;
+          if (Array.isArray(parsed)) {
+            if (wsId === 'b0000000-0000-0000-0000-000000000002') {
+              return parsed.filter(c => c.workspaceId === 'b0000000-0000-0000-0000-000000000002' || c.clientCompanyName?.toLowerCase()?.includes('sitarc'));
+            }
+            return parsed;
+          }
         }
       } catch {}
       return [];
@@ -2349,7 +2353,19 @@ export const AppProvider = ({ children }) => {
       const saved = localStorage.getItem(`dhigrowth_chats_${DEFAULT_WORKSPACE_ID}`);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Strictly filter out any Si'Tarc chats that leaked into DhiGrowth's cache
+          const clean = parsed.filter(c =>
+            c.workspaceId !== 'b0000000-0000-0000-0000-000000000002' &&
+            !c.clientCompanyName?.toLowerCase()?.includes('sitarc') &&
+            !c.clientProfileName?.toLowerCase()?.includes('sitarc') &&
+            c.phone !== '+918939878810' &&
+            c.phone !== '+918428713160' &&
+            !c.phone?.includes('8939878810') &&
+            !c.phone?.includes('8428713160')
+          );
+          return clean;
+        }
       }
     } catch {}
 
@@ -2494,12 +2510,28 @@ export const AppProvider = ({ children }) => {
     const clientName = matchedClient?.name || (wsId === DEFAULT_WORKSPACE_ID ? 'Sri' : 'Client');
     const clientCompany = matchedClient?.companyName || (wsId === DEFAULT_WORKSPACE_ID ? 'Dhigrowth CRM' : 'Workspace');
 
-    return (rawChats || []).map((c) => ({
-      ...c,
-      workspaceId: wsId,
-      clientProfileName: c.clientProfileName || clientName,
-      clientCompanyName: c.clientCompanyName || clientCompany,
-    }));
+    return (rawChats || [])
+      .filter((c) => {
+        const isSitarcChat =
+          c.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+          c.clientCompanyName?.toLowerCase()?.includes('sitarc') ||
+          c.clientProfileName?.toLowerCase()?.includes('sitarc') ||
+          c.phone === '+918939878810' ||
+          c.phone === '+918428713160' ||
+          (typeof c.phone === 'string' && (c.phone.includes('8939878810') || c.phone.includes('8428713160')));
+
+        if (wsId === 'b0000000-0000-0000-0000-000000000002') {
+          return isSitarcChat;
+        } else {
+          return !isSitarcChat;
+        }
+      })
+      .map((c) => ({
+        ...c,
+        workspaceId: wsId,
+        clientProfileName: c.clientProfileName || clientName,
+        clientCompanyName: c.clientCompanyName || clientCompany,
+      }));
   };
 
   // Helper to load all client workspaces chats merged for Super Admin
@@ -2827,12 +2859,44 @@ export const AppProvider = ({ children }) => {
             };
           });
 
+          // Filter dbChats strictly according to target workspace
+          const isSitarcWs = queryWsId === 'b0000000-0000-0000-0000-000000000002';
+          const filteredDbChats = dbChats.filter((c) => {
+            const isSitarc =
+              c.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+              c.clientCompanyName?.toLowerCase()?.includes('sitarc') ||
+              c.clientProfileName?.toLowerCase()?.includes('sitarc') ||
+              c.phone === '+918939878810' ||
+              c.phone === '+918428713160' ||
+              (typeof c.phone === 'string' && (c.phone.includes('8939878810') || c.phone.includes('8428713160')));
+
+            if (isSitarcWs) {
+              return isSitarc;
+            } else if (queryWsId !== 'all') {
+              return !isSitarc;
+            }
+            return true;
+          });
+
           // Sort descending by newest message first
-          dbChats.sort((a, b) => (b.lastMessageTimestamp || 0) - (a.lastMessageTimestamp || 0));
+          filteredDbChats.sort((a, b) => (b.lastMessageTimestamp || 0) - (a.lastMessageTimestamp || 0));
 
           setChats((prev) => {
-            const hasChanged = dbChats.some((newChat) => {
-              const oldChat = prev.find((p) => p.id === newChat.id);
+            const cleanPrev = (prev || []).filter((c) => {
+              const isSitarc =
+                c.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+                c.clientCompanyName?.toLowerCase()?.includes('sitarc') ||
+                c.clientProfileName?.toLowerCase()?.includes('sitarc') ||
+                c.phone === '+918939878810' ||
+                c.phone === '+918428713160' ||
+                (typeof c.phone === 'string' && (c.phone.includes('8939878810') || c.phone.includes('8428713160')));
+              if (isSitarcWs) return isSitarc;
+              if (queryWsId !== 'all') return !isSitarc;
+              return true;
+            });
+
+            const hasChanged = filteredDbChats.some((newChat) => {
+              const oldChat = cleanPrev.find((p) => p.id === newChat.id);
               if (!oldChat) return true;
               if ((oldChat.messages || []).length !== (newChat.messages || []).length) return true;
               const oldLast = oldChat.messages?.[oldChat.messages.length - 1];
@@ -2840,14 +2904,14 @@ export const AppProvider = ({ children }) => {
               return oldLast?.id !== newLast?.id || oldLast?.text !== newLast?.text;
             });
 
-            if (!hasChanged && prev.length === dbChats.length && prev.length > 0) {
-              return prev;
+            if (!hasChanged && cleanPrev.length === filteredDbChats.length && cleanPrev.length > 0) {
+              return cleanPrev;
             }
 
             // If a new inbound message arrived from a client, play notification sound & show toast
-            if (prev.length > 0) {
-              dbChats.forEach((newChat) => {
-                const oldChat = prev.find((p) => p.id === newChat.id);
+            if (cleanPrev.length > 0) {
+              filteredDbChats.forEach((newChat) => {
+                const oldChat = cleanPrev.find((p) => p.id === newChat.id);
                 if (oldChat) {
                   const oldLast = oldChat.messages?.[oldChat.messages.length - 1];
                   const newLast = newChat.messages?.[newChat.messages.length - 1];
@@ -2860,8 +2924,8 @@ export const AppProvider = ({ children }) => {
               });
             }
 
-            const updated = dbChats.map((newChat) => {
-              const oldChat = prev.find((p) => p.id === newChat.id);
+            const updated = filteredDbChats.map((newChat) => {
+              const oldChat = cleanPrev.find((p) => p.id === newChat.id);
               if (!oldChat) return newChat;
 
               // 1. Deduplicate newChat.messages from database if duplicate rows exist
@@ -2929,7 +2993,13 @@ export const AppProvider = ({ children }) => {
               });
             } else {
               try {
-                localStorage.setItem(`dhigrowth_chats_${queryWsId}`, JSON.stringify(updated));
+                const wsIsolated = updated.filter(c => {
+                  const isSitarc = c.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+                    c.clientCompanyName?.toLowerCase()?.includes('sitarc') ||
+                    c.phone === '+918939878810' || c.phone === '+918428713160';
+                  return isSitarcWs ? isSitarc : !isSitarc;
+                });
+                localStorage.setItem(`dhigrowth_chats_${queryWsId}`, JSON.stringify(wsIsolated));
               } catch {}
             }
             return updated;
@@ -2937,7 +3007,7 @@ export const AppProvider = ({ children }) => {
 
           setActiveChatId((prev) => {
             if (!prev) return null;
-            if (dbChats.some((d) => d.id === prev || d.conversationId === prev)) return prev;
+            if (filteredDbChats.some((d) => d.id === prev || d.conversationId === prev)) return prev;
             return null;
           });
         }
@@ -2954,6 +3024,13 @@ export const AppProvider = ({ children }) => {
     const subscription = subscribeToWorkspaceRealtime(queryWsId, {
       onNewMessage: (newMsg) => {
         if (!isMounted || !newMsg) return;
+        if (newMsg.workspace_id) {
+          const isMsgSitarc = newMsg.workspace_id === 'b0000000-0000-0000-0000-000000000002';
+          const isCurSitarc = queryWsId === 'b0000000-0000-0000-0000-000000000002';
+          if (queryWsId !== 'all' && isMsgSitarc !== isCurSitarc) {
+            return;
+          }
+        }
         const msgTimestamp = new Date(newMsg.sent_at || newMsg.created_at || Date.now()).getTime();
         const formatted = {
           id: newMsg.id,
