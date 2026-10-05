@@ -2054,7 +2054,7 @@ export const TeamInbox = () => {
                     {isAi && (
                       <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#0284C7] font-bold mb-1.5 pb-1 border-b border-[#BAE6FD]">
                         <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
-                        <span>Dhigrowth AI Auto-Pilot</span>
+                        <span>AI</span>
                       </div>
                     )}
 
@@ -2148,7 +2148,7 @@ export const TeamInbox = () => {
               <div className="p-3 bg-[#F0F9FF] border border-[#BAE6FD] text-[#101828] rounded-2xl rounded-tl-xs shadow-2xs">
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#0284C7] font-bold mb-1 pb-1 border-b border-[#BAE6FD]">
                   <Sparkles className="w-3 h-3 text-[#0284C7]" />
-                  <span>Dhigrowth AI Auto-Pilot</span>
+                  <span>AI</span>
                 </div>
                 <div className="flex items-center gap-2 py-1 px-1">
                   <span className="text-xs text-[#0284C7] font-semibold font-sans">typing</span>
@@ -3344,7 +3344,7 @@ export const TeamInbox = () => {
                   <span>Why send a template for new contacts?</span>
                 </div>
                 <p className="text-[10px] text-[#0369A1] leading-relaxed">
-                  Meta's WhatsApp Cloud API policy requires businesses to initiate conversations with new contacts using an approved template. Once <strong>{activeChat.contactName}</strong> replies, your <strong>24-hour conversational window unlocks</strong>, allowing standard messages and Dhigrowth AI auto-pilot!
+                  Meta's WhatsApp Cloud API policy requires businesses to initiate conversations with new contacts using an approved template. Once <strong>{activeChat.contactName}</strong> replies, your <strong>24-hour conversational window unlocks</strong>, allowing standard messages and AI auto-pilot!
                 </p>
               </div>
 
