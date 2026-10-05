@@ -10,7 +10,7 @@ import {
   clearQualificationSession,
 } from './leadQualificationStore.js';
 import { scheduleFollowUps } from './followUpService.js';
-import { getWorkspaceTemplates } from './templateService.js';
+import { getWorkspaceTemplates, SITARC_PRESET_TEMPLATES } from './templateService.js';
 
 import dotenv from 'dotenv';
 import path from 'path';
@@ -246,19 +246,20 @@ async function processIncomingChatMessage({
   sendReply,
 }) {
   const isValidUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  // If Si'Tarc workspace, phone ID, business phone, or tenant name, route to standard Si'Tarc workspace
+  // If Si'Tarc workspace, phone ID, business phone, channel ID, or tenant name, route to standard Si'Tarc workspace
   let resolvedWsId = workspaceId;
-  const isSitarcTarget =
+  let isSitarcTarget =
     resolvedWsId === 'b0000000-0000-0000-0000-000000000002' ||
     resolvedWsId === 'b1a0f6303e25-c325-3844-871b-c6fb9aedb713' ||
     phoneNumberId === '1399911839867541' ||
+    channelId === 'd0000000-0000-0000-0000-000000000005' ||
     String(businessPhone || '').includes('9487580473') ||
     String(resolvedWsId || '').toLowerCase().includes('sitarc');
 
   if (isSitarcTarget) {
     resolvedWsId = 'b0000000-0000-0000-0000-000000000002';
   }
-  const effectiveWorkspaceId = isValidUuid(resolvedWsId) ? resolvedWsId : DEFAULT_WORKSPACE_ID;
+  let effectiveWorkspaceId = isValidUuid(resolvedWsId) ? resolvedWsId : DEFAULT_WORKSPACE_ID;
   const supabase = getSupabase();
   if (!supabase) {
     console.warn('[WebhookHandler] Supabase not connected. Skipping database write.');
@@ -292,6 +293,10 @@ async function processIncomingChatMessage({
 
     if (existingContact) {
       contactId = existingContact.id;
+      if (existingContact.workspace_id === 'b0000000-0000-0000-0000-000000000002') {
+        isSitarcTarget = true;
+        effectiveWorkspaceId = 'b0000000-0000-0000-0000-000000000002';
+      }
     } else {
       const { data: newContact, error: cErr } = await supabase
         .from('contacts')
@@ -487,11 +492,19 @@ async function processIncomingChatMessage({
 
     // Strict safeguard: If this conversation is for Si'Tarc (+91 94875 80473 / Phone ID 1399911839867541 / Workspace 2),
     // NEVER send DhiGrowth text or logo!
-    if (isSitarcTarget) {
+    const isSitarcMsg =
+      effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+      phoneNumberId === '1399911839867541' ||
+      channelId === 'd0000000-0000-0000-0000-000000000005' ||
+      String(businessPhone || '').includes('9487580473') ||
+      String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc') ||
+      Boolean(isSitarcTarget);
+
+    if (isSitarcMsg) {
       if (aiImageUrl?.includes('dhigrowth')) {
         aiImageUrl = 'https://www.sitarc.com/images/logo.png';
       }
-      if (aiResponseText.toLowerCase().includes('dhigrowth')) {
+      if (aiResponseText.toLowerCase().includes('dhigrowth') || aiResponseText.toLowerCase().includes('app development') || aiResponseText.toLowerCase().includes('crm automation') || aiResponseText.toLowerCase().includes('custom it solutions')) {
         aiResponseText = `Hello 👋 Welcome to *Si'Tarc Testing & Calibration Laboratory*, Coimbatore 🔬\n\nHow can our accredited laboratory assist you today?\n\n1️⃣ *Pump & Motor Testing* (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating)\n2️⃣ *Calibration Services* (NABL / ISO 17025 Accredited Calibration)\n3️⃣ *Mechanical, Electrical & Chemical Testing*\n4️⃣ *Water & Food Testing*\n\nReply with 1, 2, 3, 4 or let us know what you need assistance with!`;
         aiImageUrl = 'https://www.sitarc.com/images/logo.png';
       }
@@ -508,11 +521,12 @@ async function processIncomingChatMessage({
 
         let buttonsToSend = (typeof aiResult === 'object' && Array.isArray(aiResult.buttons)) ? aiResult.buttons : null;
 
-        const isSitarcMsg =
-          effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
-          phoneNumberId === '1399911839867541' ||
-          String(businessPhone || '').includes('9487580473') ||
-          String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc');
+        if (isSitarcMsg && aiResponseText.toLowerCase().includes('dhigrowth')) {
+          buttonsToSend = [
+            { id: 'btn_quote', title: 'Request Test Quote' },
+            { id: 'btn_engineer', title: 'Connect Engineer' },
+          ];
+        }
 
         if ((!buttonsToSend || buttonsToSend.length === 0) && (aiResponseText.toLowerCase().includes('welcome') || aiResponseText.toLowerCase().includes('how can our ai') || aiResponseText.toLowerCase().includes('which service') || isSitarcMsg)) {
           buttonsToSend = isSitarcMsg
@@ -680,6 +694,7 @@ async function handleLeadQualificationFlow({
   const isSitarcTenant =
     effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
     phoneNumberId === '1399911839867541' ||
+    channelId === 'd0000000-0000-0000-0000-000000000005' ||
     String(businessPhone || '').includes('9487580473') ||
     String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc');
 
@@ -740,7 +755,7 @@ async function handleLeadQualificationFlow({
       // Prepare dynamic template content
       let welcomeMsg = matchedTemplate?.body_text;
       if (isSitarcTenant) {
-        if (!welcomeMsg || welcomeMsg.toLowerCase().includes('dhigrowth')) {
+        if (!welcomeMsg || welcomeMsg.toLowerCase().includes('dhigrowth') || welcomeMsg.toLowerCase().includes('app development')) {
           welcomeMsg = `Hello 👋 Welcome to *Si'Tarc Testing & Calibration Laboratory*, Coimbatore 🔬\n\nHow can our accredited laboratory assist you today?\n\n1️⃣ *Pump & Motor Testing* (IS standards, BEE Star Rating)\n2️⃣ *Calibration Services* (NABL / ISO 17025 Accredited)\n3️⃣ *Mechanical, Electrical & Chemical Testing*\n4️⃣ *Water & Food Testing*\n\nReply with 1, 2, 3, 4 or tap below to connect with our technical engineers!`;
         }
       } else if (!welcomeMsg) {

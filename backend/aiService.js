@@ -169,20 +169,39 @@ export const SITARC_WELCOME = {
 };
 
 let cachedRemoteConfig = null;
+const remoteConfigsByWorkspace = new Map();
 
 // Dynamically fetch AI configuration from Supabase channels settings (shared between local and Render)
-export const loadRemoteAiConfig = async () => {
+export const loadRemoteAiConfig = async (targetWs = null) => {
   try {
     const supabase = getSupabase();
     if (supabase) {
-      const { data } = await supabase
+      if (targetWs) {
+        const { data } = await supabase
+          .from('channels')
+          .select('settings')
+          .eq('type', 'whatsapp')
+          .eq('workspace_id', targetWs)
+          .maybeSingle();
+        if (data?.settings?.ai_config) {
+          remoteConfigsByWorkspace.set(targetWs, data.settings.ai_config);
+          return data.settings.ai_config;
+        }
+      }
+      const { data: allChannels } = await supabase
         .from('channels')
-        .select('settings')
-        .eq('type', 'whatsapp')
-        .maybeSingle();
-      if (data?.settings?.ai_config) {
-        cachedRemoteConfig = data.settings.ai_config;
-        return cachedRemoteConfig;
+        .select('workspace_id, settings')
+        .eq('type', 'whatsapp');
+      if (Array.isArray(allChannels)) {
+        for (const ch of allChannels) {
+          if (ch.settings?.ai_config) {
+            remoteConfigsByWorkspace.set(ch.workspace_id, ch.settings.ai_config);
+            if (ch.workspace_id === DEFAULT_WORKSPACE_ID) {
+              cachedRemoteConfig = ch.settings.ai_config;
+            }
+          }
+        }
+        return remoteConfigsByWorkspace.get(targetWs || DEFAULT_WORKSPACE_ID) || cachedRemoteConfig;
       }
     }
   } catch (err) {
@@ -590,7 +609,7 @@ export const testAiConnection = async ({ provider, apiKey, model, testPrompt }) 
 };
 
 // Main generator used by webhook handler
-export const generateAIResponse = async ({
+const generateAIResponseInternal = async ({
   customerName,
   customerMessage,
   channelType = 'whatsapp',
@@ -757,10 +776,10 @@ export const generateAIResponse = async ({
   if (!cachedRemoteConfig) {
     await loadRemoteAiConfig();
   }
-  const activeAi = getAiConfigForWorkspace(workspaceId);
+  const activeAi = getAiConfigForWorkspace(targetWsId);
   if (activeAi.hasKey) {
     try {
-      let effectiveSystemPrompt = activeAi.systemPrompt || (isSitarc ? SITARC_SYSTEM_PROMPT : DEFAULT_SYSTEM_PROMPT);
+      let effectiveSystemPrompt = isSitarc ? SITARC_SYSTEM_PROMPT : (activeAi.systemPrompt || DEFAULT_SYSTEM_PROMPT);
       if (channelType === 'instagram') {
         effectiveSystemPrompt += `\n\n[Instagram Direct Messaging Rules]:\nYou are chatting with an Instagram user via Instagram Direct Messages. Keep responses conversational, modern, friendly, concise (2-3 short punchy sentences), with relevant emojis. Help users with product questions, pricing, demo bookings, or testing services. When appropriate, offer to connect on WhatsApp or schedule a quick discovery call.`;
       }
@@ -777,6 +796,10 @@ export const generateAIResponse = async ({
 
       if (result.reply) {
         console.log(`✨ AI Response received in ${result.latencyMs}ms from ${result.provider}: "${result.reply.slice(0, 60)}..."`);
+        if (isSitarc && (result.reply.toLowerCase().includes('dhigrowth') || result.reply.toLowerCase().includes('app development') || result.reply.toLowerCase().includes('crm & automation'))) {
+          console.warn(`🛡️ [AIService] Live AI returned DhiGrowth text for Si'Tarc target! Sanitizing to Si'Tarc response.`);
+          return SITARC_WELCOME.reply;
+        }
         return result.reply;
       }
     } catch (err) {
@@ -896,3 +919,43 @@ export const generateAIResponse = async ({
   }
   return `Hello ${customerName || 'there'}! 👋 Welcome to **DhiGrowth IT Services**.\n\nOur solutions specialists are here to help you with App Development, AI Business Automations, WhatsApp CRM, and Custom IT software.\n\nCould you please share a few details about what you'd like to build or automate? We would love to prepare a custom plan for you! 🚀`;
 };
+
+// Foolproof exported generator with unconditional Si'Tarc output isolation
+export const generateAIResponse = async (params = {}) => {
+  const result = await generateAIResponseInternal(params);
+
+  const cleanWs = String(params.workspaceId || '').trim().toLowerCase();
+  const cleanPhone = String(params.businessPhone || params.customerPhone || params.phoneNumberId || '').replace(/[^0-9]/g, '');
+  const isSitarc =
+    cleanWs === 'b0000000-0000-0000-0000-000000000002' ||
+    cleanWs.includes('sitarc') ||
+    params.phoneNumberId === '1399911839867541' ||
+    cleanPhone.includes('9487580473') ||
+    String(params.businessPhone || '').includes('9487580473');
+
+  if (isSitarc) {
+    if (typeof result === 'object' && result !== null) {
+      let reply = result.reply || '';
+      if (reply.toLowerCase().includes('dhigrowth') || reply.toLowerCase().includes('app development') || reply.toLowerCase().includes('crm & automation')) {
+        reply = SITARC_WELCOME.reply;
+      }
+      let imageUrl = result.imageUrl;
+      if (!imageUrl || imageUrl.toLowerCase().includes('dhigrowth')) {
+        imageUrl = 'https://www.sitarc.com/images/logo.png';
+      }
+      return {
+        ...result,
+        reply,
+        imageUrl,
+        buttons: result.buttons && result.buttons.length > 0 ? result.buttons : SITARC_WELCOME.buttons,
+      };
+    } else if (typeof result === 'string') {
+      if (result.toLowerCase().includes('dhigrowth') || result.toLowerCase().includes('app development') || result.toLowerCase().includes('crm & automation')) {
+        return SITARC_WELCOME.reply;
+      }
+    }
+  }
+
+  return result;
+};
+

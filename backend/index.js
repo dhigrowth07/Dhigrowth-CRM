@@ -20,6 +20,7 @@ import {
   testAiConnection,
   generateAIResponse,
   DEFAULT_SYSTEM_PROMPT,
+  SITARC_WELCOME,
 } from './aiService.js';
 import {
   getTenantMetaConfig,
@@ -230,6 +231,8 @@ app.get('/health', (req, res) => {
     status: 'online',
     service: 'Dhigrowth CRM Omnichannel Webhook Gateway',
     version: '2.0.0',
+    gitCommit: process.env.RENDER_GIT_COMMIT || 'local',
+    gitBranch: process.env.RENDER_GIT_BRANCH || 'main',
     timestamp: new Date().toISOString(),
     channels: ['whatsapp', 'instagram', 'messenger', 'line'],
     supabaseConnected: Boolean(process.env.VITE_SUPABASE_URL),
@@ -1402,8 +1405,17 @@ const handleAiGenerate = async (req, res) => {
       customerPhone: phone,
     });
 
-    const replyText = typeof result === 'object' && result.reply ? result.reply : String(result);
-    const imageUrl = typeof result === 'object' && result.imageUrl ? result.imageUrl : null;
+    let replyText = typeof result === 'object' && result.reply ? result.reply : String(result);
+    let imageUrl = typeof result === 'object' && result.imageUrl ? result.imageUrl : null;
+
+    if (isSitarc) {
+      if (replyText.toLowerCase().includes('dhigrowth') || replyText.toLowerCase().includes('app development') || replyText.toLowerCase().includes('crm & automation')) {
+        replyText = SITARC_WELCOME.reply;
+      }
+      if (!imageUrl || imageUrl.toLowerCase().includes('dhigrowth')) {
+        imageUrl = 'https://www.sitarc.com/images/logo.png';
+      }
+    }
 
     // Automatically record customer interest and details to Google Sheets
     const lower = String(customerMessage || '').toLowerCase();

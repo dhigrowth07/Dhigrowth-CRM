@@ -206,12 +206,36 @@ async function executeFollowUpStep(cleanPhone, step, scheduledForInboundTimestam
     }
   }
 
-  const isSitarc =
+  let isSitarc =
     record.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
     record.phoneNumberId === '1399911839867541' ||
+    record.channelId === 'd0000000-0000-0000-0000-000000000005' ||
     String(record.businessPhone || '').includes('9487580473') ||
     String(record.workspaceId || '').toLowerCase().includes('sitarc');
-  const messageText = getFollowUpMessage(step, record.customerName, isSitarc);
+
+  // Verify from Supabase conversation if possible
+  if (supabase && record.conversationId && !isSitarc) {
+    try {
+      const { data: conv } = await supabase
+        .from('conversations')
+        .select('workspace_id, channel_id')
+        .eq('id', record.conversationId)
+        .maybeSingle();
+      if (conv?.workspace_id === 'b0000000-0000-0000-0000-000000000002' || conv?.channel_id === 'd0000000-0000-0000-0000-000000000005') {
+        isSitarc = true;
+        record.workspaceId = 'b0000000-0000-0000-0000-000000000002';
+        record.phoneNumberId = '1399911839867541';
+        record.businessPhone = '9487580473';
+      }
+    } catch {}
+  }
+
+  let messageText = getFollowUpMessage(step, record.customerName, isSitarc);
+
+  // Strict safeguard: If this is for Si'Tarc, NEVER send DhiGrowth text!
+  if (isSitarc && messageText.toLowerCase().includes('dhigrowth')) {
+    messageText = getFollowUpMessage(step, record.customerName, true);
+  }
 
   console.log(`\n📤 [FollowUpService] Triggering Step ${step} follow-up to ${record.customerName} (+${cleanPhone}) to keep 24-hr window active...`);
   console.log(`💬 Message: "${messageText}"`);

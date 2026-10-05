@@ -2807,13 +2807,21 @@ export const AppProvider = ({ children }) => {
 
           const dbChats = contactsResult.map((c) => {
             const conversationId = contactToConvMap[c.id] || null;
+            const isSitarcContact =
+              c.workspace_id === 'b0000000-0000-0000-0000-000000000002' ||
+              String(c.metadata?.channel_id || '').includes('d0000000-0000-0000-0000-000000000005') ||
+              String(c.metadata?.phone_number_id || '').includes('1399911839867541');
+
+            const sitarcInitialText = `Hello! 👋 Welcome to **Si'Tarc Testing & Calibration Laboratory**, Coimbatore 🔬\n\nHow can our technical laboratory concierge assist you today?\n\nWe provide accredited testing & calibration services:\n1️⃣ **Pump & Motor Testing** (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating)\n2️⃣ **Calibration Services** (NABL / ISO 17025 Accredited)\n3️⃣ **Electrical, Chemical & Mechanical Testing**\n4️⃣ **Water & Environmental Testing**\n\nTell us your sample or calibration requirements! 🔬`;
+            const dhiInitialText = `Hello! 👋 Welcome to **DhiGrowth IT Services**.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 **App Development**\n🤖 **AI Business Solutions & Development**\n💬 **WhatsApp CRM & Automation**\n💻 **Custom IT Solutions**\n\nTell us what your business needs, and let’s build something powerful together! 🚀`;
+
             const contactMsgs = conversationId && convMessagesMap[conversationId]?.length > 0
               ? convMessagesMap[conversationId]
               : [
                   {
                     id: `init-${c.id}`,
                     sender: 'ai',
-                    text: `Hello! 👋 Welcome to **DhiGrowth IT Services**.\n\nHow can our AI Business Concierge help you today? 🤖\n\nWe help businesses with:\n📱 **App Development**\n🤖 **AI Business Solutions & Development**\n💬 **WhatsApp CRM & Automation**\n💻 **Custom IT Solutions**\n\nTell us what your business needs, and let’s build something powerful together! 🚀`,
+                    text: isSitarcContact ? sitarcInitialText : dhiInitialText,
                     time: 'Recent',
                     timestamp: new Date(c.created_at || Date.now()).getTime(),
                   },
