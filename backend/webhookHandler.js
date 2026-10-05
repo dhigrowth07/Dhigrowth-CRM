@@ -149,6 +149,7 @@ export const handleInboundWebhook = async (req, res) => {
               phoneNumberId,
               accessToken: tenantAccessToken,
               recipientPhone: senderPhone,
+              businessPhone: rawDisplayPhone,
               sendReply: async (replyText, imageUrl) => {
                 return sendWhatsAppMessage({
                   phoneNumberId,
@@ -241,15 +242,17 @@ async function processIncomingChatMessage({
   phoneNumberId,
   accessToken,
   recipientPhone,
+  businessPhone = '',
   sendReply,
 }) {
   const isValidUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  // If Si'Tarc workspace, phone ID, or tenant name, route to standard Si'Tarc workspace
+  // If Si'Tarc workspace, phone ID, business phone, or tenant name, route to standard Si'Tarc workspace
   let resolvedWsId = workspaceId;
   const isSitarcTarget =
     resolvedWsId === 'b0000000-0000-0000-0000-000000000002' ||
     resolvedWsId === 'b1a0f6303e25-c325-3844-871b-c6fb9aedb713' ||
     phoneNumberId === '1399911839867541' ||
+    String(businessPhone || '').includes('9487580473') ||
     String(resolvedWsId || '').toLowerCase().includes('sitarc');
 
   if (isSitarcTarget) {
@@ -436,8 +439,9 @@ async function processIncomingChatMessage({
         conversationId,
         channelId,
         workspaceId: effectiveWorkspaceId,
-        phoneNumberId,
+        phoneNumberId: isSitarcTarget ? '1399911839867541' : phoneNumberId,
         accessToken,
+        businessPhone: isSitarcTarget ? '9487580473' : businessPhone,
       });
     }
 
@@ -452,8 +456,9 @@ async function processIncomingChatMessage({
       conversationId,
       channelId,
       recipientPhone,
-      phoneNumberId,
+      phoneNumberId: isSitarcTarget ? '1399911839867541' : phoneNumberId,
       accessToken,
+      businessPhone: isSitarcTarget ? '9487580473' : businessPhone,
       sendReply,
       supabase,
       contactId,
@@ -472,10 +477,25 @@ async function processIncomingChatMessage({
       channelType,
       conversationHistory,
       workspaceId: effectiveWorkspaceId,
+      phoneNumberId: isSitarcTarget ? '1399911839867541' : phoneNumberId,
+      businessPhone: isSitarcTarget ? '9487580473' : businessPhone,
+      customerPhone: senderIdentifier,
     });
 
-    const aiResponseText = typeof aiResult === 'object' && aiResult.reply ? aiResult.reply : String(aiResult);
-    const aiImageUrl = typeof aiResult === 'object' && aiResult.imageUrl ? aiResult.imageUrl : null;
+    let aiResponseText = typeof aiResult === 'object' && aiResult.reply ? aiResult.reply : String(aiResult);
+    let aiImageUrl = typeof aiResult === 'object' && aiResult.imageUrl ? aiResult.imageUrl : null;
+
+    // Strict safeguard: If this conversation is for Si'Tarc (+91 94875 80473 / Phone ID 1399911839867541 / Workspace 2),
+    // NEVER send DhiGrowth text or logo!
+    if (isSitarcTarget) {
+      if (aiImageUrl?.includes('dhigrowth')) {
+        aiImageUrl = 'https://www.sitarc.com/images/logo.png';
+      }
+      if (aiResponseText.toLowerCase().includes('dhigrowth')) {
+        aiResponseText = `Hello 👋 Welcome to *Si'Tarc Testing & Calibration Laboratory*, Coimbatore 🔬\n\nHow can our accredited laboratory assist you today?\n\n1️⃣ *Pump & Motor Testing* (IS 8472, IS 9079, IS 9283, IS 14220, BEE Star Rating)\n2️⃣ *Calibration Services* (NABL / ISO 17025 Accredited Calibration)\n3️⃣ *Mechanical, Electrical & Chemical Testing*\n4️⃣ *Water & Food Testing*\n\nReply with 1, 2, 3, 4 or let us know what you need assistance with!`;
+        aiImageUrl = 'https://www.sitarc.com/images/logo.png';
+      }
+    }
 
     console.log(`💬 AI Reply: "${aiResponseText.slice(0, 80)}..." ${aiImageUrl ? `(Image: ${aiImageUrl})` : ''}`);
 
@@ -646,6 +666,7 @@ async function handleLeadQualificationFlow({
   const isSitarcTenant =
     effectiveWorkspaceId === 'b0000000-0000-0000-0000-000000000002' ||
     phoneNumberId === '1399911839867541' ||
+    String(businessPhone || '').includes('9487580473') ||
     String(effectiveWorkspaceId || '').toLowerCase().includes('sitarc');
 
   // 1. Reset / restart commands (or fresh greeting)

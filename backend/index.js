@@ -1369,7 +1369,9 @@ const handleAiGenerate = async (req, res) => {
       customerName = 'Valued Client',
       channelType = 'whatsapp',
       phone = '',
-      workspaceId = 'b0000000-0000-0000-0000-000000000001',
+      workspaceId,
+      businessPhone = '',
+      phoneNumberId = '',
       service,
       purpose,
     } = req.body || {};
@@ -1378,10 +1380,26 @@ const handleAiGenerate = async (req, res) => {
       return res.status(400).json({ success: false, error: 'customerMessage is required' });
     }
 
+    // Strict detection for Si'Tarc
+    const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
+    const cleanBizPhone = String(businessPhone || '').replace(/[^0-9]/g, '');
+    const isSitarc =
+      workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+      String(workspaceId || '').toLowerCase().includes('sitarc') ||
+      phoneNumberId === '1399911839867541' ||
+      cleanBizPhone.includes('9487580473') ||
+      cleanPhone.includes('9487580473');
+
+    const resolvedWsId = isSitarc ? 'b0000000-0000-0000-0000-000000000002' : (workspaceId || 'b0000000-0000-0000-0000-000000000001');
+
     const result = await generateAIResponse({
       customerName,
       customerMessage,
       channelType,
+      workspaceId: resolvedWsId,
+      phoneNumberId: isSitarc ? '1399911839867541' : phoneNumberId,
+      businessPhone: isSitarc ? '9487580473' : businessPhone,
+      customerPhone: phone,
     });
 
     const replyText = typeof result === 'object' && result.reply ? result.reply : String(result);
@@ -1389,17 +1407,29 @@ const handleAiGenerate = async (req, res) => {
 
     // Automatically record customer interest and details to Google Sheets
     const lower = String(customerMessage || '').toLowerCase();
-    let detectedService = service || 'DhiGrowth IT Services';
-    if (lower.includes('app') || lower.includes('mobile') || lower.includes('flutter') || lower.includes('ios') || lower.includes('android') || lower === '1') {
-      detectedService = 'Mobile App & Web Development';
-    } else if (lower.includes('ai') || lower.includes('bot') || lower.includes('autopilot') || lower.includes('auto-pilot') || lower === '2') {
-      detectedService = 'AI Business Solutions & Auto-Pilot Bots';
-    } else if (lower.includes('whatsapp') || lower.includes('crm') || lower.includes('broadcast') || lower === '3') {
-      detectedService = 'WhatsApp CRM & Marketing Automation';
-    } else if (lower.includes('software') || lower.includes('custom') || lower.includes('enterprise') || lower === '4') {
-      detectedService = 'Custom IT Software & Enterprise Systems';
-    } else if (lower.includes('interested') || lower.includes('yes') || lower.includes('demo') || lower.includes('sure')) {
-      detectedService = 'App Development, AI Auto-Pilot & WhatsApp CRM';
+    let detectedService = service || (isSitarc ? "Si'Tarc Testing & Calibration Laboratory" : 'DhiGrowth IT Services');
+    if (isSitarc) {
+      if (lower.includes('pump') || lower.includes('motor') || lower === '1') {
+        detectedService = 'Pump & Motor Testing (IS Standards)';
+      } else if (lower.includes('calib') || lower.includes('gauge') || lower === '2') {
+        detectedService = 'Calibration Services (NABL / ISO 17025)';
+      } else if (lower.includes('chemical') || lower.includes('mechanical') || lower === '3') {
+        detectedService = 'Electrical, Chemical & Mechanical Testing';
+      } else if (lower.includes('water') || lower.includes('food') || lower === '4') {
+        detectedService = 'Water & Food Testing';
+      }
+    } else {
+      if (lower.includes('app') || lower.includes('mobile') || lower.includes('flutter') || lower.includes('ios') || lower.includes('android') || lower === '1') {
+        detectedService = 'Mobile App & Web Development';
+      } else if (lower.includes('ai') || lower.includes('bot') || lower.includes('autopilot') || lower.includes('auto-pilot') || lower === '2') {
+        detectedService = 'AI Business Solutions & Auto-Pilot Bots';
+      } else if (lower.includes('whatsapp') || lower.includes('crm') || lower.includes('broadcast') || lower === '3') {
+        detectedService = 'WhatsApp CRM & Marketing Automation';
+      } else if (lower.includes('software') || lower.includes('custom') || lower.includes('enterprise') || lower === '4') {
+        detectedService = 'Custom IT Software & Enterprise Systems';
+      } else if (lower.includes('interested') || lower.includes('yes') || lower.includes('demo') || lower.includes('sure')) {
+        detectedService = 'App Development, AI Auto-Pilot & WhatsApp CRM';
+      }
     }
 
     const validPhone = phone ? String(phone).trim() : '';

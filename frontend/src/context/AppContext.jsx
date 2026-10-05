@@ -3312,6 +3312,16 @@ export const AppProvider = ({ children }) => {
         let reply = '';
         let imageUrl = null;
         try {
+          const isSitarcChat =
+            targetWs === 'b0000000-0000-0000-0000-000000000002' ||
+            activeChatObj?.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
+            activeChatObj?.clientCompanyName?.toLowerCase()?.includes('sitarc') ||
+            activeChatObj?.phone === '+918939878810' ||
+            activeChatObj?.phone === '+918428713160' ||
+            activeChatObj?.phone?.includes('9487580473');
+
+          const finalTargetWs = isSitarcChat ? 'b0000000-0000-0000-0000-000000000002' : targetWs;
+
           // Direct background stream to Google Sheets
           if (activeChatObj?.phone || activeChatObj?.contactName) {
             fetch(`${BACKEND_URL}/api/integrations/google-sheets/record-lead`, {
@@ -3320,10 +3330,10 @@ export const AppProvider = ({ children }) => {
               body: JSON.stringify({
                 name: activeChatObj?.contactName || targetContactName,
                 phone: activeChatObj?.phone || '',
-                service: activeChatObj?.tag || activeChatObj?.attributes?.product || 'DhiGrowth Services',
+                service: activeChatObj?.tag || activeChatObj?.attributes?.product || (isSitarcChat ? "Si'Tarc Testing & Calibration" : 'DhiGrowth Services'),
                 purpose: text,
                 channel: targetChannel === 'instagram' ? 'Instagram' : 'WhatsApp',
-                workspaceId: targetWs,
+                workspaceId: finalTargetWs,
               }),
             }).catch(() => {});
           }
@@ -3337,10 +3347,12 @@ export const AppProvider = ({ children }) => {
                 customerMessage: text,
                 customerName: activeChatObj?.contactName || targetContactName,
                 phone: activeChatObj?.phone || '',
-                service: activeChatObj?.tag || 'DhiGrowth Services',
+                service: activeChatObj?.tag || (isSitarcChat ? "Si'Tarc Testing & Calibration" : 'DhiGrowth Services'),
                 purpose: text,
                 channelType: targetChannel,
-                workspaceId: targetWs,
+                workspaceId: finalTargetWs,
+                phoneNumberId: isSitarcChat ? '1399911839867541' : undefined,
+                businessPhone: isSitarcChat ? '9487580473' : undefined,
               }),
             });
           } catch {}
@@ -3354,10 +3366,12 @@ export const AppProvider = ({ children }) => {
                   customerMessage: text,
                   customerName: activeChatObj?.contactName || targetContactName,
                   phone: activeChatObj?.phone || '',
-                  service: activeChatObj?.tag || 'DhiGrowth Services',
+                  service: activeChatObj?.tag || (isSitarcChat ? "Si'Tarc Testing & Calibration" : 'DhiGrowth Services'),
                   purpose: text,
                   channelType: targetChannel,
-                  workspaceId: targetWs,
+                  workspaceId: finalTargetWs,
+                  phoneNumberId: isSitarcChat ? '1399911839867541' : undefined,
+                  businessPhone: isSitarcChat ? '9487580473' : undefined,
                 }),
               });
             } catch {}
@@ -3375,7 +3389,10 @@ export const AppProvider = ({ children }) => {
         }
 
         if (!reply) {
-          if (targetChannel === 'instagram') {
+          if (isSitarcChat) {
+            reply = `Hello ${activeChatObj?.contactName || 'there'}! 👋 Welcome to Si'Tarc Testing & Calibration Laboratory, Coimbatore 🔬\n\nHow can our accredited laboratory assist you today with Pump, Motor, Electrical, Chemical, or Mechanical testing and calibration services?`;
+            imageUrl = 'https://www.sitarc.com/images/logo.png';
+          } else if (targetChannel === 'instagram') {
             reply = `Hey ${activeChatObj?.contactName?.split(' ')[0] || 'there'}! 👋 Thanks for reaching out via Instagram DM.\n\nHow can our AI Concierge assist you today? Let us know what you're looking for or ask any questions about our IT & AI automation services! ✨`;
           } else {
             reply = `Hello ${activeChatObj?.contactName || 'there'}! 👋 Welcome to DhiGrowth IT Services.\n\nHow can our AI Business Concierge help you today? Tell us what your business needs and let's build something powerful together! 🚀`;

@@ -596,10 +596,20 @@ export const generateAIResponse = async ({
   channelType = 'whatsapp',
   conversationHistory = [],
   workspaceId,
+  phoneNumberId,
+  businessPhone,
+  customerPhone,
 }) => {
   const query = customerMessage?.trim().toLowerCase() || '';
   const cleanWs = String(workspaceId || '').trim().toLowerCase();
-  const isSitarc = cleanWs === 'b0000000-0000-0000-0000-000000000002' || cleanWs.includes('sitarc');
+  const cleanPhone = String(businessPhone || customerPhone || phoneNumberId || '').replace(/[^0-9]/g, '');
+  const isSitarc =
+    cleanWs === 'b0000000-0000-0000-0000-000000000002' ||
+    cleanWs.includes('sitarc') ||
+    phoneNumberId === '1399911839867541' ||
+    cleanPhone.includes('9487580473') ||
+    String(businessPhone || '').includes('9487580473');
+
   const targetWsId = isSitarc ? 'b0000000-0000-0000-0000-000000000002' : (workspaceId || DEFAULT_WORKSPACE_ID);
 
   // 1. Initial Greeting Detection (Only trigger welcome menu on standalone greeting)
@@ -849,11 +859,17 @@ export const generateAIResponse = async ({
   }
 
   if (/\b(location|office|address|where are you|where is your office|based|headquarters|coimbatore|visit|map)\b/i.test(query)) {
+    if (isSitarc) {
+      return `🔬 **Si'Tarc Testing & Calibration Laboratory**\n\nOur accredited laboratory headquarters is located in Coimbatore, Tamil Nadu, India:\n📍 #83, 84, Avanampalayam Road, Coimbatore - 641006\n📞 Contact: 0422-2560473 / +91 94875 80473\n\nWe warmly welcome clients for in-person sample drop-offs Monday through Saturday! Would you like assistance with pump, motor, calibration, or chemical testing? 🔬`;
+    }
     return `🏢 **Dhigrowth Business Pvt Ltd**\n\nOur official company headquarters is located in Coimbatore, Tamil Nadu, India:\n📍 Kovai Thirunagar, Coimbatore, Tamil Nadu 641001\n\n🗺️ **Google Maps Location:**\nhttps://maps.app.goo.gl/L5JzdtsP6yiBbfyZ7\n\nWe warmly welcome clients for in-person meetings by appointment, while also collaborating with businesses across India and globally! Would you like to schedule a visit or call? 🤝`;
   }
 
   // 4.3 Inquiries about updates, project status, or follow-ups
   if (/\b(update|updates|status|progress|news|what happened|following up|any update|any updates|what's the update|whats the update)\b/i.test(query) || (query.includes('update') && (query.includes('any') || query.includes('my') || query.includes('the')))) {
+    if (isSitarc) {
+      return `Hello ${customerName || 'there'}! 👋 The Si'Tarc laboratory technical team is actively reviewing your sample testing / calibration details. We will share a status report and test certificate update with you promptly! 🔬`;
+    }
     return `Hello ${customerName || 'there'}! 👋 Our solutions and technical team are actively reviewing your project details. We will share a full update and proposal with you shortly! If you have any specific feature or timeline you'd like us to prioritize, please let us know. 🚀`;
   }
 
@@ -862,5 +878,8 @@ export const generateAIResponse = async ({
   }
 
   // Conversational fallback (natural concierge, no robotic template regurgitation)
+  if (isSitarc) {
+    return `Hello ${customerName || 'there'}! 👋 Welcome to **Si'Tarc Testing & Calibration Laboratory**, Coimbatore 🔬\n\nOur accredited laboratory engineers are available to assist with Pump, Motor, Electrical, Chemical, Mechanical testing and NABL Calibration.\n\nCould you please describe the equipment or testing standard you require? We would be delighted to assist! 🔬`;
+  }
   return `Hello ${customerName || 'there'}! 👋 Welcome to **DhiGrowth IT Services**.\n\nOur solutions specialists are here to help you with App Development, AI Business Automations, WhatsApp CRM, and Custom IT software.\n\nCould you please share a few details about what you'd like to build or automate? We would love to prepare a custom plan for you! 🚀`;
 };

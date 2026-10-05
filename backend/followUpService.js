@@ -91,6 +91,7 @@ export function scheduleFollowUps({
   workspaceId,
   phoneNumberId,
   accessToken,
+  businessPhone = '',
 }) {
   if (!recipientPhone) return;
 
@@ -104,6 +105,7 @@ export function scheduleFollowUps({
   const isSitarc =
     workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
     phoneNumberId === '1399911839867541' ||
+    String(businessPhone || '').includes('9487580473') ||
     String(workspaceId || '').toLowerCase().includes('sitarc');
   const resolvedWsId = isSitarc ? 'b0000000-0000-0000-0000-000000000002' : workspaceId;
 
@@ -114,8 +116,9 @@ export function scheduleFollowUps({
     conversationId,
     channelId,
     workspaceId: resolvedWsId,
-    phoneNumberId: phoneNumberId || process.env.META_WHATSAPP_PHONE_NUMBER_ID || '1272943605907701',
+    phoneNumberId: isSitarc ? '1399911839867541' : (phoneNumberId || process.env.META_WHATSAPP_PHONE_NUMBER_ID || '1272943605907701'),
     accessToken: accessToken || process.env.META_WHATSAPP_ACCESS_TOKEN,
+    businessPhone: isSitarc ? '9487580473' : businessPhone,
     lastInboundAt: inboundTimestamp,
     step1ScheduledAt: inboundTimestamp + DELAY_STEP_1_MS,
     step2ScheduledAt: inboundTimestamp + DELAY_STEP_2_MS,
@@ -206,6 +209,7 @@ async function executeFollowUpStep(cleanPhone, step, scheduledForInboundTimestam
   const isSitarc =
     record.workspaceId === 'b0000000-0000-0000-0000-000000000002' ||
     record.phoneNumberId === '1399911839867541' ||
+    String(record.businessPhone || '').includes('9487580473') ||
     String(record.workspaceId || '').toLowerCase().includes('sitarc');
   const messageText = getFollowUpMessage(step, record.customerName, isSitarc);
 
