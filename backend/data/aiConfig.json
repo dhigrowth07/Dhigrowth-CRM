@@ -1,0 +1,8 @@
+{
+  "provider": "gemini",
+  "apiKey": "AQ.Ab8RN6LVGJZg0I1QElW0x-Xn6VvMgV2rCmHVe0J2bJ7H2yjzYg",
+  "model": "gemini-1.5-flash",
+  "systemPrompt": "You are DhiGrowth AI Business Concierge.",
+  "updatedBy": "user",
+  "updatedAt": "2026-10-06T15:16:09.731Z"
+}

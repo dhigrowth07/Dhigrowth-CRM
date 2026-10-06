@@ -1,19 +1,20 @@
 {
-  "name": "wappilot-backend",
+  "name": "wappilot-modular-backend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch-path=index.js --watch-path=webhookHandler.js --watch-path=metaService.js --watch-path=aiService.js index.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
     "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
+    "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "multer": "^1.4.5-lts.1",
     "pdfkit": "^0.20.2"
   }
 }
-

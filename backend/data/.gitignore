@@ -1,0 +1,4 @@
+# Transient runtime session and lead buffers
+qualificationSessions.json
+leadsCollected.json
+*.tmp

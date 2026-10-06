@@ -1,0 +1,30 @@
+{
+  "919888877777": {
+    "cleanPhone": "919888877777",
+    "recipientPhone": "919888877777",
+    "customerName": "Audit Test Contact",
+    "workspaceId": "b0000000-0000-0000-0000-000000000001",
+    "phoneNumberId": "1272943605907701",
+    "accessToken": "EAAuryEG6S8ABSnQreljnloaIRqykY9iloYMeN8JtfGpYGT9fIo1ANK5hg75TZBG9IrcIQtYf176NRFD5EJ3bXyVFtJnnAqgjc4yY30KZAi9tTPyhjsise4oWQIo7qAAhrL19YwrkgDv6coSh1n2JZCS6Y25cIF0UkZBewRpuHldqPx4nwSA64t4irVVZCu6LrqgZDZD",
+    "businessPhone": "",
+    "lastMessageId": "wamid.HBgLOTE5ODg4ODc3Nzc3FQIAEhggM0E2REYx",
+    "lastInboundAt": 1791282752985,
+    "step1ScheduledAt": 1791282872985,
+    "step2ScheduledAt": 1791293552985,
+    "step1Status": "cancelled",
+    "step2Status": "cancelled",
+    "step1SentAt": null,
+    "step2SentAt": null
+  },
+  "919791471277": {
+    "cleanPhone": "919791471277",
+    "recipientPhone": "919791471277",
+    "customerName": "Test Contact",
+    "phoneNumberId": "1272943605907701",
+    "accessToken": "EAAuryEG6S8ABSnQreljnloaIRqykY9iloYMeN8JtfGpYGT9fIo1ANK5hg75TZBG9IrcIQtYf176NRFD5EJ3bXyVFtJnnAqgjc4yY30KZAi9tTPyhjsise4oWQIo7qAAhrL19YwrkgDv6coSh1n2JZCS6Y25cIF0UkZBewRpuHldqPx4nwSA64t4irVVZCu6LrqgZDZD",
+    "workspaceId": "b0000000-0000-0000-0000-000000000001",
+    "channelId": "d0000000-0000-0000-0000-000000000001",
+    "step1Status": "sent",
+    "step1SentAt": "2026-10-06T11:14:38.384Z"
+  }
+}

@@ -1,0 +1,534 @@
+====================================================================================================
+DHIGROWTH CRM / WAP PILOT — BACKEND RESTRUCTURING MASTER TODO CHECKLIST
+====================================================================================================
+PROJECT:        Dhigrowth-CRM / WAP PILOT
+ORIGINAL DIR:   c:\Users\DINESH SENTHIL\Desktop\DHIWORKS\wappilot-main\Dhigrowth-CRM\backend
+NEW TARGET DIR: c:\Users\DINESH SENTHIL\Desktop\DHIWORKS\wappilot-main\Dhigrowth-CRM\backend\backend
+DOCUMENT PATH:  c:\Users\DINESH SENTHIL\Desktop\DHIWORKS\wappilot-main\Dhigrowth-CRM\backend\backend\docs\RESTRUCTURE_TODO_CHECKLIST.txt
+CREATED DATE:   2026-10-06
+STATUS:         DRAFT & READY FOR EXECUTION
+
+----------------------------------------------------------------------------------------------------
+CARDINAL RULES & SAFETY DIRECTIVES
+----------------------------------------------------------------------------------------------------
+1. ZERO DELETION RULE:
+   - NEVER delete, remove, or mutate any existing files in the parent "backend/" directory.
+   - The original "backend/" files remain 100% untouched as the live reference and rollback safety net.
+   - Any new code, structure, services, and tests MUST be created exclusively inside "backend/backend/".
+
+2. ZERO FUNCTIONALITY LOSS:
+   - Every single feature, fallback mechanism, prompt guardrail, multi-tenant rule, and all 68+ API
+     routes must be preserved with 100% behavioral parity.
+
+3. CLEAN ARCHITECTURE STANDARD:
+   - Strict separation of concerns:
+     * server.js: Slim HTTP entry point (< 60 lines).
+     * src/app.js: Express configuration, CORS, body parsers, static delivery.
+     * src/config/: Validated environment, Supabase client, and Meta/Razorpay constants.
+     * src/middlewares/: Reusable auth, RBAC, multer uploads, and error handling.
+     * src/routes/: Pure route definitions (URLs & HTTP verbs only).
+     * src/controllers/: HTTP request/response handlers (req, res, next).
+     * src/services/: Pure business logic with zero direct Express req/res coupling.
+     * src/utils/: Helper functions (PDF generator, phone sanitizer, translation).
+     * data/: Isolated runtime JSON files (stops file-watcher server reload loops).
+
+====================================================================================================
+TARGET DIRECTORY STRUCTURE BLUEPRINT (backend/backend/)
+====================================================================================================
+
+backend/backend/
+├── server.js                          # Slim HTTP listener & graceful shutdown
+├── package.json                       # Module metadata, dependencies & clean dev scripts
+├── .env.example                       # Documented environment variables specification
+├── docs/                              # Project documentation & checklists
+│   └── RESTRUCTURE_TODO_CHECKLIST.txt # This master checklist document
+├── data/                              # Isolated runtime JSON stores (git-ignored)
+│   ├── .gitignore                     # Ignores runtime files from git commits
+│   ├── tenants.json                   # Fallback tenant workspaces & settings
+│   ├── metaConfigs.json               # Tenant Meta credentials & phone map
+│   ├── subscriptions.json             # Workspace plan tiers & broadcast usage
+│   ├── automationsStore.json          # Keyword triggers & automation rules
+│   ├── dripStore.json                 # Multi-step drip workflows
+│   ├── campaignsStore.json            # Broadcast history & delivery receipts
+│   ├── templatesStore.json            # WhatsApp templates cache
+│   ├── walletStore.json               # Credit balance & transaction ledger
+│   ├── promocodesStore.json           # Discount codes & redemption logs
+│   ├── manualAgentStore.json          # Human agent takeover state map
+│   ├── qualificationSessions.json     # 30-minute lead qualification sessions
+│   ├── leadsCollected.json            # Local buffer of qualified leads
+│   └── googleSheetsConfig.json        # Google Apps Script webhook config
+├── uploads/                           # Uploaded media assets (images, PDFs)
+│   └── .gitkeep
+└── src/
+    ├── app.js                         # Express application setup & middleware mounting
+    ├── config/
+    │   ├── env.js                     # Validated process.env variables & defaults
+    │   ├── supabase.js                # Supabase client singleton
+    │   ├── meta.constants.js          # Graph API versions (v20.0, v21.0) & URLs
+    │   └── razorpay.config.js         # Razorpay client & key configuration
+    ├── middlewares/
+    │   ├── auth.middleware.js         # Session / Bearer token validation
+    │   ├── rbac.middleware.js         # Role-based access control (super_admin, admin)
+    │   ├── metaSignature.middleware.js# X-Hub-Signature-256 webhook validator
+    │   ├── upload.middleware.js       # Multer storage & file type filters
+    │   └── errorHandler.middleware.js # Global error handler & status formatter
+    ├── routes/
+    │   ├── index.js                   # Master router aggregating all domain routes
+    │   ├── webhook.routes.js          # /webhook, /api/webhook, /api/simulate-inbound
+    │   ├── messages.routes.js         # /api/send-message, /api/conversations/*
+    │   ├── campaigns.routes.js        # /api/campaigns/*, /api/send-template-message
+    │   ├── templates.routes.js        # /api/templates/*
+    │   ├── automations.routes.js      # /api/automations/*, /api/drips/*
+    │   ├── ai.routes.js               # /api/ai-config, /api/ai-test, /api/translate
+    │   ├── billing.routes.js          # /api/billing/*, /api/wallet/*, /api/promocodes/*
+    │   ├── invoices.routes.js         # /api/invoices/*, /pay/:id
+    │   ├── auth.routes.js             # /api/auth/*, /api/workspace/members
+    │   └── integrations.routes.js     # /api/google-sheets/*, /api/meta-insights/*
+    ├── controllers/
+    │   ├── webhook.controller.js      # Inbound challenge & payload dispatch
+    │   ├── messages.controller.js     # Manual sending & agent mode toggles
+    │   ├── campaigns.controller.js    # Broadcast launch & metrics polling
+    │   ├── templates.controller.js    # Template CRUD & Meta sync
+    │   ├── automations.controller.js  # Keyword rule CRUD & toggles
+    │   ├── drips.controller.js        # Drip sequence management & enrollment
+    │   ├── ai.controller.js           # Prompt updates, model selection & testing
+    │   ├── billing.controller.js      # Subscriptions, wallet recharge & promo codes
+    │   ├── invoices.controller.js     # Invoice generation, PDF view & payments
+    │   ├── auth.controller.js         # Login, registration & team members
+    │   └── integrations.controller.js # Google Sheets & Meta Insights stats
+    ├── services/
+    │   ├── meta/
+    │   │   ├── metaClient.js          # WhatsApp, IG & Messenger low-level HTTP client
+    │   │   ├── metaWebhook.service.js # Payload parser, typing indicators & receipts
+    │   │   ├── metaOAuth.service.js   # Embedded Signup OAuth code exchange
+    │   │   ├── metaInsights.service.js# Graph API v21.0 analytics & quality rating
+    │   │   └── tenantMetaManager.js   # Multi-tenant WABA & phone ID resolver
+    │   ├── ai/
+    │   │   ├── ai.service.js          # Main conversational brain & prompt isolation
+    │   │   └── providers/
+    │   │       ├── gemini.provider.js # Google Gemini Flash adapter with failover
+    │   │       ├── groq.provider.js   # Groq Llama 3.3 adapter
+    │   │       └── openai.provider.js # OpenAI GPT-4o-mini adapter
+    │   ├── campaigns/
+    │   │   ├── broadcast.service.js   # Bulk broadcast scheduler & throttling
+    │   │   ├── template.service.js    # Meta message templates sync & creation
+    │   │   ├── drip.service.js        # Spaced multi-step drip sequences
+    │   │   ├── automations.service.js # Keyword triggers & action execution
+    │   │   └── followUp.service.js    # 2-minute nudge & 3-hour session keep-alive
+    │   ├── crm/
+    │   │   ├── leadQualification.js   # 4-step conversational qualification engine
+    │   │   ├── manualAgent.service.js # Human agent takeover state manager
+    │   │   └── googleSheets.service.js# Inbound lead sync to Google Apps Script
+    │   └── billing/
+    │       ├── billing.service.js     # SaaS subscription tiers & quota checks
+    │       ├── wallet.service.js      # Real-time credit balance & Razorpay orders
+    │       ├── promocode.service.js   # Coupon code validation & redemption
+    │       └── invoice.service.js     # GST invoices & WhatsApp document dispatch
+    └── utils/
+        ├── invoicePdfGenerator.js     # PDFKit vector invoice builder
+        ├── phoneSanitizer.js          # International phone normalizer (+91)
+        └── translate.js               # Google Translate API integration
+
+====================================================================================================
+SEQUENCE ORDER IMPLEMENTATION CHECKLIST
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+PHASE 0: DIRECTORY SCAFFOLDING & FOUNDATION
+----------------------------------------------------------------------------------------------------
+[x] Step 0.1: Create Target Directory Trees (COMPLETED)
+    Create the following subdirectories inside "backend/backend/":
+    - backend/backend/src/config/
+    - backend/backend/src/middlewares/
+    - backend/backend/src/routes/
+    - backend/backend/src/controllers/
+    - backend/backend/src/services/meta/
+    - backend/backend/src/services/ai/providers/
+    - backend/backend/src/services/campaigns/
+    - backend/backend/src/services/crm/
+    - backend/backend/src/services/billing/
+    - backend/backend/src/services/auth/
+    - backend/backend/src/utils/
+    - backend/backend/data/
+    - backend/backend/uploads/
+
+[x] Step 0.2: Create backend/backend/package.json (COMPLETED)
+    - Configure type: "module".
+    - Declare clean scripts:
+      * "start": "node server.js"
+      * "dev": "node --watch server.js"
+    - Include all required production dependencies:
+      * express (^5.2.1)
+      * cors (^2.8.5)
+      * dotenv (^17.4.2)
+      * @supabase/supabase-js (^2.116.0)
+      * pdfkit (^0.20.2)
+      * bcryptjs (^3.0.3)
+      * multer (^1.4.5-lts.1)
+
+[x] Step 0.3: Create backend/backend/.env.example (COMPLETED)
+    - Document all environment variables:
+      * SUPABASE_URL & SUPABASE_ANON_KEY
+      * META_WHATSAPP_PHONE_NUMBER_ID, META_WHATSAPP_WABA_ID, META_WHATSAPP_ACCESS_TOKEN
+      * META_WHATSAPP_VERIFY_TOKEN
+      * GEMINI_API_KEY, GROQ_API_KEY, OPENAI_API_KEY
+      * RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET
+      * PORT (default: 4000)
+
+----------------------------------------------------------------------------------------------------
+PHASE 1: RUNTIME DATA ISOLATION (data/ FOLDER)
+----------------------------------------------------------------------------------------------------
+[x] Step 1.1: Copy (Do NOT Move) All 11 JSON Stores into backend/backend/data/ (COMPLETED)
+    Copy the existing JSON data files from "backend/" into "backend/backend/data/":
+    - copy backend/tenants.json             -> backend/backend/data/tenants.json
+    - copy backend/metaConfigs.json         -> backend/backend/data/metaConfigs.json
+    - copy backend/subscriptions.json       -> backend/backend/data/subscriptions.json
+    - copy backend/automationsStore.json    -> backend/backend/data/automationsStore.json
+    - copy backend/dripStore.json           -> backend/backend/data/dripStore.json
+    - copy backend/campaignsStore.json      -> backend/backend/data/campaignsStore.json
+    - copy backend/templatesStore.json      -> backend/backend/data/templatesStore.json
+    - copy backend/walletStore.json         -> backend/backend/data/walletStore.json
+    - copy backend/promocodesStore.json     -> backend/backend/data/promocodesStore.json
+    - copy backend/manualAgentStore.json    -> backend/backend/data/manualAgentStore.json
+    - copy backend/googleSheetsConfig.json  -> backend/backend/data/googleSheetsConfig.json
+
+[x] Step 1.2: Create backend/backend/data/.gitignore (COMPLETED)
+    - Ignore runtime files so git commits stay clean:
+      * qualificationSessions.json
+      * leadsCollected.json
+      * *.tmp
+
+----------------------------------------------------------------------------------------------------
+PHASE 2: CENTRALIZED CONFIGURATION LAYER (src/config/)
+----------------------------------------------------------------------------------------------------
+[x] Step 2.1: Implement src/config/env.js (COMPLETED)
+    - Load environment variables using dotenv.
+    - Validate required keys (Supabase URL, Meta Access Token, Port).
+    - Export strongly typed, sanitized config object with defaults.
+
+[x] Step 2.2: Implement src/config/supabase.js (COMPLETED)
+    - Initialize Supabase Cloud client with error boundary.
+    - Export singleton supabase client instance.
+
+[x] Step 2.3: Implement src/config/meta.constants.js (COMPLETED)
+    - Define GRAPH_API_VERSION ('v20.0', 'v21.0').
+    - Define GRAPH_BASE_URL ('https://graph.facebook.com').
+    - Define default verify token ('dhigrowth_webhook_secret_2026').
+
+[x] Step 2.4: Implement src/config/razorpay.config.js (COMPLETED)
+    - Export Razorpay key ID, secret, and API base URL.
+
+----------------------------------------------------------------------------------------------------
+PHASE 3: REUSABLE UTILITIES & MIDDLEWARES (src/utils/ & src/middlewares/)
+----------------------------------------------------------------------------------------------------
+[x] Step 3.1: Implement src/utils/phoneSanitizer.js (COMPLETED)
+    - Clean phone number string (strip spaces, symbols, plus sign).
+    - If 10 digits, prepend Indian country code '91'.
+    - Validate E.164 compliance.
+
+[x] Step 3.2: Implement src/utils/invoicePdfGenerator.js (COMPLETED)
+    - Migrate vector PDF generator from backend/invoicePdfGenerator.js.
+    - Render 18% GST invoice, table layout, business details, and QR code using PDFKit.
+
+[x] Step 3.3: Implement src/utils/translate.js (COMPLETED)
+    - Migrate Google Translate helper from backend/index.js (line 540).
+
+[x] Step 3.4: Implement src/middlewares/upload.middleware.js (COMPLETED)
+    - Configure Multer disk storage targeting "backend/backend/uploads/".
+    - Allow PDF, JPEG, PNG, MP4, and WEBP formats with 25MB file limit.
+
+[x] Step 3.5: Implement src/middlewares/errorHandler.middleware.js (COMPLETED)
+    - Centralized Express 5 error handling middleware.
+    - Format errors into structured JSON response: { success: false, error: err.message }.
+
+[x] Step 3.6: Implement src/middlewares/auth.middleware.js (COMPLETED)
+    - Verify authorization token or session.
+    - Inject workspaceId and user context into req.user.
+
+[x] Step 3.7: Implement src/middlewares/rbac.middleware.js (COMPLETED)
+    - Role guards: requireSuperAdmin, requireAdmin, requireAgent.
+
+----------------------------------------------------------------------------------------------------
+PHASE 4: PURE DOMAIN SERVICES (src/services/)
+----------------------------------------------------------------------------------------------------
+-- SUB-PHASE 4A: META PLATFORM SERVICES (src/services/meta/) --
+[x] Step 4.1: Implement src/services/meta/tenantMetaManager.js (COMPLETED)
+    - Migrate from backend/tenantMetaManager.js.
+    - Update data file path to "backend/backend/data/metaConfigs.json".
+    - Export: getTenantMetaConfig, saveTenantMetaConfig, getTenantByPhoneNumberId, removeTenantMeta.
+
+[x] Step 4.2: Implement src/services/meta/metaClient.js (COMPLETED)
+    - Migrate from backend/metaService.js.
+    - Export: sendWhatsAppMessage, sendWhatsAppTypingIndicator, sendWhatsAppInteractiveButtons,
+      sendInstagramMessage, sendMessengerMessage.
+
+[x] Step 4.3: Implement src/services/meta/metaOAuth.service.js (COMPLETED)
+    - Migrate from backend/metaOAuthService.js.
+    - Export: getMetaOAuthConfig, handleEmbeddedSignupCallback.
+
+[x] Step 4.4: Implement src/services/meta/metaInsights.service.js (COMPLETED)
+    - Migrate from backend/metaInsightsService.js.
+    - Export: getMetaWhatsAppInsights.
+
+[x] Step 4.5: Implement src/services/meta/metaWebhook.service.js (COMPLETED)
+    - Refactor core processing from backend/webhookHandler.js into service functions:
+      * processInboundWebhookPayload(body)
+      * parseMessageStatuses(entry)
+      * handleInteractiveButtonClick(buttonId, phone, workspaceId)
+
+-- SUB-PHASE 4B: AI AUTONOMOUS BRAIN (src/services/ai/) --
+[x] Step 4.6: Implement src/services/ai/providers/gemini.provider.js (COMPLETED)
+    - Extract Google Gemini API caller with automatic fallback models:
+      (gemini-1.5-flash -> gemini-flash-lite-latest -> gemini-3.5-flash-lite).
+
+[x] Step 4.7: Implement src/services/ai/providers/groq.provider.js (COMPLETED)
+    - Extract Groq llama-3.3-70b-versatile adapter.
+
+[x] Step 4.8: Implement src/services/ai/providers/openai.provider.js (COMPLETED)
+    - Extract OpenAI gpt-4o-mini / gpt-3.5-turbo adapter.
+
+[x] Step 4.9: Implement src/services/ai/ai.service.js (COMPLETED)
+    - Migrate from backend/aiService.js.
+    - Wire provider failover cascade (Gemini -> Groq -> OpenAI -> Rule Engine).
+    - Preserve tenant persona isolation guardrails (Sri / DhiGrowth vs Si'Tarc Laboratory).
+    - Export: generateAiReply, getTenantPersona, testAiProvider.
+
+-- SUB-PHASE 4C: CRM & PIPELINE SERVICES (src/services/crm/) --
+[x] Step 4.10: Implement src/services/crm/leadQualification.js (COMPLETED)
+    - Migrate from backend/leadQualificationStore.js.
+    - Update file path to "backend/backend/data/qualificationSessions.json".
+    - Export: getQualificationSession, updateQualificationSession, clearQualificationSession.
+
+[x] Step 4.11: Implement src/services/crm/manualAgent.service.js (COMPLETED)
+    - Migrate from backend/manualAgentStore.js.
+    - Update file path to "backend/backend/data/manualAgentStore.json".
+    - Export: setManualMode, isManualMode, loadManualStore, saveManualStore.
+
+[x] Step 4.12: Implement src/services/crm/googleSheets.service.js (COMPLETED)
+    - Migrate from backend/googleSheetsService.js.
+    - Update paths to "backend/backend/data/googleSheetsConfig.json" and "leadsCollected.json".
+    - Export: getGoogleSheetsConfig, saveGoogleSheetsConfig, getCapturedLeads, sendLeadToGoogleSheets.
+
+-- SUB-PHASE 4D: CAMPAIGNS & AUTOMATIONS (src/services/campaigns/) --
+[x] Step 4.13: Implement src/services/campaigns/broadcast.service.js
+    - Migrate from backend/broadcastService.js.
+    - Update file path to "backend/backend/data/campaignsStore.json".
+    - Export: sendBroadcastCampaign, sendDirectCustomBroadcast, getCampaignStatus.
+
+[x] Step 4.14: Implement src/services/campaigns/template.service.js
+    - Migrate from backend/templateService.js.
+    - Update file path to "backend/backend/data/templatesStore.json".
+    - Export: syncTemplatesFromMeta, createMetaTemplate, deleteMetaTemplate, getWorkspaceTemplates.
+
+[x] Step 4.15: Implement src/services/campaigns/automations.service.js
+    - Migrate from backend/automationsService.js.
+    - Update file path to "backend/backend/data/automationsStore.json".
+    - Export: getWorkspaceAutomations, createAutomation, toggleAutomationStatus,
+      deleteAutomation, evaluateInboundAutomation.
+
+[x] Step 4.16: Implement src/services/campaigns/drip.service.js
+    - Migrate from backend/dripService.js.
+    - Update file path to "backend/backend/data/dripStore.json".
+    - Export: getWorkspaceDrips, createDripCampaign, enrollContactInDrip, toggleDripStatus, deleteDrip.
+
+[x] Step 4.17: Implement src/services/campaigns/followUp.service.js
+    - Migrate from backend/followUpService.js.
+    - Export: scheduleInboundFollowUps, cancelScheduledFollowUps.
+
+-- SUB-PHASE 4E: BILLING, COMMERCE & WALLET (src/services/billing/) --
+[x] Step 4.18: Implement src/services/billing/billing.service.js
+    - Migrate from backend/billingService.js.
+    - Update file path to "backend/backend/data/subscriptions.json".
+    - Export: getWorkspaceSubscription, upgradeWorkspacePlan, checkUsageLimit.
+
+[x] Step 4.19: Implement src/services/billing/wallet.service.js
+    - Migrate from backend/walletService.js.
+    - Update file path to "backend/backend/data/walletStore.json".
+    - Export: getUserWallet, createRazorpayOrder, recordWalletRecharge.
+
+[x] Step 4.20: Implement src/services/billing/promocode.service.js
+    - Migrate from backend/promocodeService.js.
+    - Update file path to "backend/backend/data/promocodesStore.json".
+    - Export: validatePromocode, redeemPromocode, createPromocode, togglePromocodeStatus.
+
+[x] Step 4.21: Implement src/services/billing/invoice.service.js
+    - Migrate from backend/invoiceService.js.
+    - Export: createInvoiceRecord, getWorkspaceInvoices, getInvoiceById,
+      renderHostedPayPage, verifyInvoicePayment.
+
+-- SUB-PHASE 4F: AUTHENTICATION & WORKSPACE (src/services/auth/) --
+[x] Step 4.22: Implement src/services/auth/auth.service.js
+    - Migrate from backend/authService.js.
+    - Update file path to "backend/backend/data/tenants.json".
+    - Export: loginUser, registerUser, getWorkspaceMembers.
+
+----------------------------------------------------------------------------------------------------
+PHASE 5: HTTP CONTROLLERS (src/controllers/)
+----------------------------------------------------------------------------------------------------
+[x] Step 5.1: Implement src/controllers/webhook.controller.js
+    - Handle GET /webhook (Meta verification handshake: hub.mode, hub.verify_token, hub.challenge).
+    - Handle POST /webhook (Inbound payload processing via metaWebhook.service.js).
+    - Handle POST /api/simulate-inbound (Inbound test trigger).
+
+[x] Step 5.2: Implement src/controllers/messages.controller.js
+    - Handle POST /api/send-message (Outbound send with 24h window error 131047 fallback).
+    - Handle POST /api/conversations/set-agent-mode (AI vs Manual human toggle).
+    - Handle GET /api/conversations/agent-modes (List active modes).
+
+[x] Step 5.3: Implement src/controllers/campaigns.controller.js
+    - Handle GET /api/campaigns (List campaigns).
+    - Handle POST /api/campaigns/send (Launch broadcast).
+    - Handle POST /api/send-template-message (Direct template dispatch).
+
+[x] Step 5.4: Implement src/controllers/templates.controller.js
+    - Handle GET /api/templates (List templates).
+    - Handle POST /api/templates (Create template on Meta).
+    - Handle POST /api/templates/sync (Sync from Meta Cloud API).
+
+[x] Step 5.5: Implement src/controllers/automations.controller.js
+    - Handle GET /api/automations (List automation rules).
+    - Handle POST /api/automations (Create rule).
+    - Handle POST /api/automations/:id/toggle (Activate/pause).
+    - Handle DELETE /api/automations/:id (Delete rule).
+
+[x] Step 5.6: Implement src/controllers/drips.controller.js
+    - Handle GET /api/drips (List drips).
+    - Handle POST /api/drips (Create multi-step sequence).
+    - Handle POST /api/drips/:id/toggle (Activate/pause).
+    - Handle DELETE /api/drips/:id (Delete drip).
+
+[x] Step 5.7: Implement src/controllers/ai.controller.js
+    - Handle GET /api/ai-config (Get prompt & model).
+    - Handle POST /api/ai-config (Update prompt & temperature).
+    - Handle POST /api/ai-test (Test response in sandbox).
+    - Handle POST /api/translate (Google Translate proxy).
+
+[x] Step 5.8: Implement src/controllers/billing.controller.js
+    - Handle GET /api/billing/subscription (Get current plan).
+    - Handle POST /api/billing/upgrade (Upgrade subscription tier).
+    - Handle GET /api/wallet (Get balance & credit transactions).
+    - Handle POST /api/wallet/create-razorpay-order (Create recharge order).
+    - Handle POST /api/wallet/recharge (Record completed top-up).
+    - Handle POST /api/promocodes/validate (Validate coupon).
+    - Handle POST /api/promocodes/redeem (Apply coupon).
+    - Handle GET /api/promocodes & POST /api/promocodes (Promo admin CRUD).
+
+[x] Step 5.9: Implement src/controllers/invoices.controller.js
+    - Handle POST /api/invoices (Create GST invoice & dispatch via WhatsApp).
+    - Handle GET /api/invoices & GET /api/invoices/:id (Fetch invoice & PDF).
+    - Handle GET /pay/:id (Hosted HTML checkout page).
+    - Handle POST /api/invoices/:id/verify-payment (Confirm payment).
+
+[x] Step 5.10: Implement src/controllers/auth.controller.js
+    - Handle POST /api/auth/login (User authentication with fallback).
+    - Handle POST /api/auth/register (New tenant registration).
+    - Handle GET /api/workspace/members (Team members list).
+    - Handle GET /api/tenants & POST /api/tenants (Super Admin tenant provisioning).
+
+[x] Step 5.11: Implement src/controllers/integrations.controller.js
+    - Handle GET /api/google-sheets/config & POST /api/google-sheets/config.
+    - Handle GET /api/google-sheets/leads & POST /api/google-sheets/sync.
+    - Handle GET /api/meta-insights (Phone quality score & Graph API analytics).
+    - Handle GET /api/meta-config & POST /api/meta-config (Credentials manager).
+    - Handle POST /api/meta/embedded-signup (OAuth code exchange).
+
+----------------------------------------------------------------------------------------------------
+PHASE 6: ROUTE DEFINITIONS & MASTER ROUTER (src/routes/)
+----------------------------------------------------------------------------------------------------
+[x] Step 6.1: Implement src/routes/webhook.routes.js
+    - Mount GET /webhook, POST /webhook, GET /api/webhook, POST /api/webhook, POST /api/simulate-inbound.
+
+[x] Step 6.2: Implement src/routes/messages.routes.js
+    - Mount POST /api/send-message, POST /api/conversations/set-agent-mode, GET /api/conversations/agent-modes.
+
+[x] Step 6.3: Implement src/routes/campaigns.routes.js
+    - Mount GET /api/campaigns, POST /api/campaigns/send, POST /api/send-template-message.
+
+[x] Step 6.4: Implement src/routes/templates.routes.js
+    - Mount GET /api/templates, POST /api/templates, POST /api/templates/sync.
+
+[x] Step 6.5: Implement src/routes/automations.routes.js
+    - Mount /api/automations (*), /api/drips (*).
+
+[x] Step 6.6: Implement src/routes/ai.routes.js
+    - Mount /api/ai-config, /api/ai-test, /api/translate.
+
+[x] Step 6.7: Implement src/routes/billing.routes.js
+    - Mount /api/billing/*, /api/wallet/*, /api/promocodes/*.
+
+[x] Step 6.8: Implement src/routes/invoices.routes.js
+    - Mount /api/invoices (*), /pay/:id.
+
+[x] Step 6.9: Implement src/routes/auth.routes.js
+    - Mount /api/auth/login, /api/auth/register, /api/workspace/members, /api/tenants.
+
+[x] Step 6.10: Implement src/routes/integrations.routes.js
+    - Mount /api/google-sheets/*, /api/meta-insights, /api/meta-config, /api/meta/embedded-signup.
+
+[x] Step 6.11: Implement src/routes/index.js (Master Router)
+    - Mount GET /health.
+    - Mount POST /api/upload (Multer).
+    - Aggregate all domain routes into a single clean router.
+
+----------------------------------------------------------------------------------------------------
+PHASE 7: EXPRESS APPLICATION & SERVER ENTRY POINT
+----------------------------------------------------------------------------------------------------
+[x] Step 7.1: Implement backend/backend/src/app.js (~60 lines)
+    - Initialize Express app.
+    - Setup CORS (credentials enabled, origin: true).
+    - Setup express.json({ limit: '50mb' }) and express.urlencoded().
+    - Serve static /uploads folder.
+    - Mount master router (src/routes/index.js).
+    - Setup SPA Static frontend delivery (frontend/dist fallback).
+    - Attach global error handler middleware.
+    - Export default app.
+
+[x] Step 7.2: Implement backend/backend/server.js (~45 lines)
+    - Load environment configuration.
+    - Initialize self-healing JSON stores (initTenantMetaStore, initWalletStore, etc.).
+    - Start HTTP listener on process.env.PORT || 4000.
+    - Handle SIGTERM and SIGINT for graceful shutdown.
+
+----------------------------------------------------------------------------------------------------
+PHASE 8: SYSTEM VERIFICATION & ENDPOINT TESTING MATRIX
+----------------------------------------------------------------------------------------------------
+[x] Step 8.1: Start New Backend on Alternate Port (e.g., PORT=4001)
+    - Run: node server.js with PORT=4001.
+    - Verify clean boot log with zero errors or unhandled rejections.
+
+[x] Step 8.2: Verify Core Endpoints
+    - GET  http://localhost:4001/health                   -> Expect 200 { status: 'ok' }
+    - GET  http://localhost:4001/webhook?hub.mode=...     -> Expect 200 with challenge echo
+    - POST http://localhost:4001/api/simulate-inbound     -> Expect 200 with bot reply
+    - GET  http://localhost:4001/api/templates            -> Expect 200 with template list
+    - GET  http://localhost:4001/api/wallet               -> Expect 200 with wallet balance
+    - GET  http://localhost:4001/api/automations          -> Expect 200 with starter automations
+    - GET  http://localhost:4001/api/drips                -> Expect 200 with drip campaigns
+    - POST http://localhost:4001/api/promocodes/validate  -> Expect 200 discount calculations
+
+[x] Step 8.3: Verify Real Meta WhatsApp Outbound
+    - Test send WhatsApp message with 24h window recovery behavior.
+
+[x] Step 8.4: Verify AI Engine Multi-Provider Failover
+    - Test prompt generation with Gemini Flash, Groq, and fallback heuristics.
+
+----------------------------------------------------------------------------------------------------
+PHASE 9: SEAMLESS PRODUCTION CUTOVER (ZERO DOWNTIME)
+----------------------------------------------------------------------------------------------------
+[x] Step 9.1: Align Port to 4000
+    - Stop test instance on port 4001.
+    - Update configuration to default port 4000.
+
+[x] Step 9.2: Update Root Execution Scripts
+    - Update root server.js or root package.json "start" command to run:
+      "node backend/backend/server.js"
+    - The original "backend/" files remain untouched on disk as a permanent rollback option.
+
+[x] Step 9.3: Final Live Smoke Test
+    - Test web dashboard UI in browser.
+    - Verify Team Inbox live messaging, Campaign scheduler, Wallet balance, and Settings.
+    - Mark migration 100% COMPLETE.
+
+====================================================================================================
+END OF CHECKLIST
+====================================================================================================

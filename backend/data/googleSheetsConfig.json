@@ -1,0 +1,8 @@
+{
+  "webhookUrl": "https://script.google.com/macros/s/TEST1234/exec",
+  "sheetUrl": "https://docs.google.com/spreadsheets/d/test_sheet",
+  "enabled": true,
+  "sheetName": "Test Sync Sheet",
+  "lastSyncedAt": "2026-10-06T15:16:17.000Z",
+  "updatedAt": "2026-10-06T15:43:32.701Z"
+}

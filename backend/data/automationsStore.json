@@ -1,0 +1,239 @@
+{
+  "workspaces": {
+    "b0000000-0000-0000-0000-000000000001": [
+      {
+        "id": "auto_welcome_greeting",
+        "name": "WhatsApp AI Welcome & Service Menu",
+        "description": "Instantly send interactive button card & service menu on first customer message",
+        "trigger": "First Inbound Message",
+        "triggerCondition": "First message from new contact or 24h inactive",
+        "action": "Dispatch Interactive Greeting",
+        "actionDetails": "Send button card with App Dev, CRM, and AI Solutions",
+        "status": "Active",
+        "runs": 144,
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-10-06T10:32:32.974Z",
+        "lastRunAt": "2026-10-06T10:32:32.974Z"
+      },
+      {
+        "id": "auto_app_inquiry",
+        "name": "Mobile & Web App Funnel",
+        "description": "Auto-respond with portfolio deck when customer asks about apps or websites",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"app\", \"website\", \"ios\", \"android\", \"1\"",
+        "action": "Send Portfolio & Tech Deck",
+        "actionDetails": "Send Flutter & React Native portfolio with consultation link",
+        "status": "Active",
+        "runs": 91,
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-10-06T10:31:47.702Z",
+        "lastRunAt": "2026-10-06T10:31:47.701Z"
+      },
+      {
+        "id": "auto_crm_funnel",
+        "name": "WhatsApp CRM & Auto-Pilot Funnel",
+        "description": "Explain WhatsApp API features and pricing when requested",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"crm\", \"auto-pilot\", \"whatsapp api\", \"2\"",
+        "action": "Send WhatsApp CRM Overview",
+        "actionDetails": "Send Cloud API features, lead funnels, and pricing plans",
+        "status": "Active",
+        "runs": 64,
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-09-21T05:02:15.568571+00:00"
+      },
+      {
+        "id": "auto_agent_handoff",
+        "name": "High-Intent Human Agent Handoff",
+        "description": "Assign to live human agent when user asks for quote, call, or urgent help",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"quote\", \"call\", \"urgent\", \"human\", \"talk\"",
+        "action": "Assign to Agent & Pause AI",
+        "actionDetails": "Move to Manual Agent mode and notify team inbox",
+        "status": "Active",
+        "runs": 34,
+        "createdAt": "2026-09-21T05:02:15.568571+00:00",
+        "updatedAt": "2026-10-06T10:32:32.971Z",
+        "lastRunAt": "2026-10-06T10:32:32.971Z"
+      }
+    ],
+    "80f6df12-ba78-472a-a4ec-1059b113f8ab": [
+      {
+        "id": "auto_welcome_greeting",
+        "name": "WhatsApp AI Welcome & Service Menu",
+        "description": "Instantly send interactive button card & service menu on first customer message",
+        "trigger": "First Inbound Message",
+        "triggerCondition": "First message from new contact or 24h inactive",
+        "action": "Dispatch Interactive Greeting",
+        "actionDetails": "Send button card with App Dev, CRM, and AI Solutions",
+        "status": "Active",
+        "runs": 142,
+        "createdAt": "2026-09-14T05:27:10.790Z",
+        "lastRunAt": "2026-09-21T05:12:10.791Z"
+      },
+      {
+        "id": "auto_app_inquiry",
+        "name": "Mobile & Web App Funnel",
+        "description": "Auto-respond with portfolio deck when customer asks about apps or websites",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"app\", \"website\", \"ios\", \"android\", \"1\"",
+        "action": "Send Portfolio & Tech Deck",
+        "actionDetails": "Send Flutter & React Native portfolio with consultation link",
+        "status": "Active",
+        "runs": 89,
+        "createdAt": "2026-09-16T05:27:10.791Z",
+        "lastRunAt": "2026-09-21T03:27:10.791Z"
+      },
+      {
+        "id": "auto_crm_funnel",
+        "name": "WhatsApp CRM & Auto-Pilot Funnel",
+        "description": "Explain WhatsApp API features and pricing when requested",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"crm\", \"auto-pilot\", \"whatsapp api\", \"2\"",
+        "action": "Send WhatsApp CRM Overview",
+        "actionDetails": "Send Cloud API features, lead funnels, and pricing plans",
+        "status": "Active",
+        "runs": 64,
+        "createdAt": "2026-09-18T05:27:10.791Z",
+        "lastRunAt": "2026-09-21T00:27:10.791Z"
+      },
+      {
+        "id": "auto_agent_handoff",
+        "name": "High-Intent Human Agent Handoff",
+        "description": "Assign to live human agent when user asks for quote, call, or urgent help",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"quote\", \"call\", \"urgent\", \"human\", \"talk\"",
+        "action": "Assign to Agent & Pause AI",
+        "actionDetails": "Move to Manual Agent mode and notify team inbox",
+        "status": "Active",
+        "runs": 31,
+        "createdAt": "2026-09-19T05:27:10.791Z",
+        "lastRunAt": "2026-09-21T05:05:10.791Z"
+      }
+    ],
+    "test-new-user-ws-1789975151188": [
+      {
+        "id": "auto_1789975159102_t0q3",
+        "name": "Instant Offer Sender",
+        "description": "Automatically triggered workflow",
+        "trigger": "Keyword Match",
+        "triggerCondition": "discount, coupon, offer",
+        "action": "Send WhatsApp Template",
+        "actionDetails": "lead_offer_voucher",
+        "status": "Paused",
+        "runs": 0,
+        "createdAt": "2026-09-21T07:19:19.102Z",
+        "lastRunAt": null,
+        "updatedAt": "2026-09-21T07:19:19.746Z"
+      }
+    ],
+    "a0000000-0000-0000-0000-000000000001": [
+      {
+        "id": "auto_welcome_greeting",
+        "name": "WhatsApp AI Welcome & Service Menu",
+        "description": "Instantly send interactive button card & service menu on first customer message",
+        "trigger": "First Inbound Message",
+        "triggerCondition": "First message from new contact or 24h inactive",
+        "action": "Dispatch Interactive Greeting",
+        "actionDetails": "Send button card with App Dev, CRM, and AI Solutions",
+        "status": "Active",
+        "runs": 142,
+        "createdAt": "2026-09-15T04:38:42.134Z",
+        "lastRunAt": "2026-09-22T04:23:42.134Z"
+      },
+      {
+        "id": "auto_app_inquiry",
+        "name": "Mobile & Web App Funnel",
+        "description": "Auto-respond with portfolio deck when customer asks about apps or websites",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"app\", \"website\", \"ios\", \"android\", \"1\"",
+        "action": "Send Portfolio & Tech Deck",
+        "actionDetails": "Send Flutter & React Native portfolio with consultation link",
+        "status": "Active",
+        "runs": 89,
+        "createdAt": "2026-09-17T04:38:42.134Z",
+        "lastRunAt": "2026-09-22T02:38:42.134Z"
+      },
+      {
+        "id": "auto_crm_funnel",
+        "name": "WhatsApp CRM & Auto-Pilot Funnel",
+        "description": "Explain WhatsApp API features and pricing when requested",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"crm\", \"auto-pilot\", \"whatsapp api\", \"2\"",
+        "action": "Send WhatsApp CRM Overview",
+        "actionDetails": "Send Cloud API features, lead funnels, and pricing plans",
+        "status": "Active",
+        "runs": 64,
+        "createdAt": "2026-09-19T04:38:42.134Z",
+        "lastRunAt": "2026-09-21T23:38:42.134Z"
+      },
+      {
+        "id": "auto_agent_handoff",
+        "name": "High-Intent Human Agent Handoff",
+        "description": "Assign to live human agent when user asks for quote, call, or urgent help",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"quote\", \"call\", \"urgent\", \"human\", \"talk\"",
+        "action": "Assign to Agent & Pause AI",
+        "actionDetails": "Move to Manual Agent mode and notify team inbox",
+        "status": "Active",
+        "runs": 31,
+        "createdAt": "2026-09-20T04:38:42.134Z",
+        "lastRunAt": "2026-09-22T04:16:42.134Z"
+      }
+    ],
+    "0bb3a66f-ccad-46dd-8a69-d8f44c56e1f1": [
+      {
+        "id": "auto_welcome_greeting",
+        "name": "WhatsApp AI Welcome & Service Menu",
+        "description": "Instantly send interactive button card & service menu on first customer message",
+        "trigger": "First Inbound Message",
+        "triggerCondition": "First message from new contact or 24h inactive",
+        "action": "Dispatch Interactive Greeting",
+        "actionDetails": "Send button card with App Dev, CRM, and AI Solutions",
+        "status": "Active",
+        "runs": 142,
+        "createdAt": "2026-09-29T15:38:16.694Z",
+        "lastRunAt": "2026-10-06T15:23:16.694Z"
+      },
+      {
+        "id": "auto_app_inquiry",
+        "name": "Mobile & Web App Funnel",
+        "description": "Auto-respond with portfolio deck when customer asks about apps or websites",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"app\", \"website\", \"ios\", \"android\", \"1\"",
+        "action": "Send Portfolio & Tech Deck",
+        "actionDetails": "Send Flutter & React Native portfolio with consultation link",
+        "status": "Active",
+        "runs": 89,
+        "createdAt": "2026-10-01T15:38:16.694Z",
+        "lastRunAt": "2026-10-06T13:38:16.694Z"
+      },
+      {
+        "id": "auto_crm_funnel",
+        "name": "WhatsApp CRM & Auto-Pilot Funnel",
+        "description": "Explain WhatsApp API features and pricing when requested",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"crm\", \"auto-pilot\", \"whatsapp api\", \"2\"",
+        "action": "Send WhatsApp CRM Overview",
+        "actionDetails": "Send Cloud API features, lead funnels, and pricing plans",
+        "status": "Active",
+        "runs": 64,
+        "createdAt": "2026-10-03T15:38:16.694Z",
+        "lastRunAt": "2026-10-06T15:33:16.694Z"
+      },
+      {
+        "id": "auto_agent_handoff",
+        "name": "High-Intent Human Agent Handoff",
+        "description": "Assign to live human agent when user asks for quote, call, or urgent help",
+        "trigger": "Keyword Match",
+        "triggerCondition": "Matches: \"quote\", \"call\", \"urgent\", \"human\", \"talk\"",
+        "action": "Assign to Agent & Pause AI",
+        "actionDetails": "Move to Manual Agent mode and notify team inbox",
+        "status": "Active",
+        "runs": 31,
+        "createdAt": "2026-10-04T15:38:16.694Z",
+        "lastRunAt": "2026-10-06T15:16:16.694Z"
+      }
+    ]
+  }
+}

@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'wappilot-server',
-      script: 'backend/index.js',
+      script: 'backend/server.js',
       cwd: './',
       instances: 1,
       autorestart: true,
